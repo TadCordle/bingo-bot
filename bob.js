@@ -1,4 +1,5 @@
 const config = require("./config.json");
+const emotes = require("./emotes.json");
 const categories = require("./categories.js");
 const Discord = require("discord.js");
 const SQLite = require("better-sqlite3");
@@ -254,7 +255,7 @@ raceCmd = (message) => {
     } else if (raceState.state === State.JOINING) {
         // Join existing race
         if (raceState.addEntrant(message)) {
-            message.react(config.bingo);
+            message.react(emotes.bingo);
         }
 
     } else if (raceState.state === State.COUNTDOWN || raceState.state === State.ACTIVE) {
@@ -369,7 +370,7 @@ unforfeitCmd = (message) => {
             raceState.ffEntrants = arrayRemove(raceState.ffEntrants, message.author.id);
             clearTimeout(raceDoneTimeout);
             clearTimeout(raceDoneWarningTimeout);
-            message.react(config.bingo);
+            message.react(emotes.bingo);
         }
     }
 }
@@ -388,7 +389,7 @@ readyCmd = (message) => {
             // Mark as ready
             raceState.addEntrant(message);
             raceState.entrants.get(message.author.id).ready = true;
-            message.react(config.bingo);
+            message.react(emotes.bingo);
 
             // Start countdown if everyone is ready
             everyoneReady = true;
@@ -410,7 +411,7 @@ unreadyCmd = (message) => {
     if (raceState.state === State.JOINING || raceState.state === State.COUNTDOWN) {
         if (raceState.entrantIsReady(message.author.id)) {
             raceState.entrants.get(message.author.id).ready = false;
-            message.react(config.bingo);
+            message.react(emotes.bingo);
 
             // If someone unready'd during countdown, stop the countdown
             if (raceState.state === State.COUNTDOWN) {
@@ -455,7 +456,7 @@ undoneCmd = (message) => {
             raceState.doneEntrants = arrayRemove(raceState.doneEntrants, message.author.id);
             clearTimeout(raceDoneTimeout);
             clearTimeout(raceDoneWarningTimeout);
-            message.react(config.bingo);
+            message.react(emotes.bingo);
         }
     }
 }
@@ -547,7 +548,7 @@ kickCmd = (message) => {
             if (raceState.ffEntrants.length + raceState.doneEntrants.length === raceState.entrants.size) {
                 doEndRace(message);
             }
-            message.react(config.bingo);
+            message.react(emotes.bingo);
         }
     }
 }
@@ -590,7 +591,7 @@ meCmd = (message) => {
             meString += "   :second_place: " + line.silver;
             meString += "   :third_place: " + line.bronze;
             meString += "   :x: " + line.ffs;
-            meString += "   " + config.ppjSmug + " " + Math.floor(line.elo);
+            meString += "   " + emotes.ppjSmug + " " + Math.floor(line.elo);
             meString += "   :stopwatch: " + (line.pb > 0 ? formatTime(line.pb) : "--:--:--");
             meString += "\n";
         });
@@ -643,12 +644,12 @@ resultsCmd = (message) => {
 // Sets up a bunch of callbacks that send messages for the countdown
 doCountDown = (message) => {
     raceState.state = State.COUNTDOWN;
-    message.channel.send("Everyone is ready, gl;hf! " + config.ppjWink + " Starting race in 10 seconds...");
-    countDownTimeout3 = setTimeout(() => { message.channel.send(config.ppjE + " 3..."); }, 7000);
-    countDownTimeout2 = setTimeout(() => { message.channel.send(config.ppjE + " 2..."); }, 8000);
-    countDownTimeout1 = setTimeout(() => { message.channel.send(config.ppjE + " 1..."); }, 9000);
+    message.channel.send("Everyone is ready, gl;hf! " + emotes.ppjWink + " Starting race in 10 seconds...");
+    countDownTimeout3 = setTimeout(() => { message.channel.send(emotes.ppjE + " 3..."); }, 7000);
+    countDownTimeout2 = setTimeout(() => { message.channel.send(emotes.ppjE + " 2..."); }, 8000);
+    countDownTimeout1 = setTimeout(() => { message.channel.send(emotes.ppjE + " 1..."); }, 9000);
     goTimeout = setTimeout(() => {
-        message.channel.send(config.ppjSmug + " **Go!!!**");
+        message.channel.send(emotes.ppjSmug + " **Go!!!**");
         raceState.state = State.ACTIVE;
         raceState.startTime = Date.now() / 1000;
     }, 10000);
