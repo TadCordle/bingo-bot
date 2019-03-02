@@ -99,7 +99,7 @@ client.on("ready", () => {
 
     // Setup SQL queries for setting/retrieving user stats
     client.getUserStatsForGame = sql.prepare("SELECT * FROM users WHERE user_id = ? AND game = ? ORDER BY category ASC");
-    client.getUserStatsForGameAndCategory = sql.prepare("SELECT * FROM users WHERE user_id = ? AND game = ? AND category = ?");
+    client.getUserStatsForCategory = sql.prepare("SELECT * FROM users WHERE user_id = ? AND game = ? AND category = ?");
     client.addUserStat = sql.prepare("INSERT OR REPLACE INTO users (user_id, game, category, races, gold, silver, bronze, ffs, elo, pb) "
                                    + "VALUES (@user_id, @game, @category, @races, @gold, @silver, @bronze, @ffs, @elo, @pb);");
 
@@ -348,7 +348,6 @@ forfeitCmd = (message) => {
 // !uff/!unforfeit
 unforfeitCmd = (message) => {
     if (raceState.state === State.ACTIVE || raceState.state === State.COUNTDOWN || raceState.state === State.DONE) {
-        // Only mark as forfeited if the race is in progress
         if (raceState.entrants.has(message.author.id) && raceState.ffEntrants.includes(message.author.id)) {
             raceState.state = State.ACTIVE;
             raceState.ffEntrants = arrayRemove(raceState.ffEntrants, message.author.id);
@@ -380,7 +379,6 @@ readyCmd = (message) => {
             raceState.entrants.forEach((entrant) => {
                 if (!entrant.ready) {
                     everyoneReady = false;
-                    return;
                 }
             });
             if (everyoneReady) {
@@ -555,7 +553,7 @@ meCmd = (message) => {
     // Parse game name
     game = message.content.replace("!me", "").trim();
     if (game === null || game === "") {
-        message.channel.send("Usage: `!me game name` (e.g. `!me LBP1`)");
+        message.channel.send("Usage: `!me <game name>` (e.g. `!me LBP1`)");
         return;
     }
     game = categories.normalizeGameName(game);
@@ -569,15 +567,15 @@ meCmd = (message) => {
     if (stats.length > 0) {
         meString = "**" + game + "**\n";
         stats.forEach((line) => {
-            meString += "  " + line.category + "\n ";
-            meString += "   :checkered_flag: " + line.races;
-            meString += "   :first_place: " + line.gold;
-            meString += "   :second_place: " + line.silver;
-            meString += "   :third_place: " + line.bronze;
-            meString += "   :x: " + line.ffs;
-            meString += "   " + emotes.ppjSmug + " " + Math.floor(line.elo);
-            meString += "   :stopwatch: " + (line.pb > 0 ? formatTime(line.pb) : "--:--:--");
-            meString += "\n";
+            meString += "  " + line.category + "\n "
+                    + "   :checkered_flag: " + line.races
+                    + "   :first_place: " + line.gold
+                    + "   :second_place: " + line.silver
+                    + "   :third_place: " + line.bronze
+                    + "   :x: " + line.ffs
+                    + "   " + emotes.ppjSmug + " " + Math.floor(line.elo)
+                    + "   :stopwatch: " + (line.pb > 0 ? formatTime(line.pb) : "--:--:--")
+                    + "\n";
         });
         message.channel.send(meString);
     } else {
@@ -652,7 +650,7 @@ doEndRace = (message) => {
     raceDoneTimeout = setTimeout(() => { recordResults(); }, 60000);
 }
 
-// Records the previous race results
+// Records the previous race results and resets the race state
 recordResults = () => {
     // Don't record the race if everyone forfeited
     if (raceState.doneEntrants.length === 0) {
@@ -678,7 +676,7 @@ recordResults = () => {
     newElos = new Map();
     raceRankings = raceState.doneEntrants.concat(raceState.ffEntrants);
     raceRankings.forEach((id, i) => {
-        statObj = client.getUserStatsForGameAndCategory.get(id, gameName, categoryName);
+        statObj = client.getUserStatsForCategory.get(id, gameName, categoryName);
         if (!statObj) {
             statObj = { user_id: `${id}`, game: `${gameName}`, category: `${categoryName}`, races: 0, gold: 0, silver: 0, bronze: 0, ffs: 0, elo: 500, pb: -1 };
         }
@@ -704,31 +702,26 @@ recordResults = () => {
         playerStats.set(id, statObj);
     });
 
-    // Calculate new ELOs. Since there are sometimes multiple races, we count each opponent a player beats as a win, and each opponent a player is behind as a loss.
+    // Calculate new ELOs by treating each pair of racers in the race as a 1v1 matchup.
     // See https://en.wikipedia.org/wiki/Elo_rating_system
-    raceRankings.forEach((id1, i) => {
-        p1Place = i + 1;
+    raceRankings.forEach((id1, p1Place) => {
         actualScore = 0;
         expectedScore = 0;
-        raceRankings.forEach((id2, j) => {
+        raceRankings.forEach((id2, p2Place) => {
             // Don't compare the player against themselves
             if (id1 === id2) {
                 return;
             }
             
-            p2Place = j + 1;
             if (raceState.ffEntrants.includes(id1) && raceState.ffEntrants.includes(id2)) {
                 // If both players forfeited, count them as tied
                 actualScore += 0.5;
             } else if (p1Place < p2Place) {
                 // Ahead of opponent, count as win
                 actualScore += 1;
-            } else if (p1Place > p2Place) {
+            } else {
                 // Weigh losses a bit less than wins
                 actualScore += 0.1;
-            } else {
-                // I can't imagine this can/will ever happen
-                actualScore += 0.5;
             }
             expectedScore += 1.0 / (1 + Math.pow(10, (playerStats.get(id2).elo - playerStats.get(id1).elo) / 400));
         });
@@ -738,7 +731,6 @@ recordResults = () => {
 
     // Update/save stats with new ELOs
     playerStats.forEach((stat, id) => {
-        console.log(id + " " + stat);
         stat.elo = newElos.get(id);
         client.addUserStat.run(stat);
     });
