@@ -34,8 +34,6 @@ class RaceState {
         this.doneEntrants = [];
         this.ffEntrants = [];
         this.state = State.NO_RACE;
-        this.game = gameName;
-        this.category = categoryName;
         this.startTime = 0;
     }
 
@@ -60,20 +58,6 @@ class RaceState {
     // Returns true if the user is joined and ready, false if not.
     entrantIsReady(id) {
         return this.entrants.has(id) && this.entrants.get(id).ready;
-    }
-
-    // Updates the current/global game name
-    // The reason there's a global variable is so the previously set game is kept even when a new race is created
-    updateGame(game) {
-        gameName = game;
-        this.game = gameName;
-    }
-    
-    // Updates the current/global category name
-    // The reason there's a global variable is so the previously set category is kept even when a new race is created
-    updateCategory(category) {
-        categoryName = category;
-        this.category = categoryName;
     }
 }
 
@@ -277,7 +261,7 @@ gameCmd = (message) => {
         if (game !== null && game !== "") {
             game = categories.normalizeGameName(game);
             if (game !== null) {
-                raceState.updateGame(game);
+                gameName = game;
                 message.channel.send("Game / category updated to " + gameName + " / " + categoryName + ".");
             } else {
                 message.channel.send("Specified game name was not a valid LBP game, try something else.");
@@ -300,13 +284,13 @@ categoryCmd = (message) => {
         if (category !== null && category !== "") {
             normalized = categories.normalizeCategory(gameName, category);
             if (normalized !== null) {
-                raceState.updateCategory(normalized);
+                categoryName = normalized;
                 if (categoryName === "An3%" || categoryName === "An7%") {
-                    raceState.updateGame("LittleBigPlanet");
+                    gameName = "LittleBigPlanet";
                 }
                 message.channel.send("Category updated to " + categoryName + ".");
             } else {
-                raceState.updateCategory(category);
+                categoryName = category;
                 message.channel.send("Category updated to " 
                         + categoryName 
                         + ". (This doesn't seem to be an official category, though; did you mean something else?)");
