@@ -23,7 +23,7 @@ Create config.json in same directory as bob.js with your auth token.
 }
 ```
 
-Run bot
+Run bot.
 
 ```
 node bob.js
@@ -34,7 +34,7 @@ node bob.js
 **Pre-race commands**
 
 * `!race` - Starts a new full-game race, or joins the current open race if someone already started one.
-* `!game <game name>` - Sets the game (e.g. `!game LBP2`)..
+* `!game <game name>` - Sets the game (e.g. `!game LBP2`).
 * `!category <category name>` - Sets the category (e.g. `!category styrofoam%`).
 * `!exit` - Leave the race.
 * `!ready` - Indicate that you're ready to start.
@@ -63,4 +63,8 @@ node bob.js
 
 ## Stuff I kinda want to do but might be too lazy:
 * `!coop` - Start a co-op race.
-* `!elo <game name>` - Shows an ELO leaderboard for each category in the given game.
+* `!elo <game name>` - Show an ELO leaderboard for each category in the given game.
+
+## Stuff that probably won't happen but would be cool:
+* Allow multiple simultaneous races (LBP isn't that popular of a speedgame, so this probably isn't necessary).
+* Bingo support (would make the bot name fit a little better, but how would LBP bingo even work?).
