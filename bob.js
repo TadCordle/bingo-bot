@@ -8,6 +8,7 @@ const client = new Discord.Client();
 const sql = new SQLite('./race.sqlite');
 var gameName = "LittleBigPlanet";
 var categoryName = "Any% No-Overlord";
+var prevCategoryName = "Any% No-Overlord"; // Used to save full game category when people do IL races
 var levelName = "Introduction";
 var raceId = 0;
 
@@ -36,7 +37,8 @@ class RaceState {
         this.ffEntrants = [];
         this.state = State.NO_RACE;
         this.startTime = 0;
-        this.numILs = 0;
+        this.ilScores = new Map();
+        this.ilResults = [];
     }
 
     // Adds an entrant. Returns true if succesful, returns false if the user has already joined.
@@ -61,6 +63,14 @@ class RaceState {
     entrantIsReady(id) {
         return this.entrants.has(id) && this.entrants.get(id).ready;
     }
+
+    // Returns the current IL score of a user
+    getILScore(id) {
+        if (this.ilScores.has(id)) {
+            return this.ilScores.get(id);
+        }
+        return 0;
+    }
 }
 
 // Represents a race entrant
@@ -70,7 +80,14 @@ class Entrant {
         this.ready = false;
         this.doneTime = 0;
         this.disqualified = false;
-        this.ilScore = 0;
+    }
+}
+
+// Holds the winner of an IL race
+class ILResult {
+    constructor(level, winner) {
+        this.level = level;
+        this.winner = winner;
     }
 }
 
@@ -188,6 +205,9 @@ client.on("message", (message) => {
     else if (message.content.startsWith("!results"))
         resultsCmd(message);
 
+    else if (message.content.startsWith("!ilresults"))
+        ilResultsCmd(message);
+
     else if (message.content.startsWith("!s")) 
         statusCmd(message);
 });
@@ -199,10 +219,8 @@ helpCmd = (message) => {
     message.channel.send(`
 **Pre-race commands**
 \`!race\` - Starts a new full-game race, or joins the current open race if someone already started one.
-\`!ilrace\` - Starts a new series of IL races.
 \`!game <game name>\` - Sets the game (e.g. \`!game LBP2\`). Default is "LittleBigPlanet".
 \`!category <category name>\` - Sets the category. Default is "Any% No-Overlord".
-\`!level <level name>\` - Sets the level name during an IL race. Default is "Introduction".
 \`!exit\` - Leave the race.
 \`!ready\` - Indicate that you're ready to start.
 \`!unready\` - Indicate that you're not actually ready.
@@ -212,6 +230,11 @@ helpCmd = (message) => {
 \`!ud\` / \`!undone\` - Get back in the race if you finished by accident.
 \`!f\` / \`!forfeit\` - Drop out of the race.
 \`!uf\` / \`!unforfeit\` - Rejoin the race if you forfeited by accident.
+
+**IL race commands**
+\`!ilrace\` - Starts a new series of IL races.
+\`!level <level name>\` - Sets the next level to race. Default is "Introduction".
+\`!ilresults\` - Shows the ILs that have been played so far in a series, and the winner of each one.
 
 **Stat commands**
 \`!status\` - Shows current race status/entrants.
@@ -307,11 +330,7 @@ gameCmd = (message) => {
                 message.channel.send("Specified game name was not a valid LBP game, try something else.");
             }
         } else {
-            message.channel.send("Game / category is currently set to "
-                    + gameName
-                    + " / "
-                    + categoryName
-                    + ". Set the game using: `!game <game name>`");
+            message.channel.send("Game / category is currently set to " + gameName + " / " + categoryName + ". Set the game using: `!game <game name>`");
         }
     }
 }
@@ -322,9 +341,16 @@ categoryCmd = (message) => {
         // Change category
         category = message.content.replace("!category", "").trim();
         if (category !== null && category !== "") {
+            if (isILRace()) {
+                return;
+            }
             normalized = categories.normalizeCategory(gameName, category);
             if (normalized !== null) {
+                if (category === "Individual Levels") {
+                    message.channel.send("Category not updated; use `!ilrace` to start an IL race.");
+                }
                 categoryName = normalized;
+                prevCategoryName = normalized;
                 if (categoryName === "An3%" || categoryName === "An7%") {
                     gameName = "LittleBigPlanet";
                 }
@@ -336,11 +362,11 @@ categoryCmd = (message) => {
                         + ". (This doesn't seem to be an official category, though; did you mean something else?)");
             }
         } else {
-            message.channel.send("Game / category is currently set to " 
-                    + gameName 
-                    + " / " 
-                    + categoryName 
-                    + ". Set the category using: `!category <category name>`");
+            if (isILRace()) {
+                message.channel.send("IL race is currently in progress. Current game / level is set to " + gameName + " / " + categoryName + ".");
+            } else {
+                message.channel.send("Game / category is currently set to "  + gameName + " / " + categoryName + ". Set the category using: `!category <category name>`");
+            }
         }
     }
 }
@@ -356,7 +382,7 @@ levelCmd = (message) => {
                 levelName = normalized;
                 message.channel.send("Level updated to " + levelName + ".");
             } else {
-                message.channel.send("Unknown level \"" + level + "\". If this is an LBP2/LBP3 side level or an LBPV/LBPK level, it may not be supported yet.");
+                message.channel.send("\"" + level + "\" is not a level in " + gameName + ". If it is, yell at Rabid (note: LBP2/LBP3 side levels and LBPV/LBPK levels aren't supported yet).");
             }
         } else {
             message.channel.send("Game / level is currently set to "
@@ -377,6 +403,7 @@ forfeitCmd = (message) => {
                 // Close down race if this is the last person leaving
                 message.channel.send(username(message) + " has left the race. Closing race.");
                 raceState = new RaceState();
+                categoryName = prevCategoryName;
             } else {
                 message.channel.send(username(message) + " has left the race.");
                 if (raceState.entrants.size === 1) {
@@ -458,6 +485,7 @@ readyCmd = (message) => {
 
 // !unready
 unreadyCmd = (message) => {
+    unforfeitCmd(message);
     if (raceState.state === State.JOINING || raceState.state === State.COUNTDOWN) {
         if (raceState.entrantIsReady(message.author.id)) {
             raceState.entrants.get(message.author.id).ready = false;
@@ -484,12 +512,12 @@ doneCmd = (message) => {
             raceState.entrants.get(message.author.id).doneTime = time;
             raceState.doneEntrants.push(message.author.id);
             message.channel.send(
-                    mention(message.author) 
-                        + " has finished in " 
+                    mention(message.author)
+                        + " has finished in "
                         + formatPlace(raceState.doneEntrants.length)
-                        + " place with a time of " 
-                        + formatTime(time) 
-                        + "! (Use `!undone` if this was a mistake.)");
+                        + " place "
+                        + (isILRace() ? "(+" + (raceState.entrants.size - raceState.doneEntrants.length + 1) + " points) " : "")
+                        + "with a time of " + formatTime(time)) + "! (Use `!undone` if this was a mistake.)";
             if (raceState.ffEntrants.length + raceState.doneEntrants.length === raceState.entrants.size) {
                 doEndRace(message);
             }
@@ -521,18 +549,17 @@ statusCmd = (message) => {
         
     } else if (raceState.state === State.JOINING) {
         raceString = "**" + gameName + " / " + categoryName + " race is currently open with " + raceState.entrants.size + " entrant" 
-                + (raceState.entrants.size === 1 ? "" : "s") + ". ";
+                + (raceState.entrants.size === 1 ? "" : "s") + ". Type `!race` to join!**\n";
         if (isILRace()) {
-            raceString += "Currently on IL #" + (raceState.numILs + 1) + ". ";
+            raceString += "*Starting IL #" + (raceState.ilResults.length + 1) + " (" + levelName + ")*\n";
         }
-        raceString += "Type `!race` to join!**\n";
         raceState.entrants.forEach((entrant) => {
             if (entrant.ready) {
                 raceString += "\t:white_check_mark: ";
             } else {
                 raceString += "\t:small_orange_diamond: ";
             }
-            raceString += username(entrant.message) + (isILRace() ? " - " + entrant.ilScore : "") + "\n";
+            raceString += username(entrant.message) + (isILRace() ? " - " + raceState.getILScore(entrant.message.author.id) : "") + "\n";
         });
         message.channel.send(raceString);
 
@@ -540,8 +567,8 @@ statusCmd = (message) => {
         // Say race is done if it is, otherwise say it's in progress and show the time
         raceString = "**" + gameName + " / " + categoryName + " race is "
                 + (raceState.state === State.ACTIVE 
-                    ? "in progress. Current time: " + formatTime(Date.now() / 1000 - raceState.startTime)
-                    : "done!" + (raceState.ffEntrants.length === raceState.entrants.size ? "" : "Results will be recorded soon."))
+                        ? "in progress. Current time: " + formatTime(Date.now() / 1000 - raceState.startTime)
+                        : "done!" + (raceState.ffEntrants.length === raceState.entrants.size ? "" : "Results will be recorded soon."))
                 + "**\n";
 
         // List done entrants
@@ -556,7 +583,9 @@ statusCmd = (message) => {
             } else {
                 raceString += "\t:checkered_flag: ";
             }
-            raceString += "**" + username(entrant.message) + "** (" + formatTime(entrant.doneTime) +  ")\n";
+            raceString += "**" + username(entrant.message) + "** "
+                    + (isILRace() ? "(+" + (raceState.entrants.size - i) + " points)" : "")
+                    + " (" + formatTime(entrant.doneTime) + ")\n";
         });
 
         //  List racers still going
@@ -698,6 +727,32 @@ resultsCmd = (message) => {
     }
 }
 
+// !ilresults
+ilResultsCmd = (message) => {
+    if (isILRace() && (raceState.state === State.JOINING || raceState.state === State.ACTIVE)) {
+        if (raceState.ilResults.length === 0) {
+            message.channel.send("No ILs completed in this race.");
+            return;
+        }
+
+        // If people do too many ILs, it might break the message limit, so try to split it over multiple messages.
+        msgs = [];
+        messageString = "**Results for current IL race series:**\n";
+        raceState.ilResults.forEach((result, num) => {
+            toAdd = "\t" + (num + 1) + ". " + result.level + " (:first_place: " + result.winner + ")\n";
+            if (messageString.length + toAdd.length > 2000) {
+                msgs.push(messageString);
+                messageString = "** Results for current IL race series (cont):**\n";
+            }
+            messageString += toAdd;
+        });
+        msgs.push(messageString);
+        msgs.forEach((msg, count) => {
+            setTimeout(() => { message.channel.send(msg); }, 100 + count * 100);
+        });
+    }
+}
+
 // Sets up a bunch of callbacks that send messages for the countdown
 doCountDown = (message) => {
     raceState.state = State.COUNTDOWN;
@@ -715,18 +770,18 @@ doCountDown = (message) => {
 // Sets up a callback to record the race results
 doEndRace = (message) => {
     if (isILRace()) {
-        raceDoneWarningTimeout = setTimeout(() => { message.channel.send("Race done/recorded (Race ID: " + raceId + ")! Use `!level` to choose another level, or `!leave` to drop out of the IL series."); }, 1000);
         recordResults();
+        raceDoneWarningTimeout = setTimeout(() => { message.channel.send("Race done/recorded (Race ID: " + (raceId-1) + ")! Use `!level` to choose another level, or `!leave` to drop out of the IL series."); }, 1000);
     } else {
         raceState.state = State.DONE;
+
+        // Setup callback to record results in 60 seconds. recordResults() will do nothing if everyone forfeited.
+        raceDoneTimeout = setTimeout(() => { recordResults(); }, 60000);
         if (raceState.doneEntrants.length === 0) {
             raceDoneWarningTimeout = setTimeout(() => { message.channel.send("Everyone forfeited; race results will not be recorded. Clearing race in 1 minute."); }, 1000);
         } else {
             raceDoneWarningTimeout = setTimeout(() => { message.channel.send("Race done! Recording results/clearing race in 1 minute (Race ID: " + raceId + ")."); }, 1000);
         }
-
-        // Setup callback to record results in 60 seconds. recordResults() will do nothing if everyone forfeited.
-        raceDoneTimeout = setTimeout(() => { recordResults(); }, 60000);
     }
 }
 
@@ -773,6 +828,9 @@ recordResults = () => {
         } else {
             if (i === 0) {
                 statObj.gold++;
+                if (isILRace()) {
+                    raceState.ilResults.push(new ILResult(levelName, username(raceState.entrants.get(id).message)))
+                }
             } else if (i === 1) {
                 statObj.silver++;
             } else if (i === 2) {
@@ -780,7 +838,7 @@ recordResults = () => {
             }
 
             if (isILRace()) {
-                raceState.entrants.get(id).ilScore += raceState.doneEntrants.length + raceState.ffEntrants.length - i;
+                raceState.ilScores.set(id, raceState.getILScore(id) + raceState.doneEntrants.length + raceState.ffEntrants.length - i);
             } else {
                 if (statObj.pb === -1 || raceState.entrants.get(id).doneTime < statObj.pb) {
                     statObj.pb = raceState.entrants.get(id).doneTime;
@@ -835,7 +893,6 @@ recordResults = () => {
 }
 
 newIL = () => {
-    raceState.numILs++;
     raceState.doneEntrants = [];
     raceState.ffEntrants = [];
     raceState.entrants.forEach((entrant) => {
