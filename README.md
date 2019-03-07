@@ -46,6 +46,11 @@ node bob.js
 * `!f` / `!forfeit` - Drop out of the race.
 * `!uf` / `!unforfeit` - Rejoin the race if you forfeited by accident.
 
+**IL race commands**
+* `!ilrace` - Starts a new series of IL races.
+* `!level <level name>` - Sets the next level to race (e.g. `!level get a grip`).
+* `!ilresults` - Shows the ILs that have been played so far in a series, and the winner of each one.
+
 **Stat commands**
 * `!status` - Shows current race status/entrants.
 * `!me <game name>` - Shows your race statistics for the specified game (e.g. \`!me LBP\` shows your LBP1 stats).
@@ -57,9 +62,6 @@ node bob.js
 * `!endrace` - Forces ending the race without recording any results.
 
 # Upcoming Features?
-
-## Stuff I definitely want to do:
-* `!ilrace` - Start a series of individual level races.
 
 ## Stuff I kinda want to do but might be too lazy:
 * `!coop` - Start a co-op race.
