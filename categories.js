@@ -65,6 +65,8 @@ exports.normalizeCategory = (normalizedGame, category) => {
         return "An3%";
     } else if (normalizedCategory === "an7") {
         return "An7%";
+    } else if (normalizedCategory === "il" || normalizedCategory === "individuallevel" || normalizedCategory === "individuallevels") {
+        return "Individual Levels";
     }
 
     if (normalizedGame === "LittleBigPlanet") {
@@ -107,12 +109,12 @@ exports.normalizeCategory = (normalizedGame, category) => {
 }
 
 // this function is so dumb
-exports.normalizeLevels = (normalizedGame, level) => {
+exports.normalizeLevel = (normalizedGame, level) => {
     level = level.toLowerCase()
             .replace(new RegExp("'", 'g'), "")
             .replace(new RegExp("-", 'g'), "")
             .replace(new RegExp(":", 'g'), "")
-            .replace(new RegExp("?", 'g'), "")
+            .replace(new RegExp("\\?", 'g'), "")
             .replace(new RegExp("&", 'g'), "and")
             .replace(new RegExp("!", 'g'), "")
             .replace(new RegExp(",", 'g'), "")
@@ -135,6 +137,8 @@ exports.normalizeLevels = (normalizedGame, level) => {
             return "Castle Climb Challenge";
         } else if (level === "skateboardfreefall") {
             return "Skateboard Freefall";
+        } else if (level === "die" || level === "die%") {
+            return "Die%";
         }
 
         else if (level === "swingingsafari") {
@@ -153,6 +157,8 @@ exports.normalizeLevels = (normalizedGame, level) => {
             return "Tunnel Plunge";
         } else if (level === "meerkatbounce") {
             return "Meerkat Bounce";
+        } else if (level === "styrofoam" || level === "styrofoam%") {
+            return "Styrofoam%";
         }
 
         else if (level === "weddingreception") {
@@ -250,7 +256,7 @@ exports.normalizeLevels = (normalizedGame, level) => {
     } else if (normalizedGame === "LittleBigPlanet PSP") {
         // PSP levels
         if (level === "intro" || level === "introduction") {
-            return "The Introduction";
+            return "Introduction";
         } else if (level === "walkabout") {
             return "Walkabout";
         } else if (level === "giftofgrab") {
