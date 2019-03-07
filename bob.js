@@ -190,8 +190,8 @@ client.on("message", (message) => {
             if (message.content.startsWith("!kick"))
                 kickCmd(message);
 
-            else if (message.content.startsWith("!endrace"))
-                endRaceCmd(message);
+            else if (message.content.startsWith("!clearrace"))
+                clearRaceCmd(message);
         }
     }
     
@@ -245,7 +245,7 @@ helpCmd = (message) => {
 
 **Admin/moderator only**
 \`!kick @user\` - Kicks someone from the race (in case they're afk or something).
-\`!endrace\` - Forces ending the race without recording any results.
+\`!clearrace\` - Resets the bot; forces ending the race without recording any results.
 `);}
 
 // !race/!join
@@ -342,25 +342,39 @@ categoryCmd = (message) => {
         // Change category
         category = message.content.replace("!category", "").trim();
         if (category !== null && category !== "") {
-            if (isILRace()) {
-                return;
-            }
             normalized = categories.normalizeCategory(gameName, category);
             if (normalized !== null) {
-                if (category === "Individual Levels") {
-                    message.channel.send("Category not updated; use `!ilrace` to start an IL race.");
+                // Switch to IL race if someone manually types it
+                if (normalized === "Individual Levels") {
+                    if (!isILRace()) {
+                        categoryName = normalized;
+                        message.channel.send("Switched to IL race. Use `!race` to join; use `!game` and `!level` to setup the race further (currently " + gameName + " / " + levelName + ").");
+                    }
+                    return;
+                }
+
+                // Switch game to LBP1 for An3% of An7%
+                if (normalized === "An3%" || normalized === "An7%") {
+                    gameName = "LittleBigPlanet";
+                }
+
+                if (isILRace()) {
+                    // Switch to full-game race if currently an IL race
+                    message.channel.send("Switching from IL race to full-game race (" + gameName + " / " + normalized + ").");
+                } else {
+                    message.channel.send("Category updated to " + normalized + ".");
                 }
                 categoryName = normalized;
                 prevCategoryName = normalized;
-                if (categoryName === "An3%" || categoryName === "An7%") {
-                    gameName = "LittleBigPlanet";
-                }
-                message.channel.send("Category updated to " + categoryName + ".");
             } else {
+                if (isILRace()) {
+                    // Switch to full-game/unofficial category if currently an IL race
+                    message.channel.send("Switching from IL race to full-game race (" + gameName + " / " + category + "). (This doesn't seem to be an official category, though; did you mean something else?)");
+                } else {
+                    message.channel.send("Category updated to " + category + ". (This doesn't seem to be an official category, though; did you mean something else?)");
+                }
                 categoryName = category;
-                message.channel.send("Category updated to " 
-                        + categoryName 
-                        + ". (This doesn't seem to be an official category, though; did you mean something else?)");
+                prevCategoryName = category;
             }
         } else {
             if (isILRace()) {
@@ -553,7 +567,7 @@ statusCmd = (message) => {
         raceString = "**" + gameName + " / " + categoryName + " race is currently open with " + raceState.entrants.size + " entrant" 
                 + (raceState.entrants.size === 1 ? "" : "s") + ". Type `!race` to join!**\n";
         if (isILRace()) {
-            raceString += "*Starting " + formatPlace(raceState.ilResults.length + 1) + " IL (" + levelName + ", id: " + raceId + ")*\n";
+            raceString += "*Starting " + formatPlace(raceState.ilResults.length + 1) + " IL (" + levelName + " - id: " + raceId + ")*\n";
         }
         raceState.entrants.forEach((entrant) => {
             if (entrant.ready) {
@@ -622,6 +636,7 @@ kickCmd = (message) => {
             // If only one person is left now, make sure they are marked as unready
             raceState.entrants.forEach((entrant) => { entrant.ready = false; });
         }
+        message.react(emotes.bingo);
 
     } else if (raceState.state === State.ACTIVE || raceState.state === State.COUNTDOWN) {
         // If race is in progress, auto-forfeit them
@@ -642,17 +657,26 @@ kickCmd = (message) => {
     }
 }
 
-// !endrace
-endRaceCmd = (message) => {
+// !clearrace
+clearRaceCmd = (message) => {
     // Force end of race, unless it's already done
-    if (raceState.state !== State.DONE) {
-        clearTimeout(countDownTimeout1);
-        clearTimeout(countDownTimeout2);
-        clearTimeout(countDownTimeout3);
-        clearTimeout(goTimeout);
-        raceState = new RaceState();
-        message.channel.send("Clearing race.");
+    clearTimeout(countDownTimeout1);
+    clearTimeout(countDownTimeout2);
+    clearTimeout(countDownTimeout3);
+    clearTimeout(goTimeout);
+    clearTimeout(raceDoneTimeout);
+    clearTimeout(raceDoneWarningTimeout);
+    raceState = new RaceState();
+    gameName = "LittleBigPlanet";
+    categoryName = "Any% No-Overlord";
+    prevCategoryName = "Any% No-Overlord";
+    levelName = "Introduction";
+    raceId = client.getLastRaceID.get().id;
+    if (!raceId) {
+        raceId = 0;
     }
+    raceId += 1;
+    message.channel.send("Clearing race.");
 }
 
 // !me

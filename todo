@@ -1,2 +1,4 @@
+Add timeout to clear il race lobby if people are inactive for too long
+Add LBP2/3 side levels and LBPV/LBPK levels
 Cleanup (adding IL races made everything really messy)
 !cooprace?

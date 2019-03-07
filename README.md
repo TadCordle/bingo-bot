@@ -59,7 +59,7 @@ node bob.js
 
 **Admin/moderator only**
 * `!kick @user` - Kicks someone from the race (in case they're afk or something).
-* `!endrace` - Forces ending the race without recording any results.
+* `!clearrace` - Resets the bot; forces ending the race without recording any results.
 
 # Upcoming Features?
 

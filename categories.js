@@ -14,6 +14,7 @@ exports.normalizeGameName = (game) => {
         return "LittleBigPlanet PSP";
 
     } else if (game === "memes"
+            || game === "moves"
             || game === "spm"
             || game === "sackboysprehistoricmoves"
             || game === "prehistoricmemes"
@@ -65,13 +66,13 @@ exports.normalizeCategory = (normalizedGame, category) => {
         return "An3%";
     } else if (normalizedCategory === "an7") {
         return "An7%";
-    } else if (normalizedCategory === "il" || normalizedCategory === "individuallevel" || normalizedCategory === "individuallevels") {
+    } else if (normalizedCategory === "il" || normalizedCategory === "ils" || normalizedCategory === "individuallevel" || normalizedCategory === "individuallevels") {
         return "Individual Levels";
     }
 
     if (normalizedGame === "LittleBigPlanet") {
         // LBP1-specific categories
-        if (normalizedCategory === "anynooverlord" || normalizedCategory === "anyno") {
+        if (normalizedCategory === "anynooverlord" || normalizedCategory === "anyno" || normalizedCategory === "no") {
             return "Any% No-Overlord";
         } else if (normalizedCategory === "100nooverlord" || normalizedCategory === "100no") {
             return "100% No-Overlord";
@@ -87,7 +88,7 @@ exports.normalizeCategory = (normalizedGame, category) => {
 
     } else if (normalizedGame === "LittleBigPlanet 2") {
         // LBP2-specific categories
-        if (normalizedCategory === "anynooverlord" || normalizedCategory === "anyno" || normalizedCategory === "ng+" || normalizedCategory === "solong+") {
+        if (normalizedCategory === "anynooverlord" || normalizedCategory === "anyno" || normalizedCategory === "no" || normalizedCategory === "ng+" || normalizedCategory === "solong+") {
             return "Any% No-Overlord";
         } else {
             return null;
@@ -95,7 +96,7 @@ exports.normalizeCategory = (normalizedGame, category) => {
 
     } else if (normalizedGame === "LittleBigPlanet 3") {
         // LBP3-specific categories
-        if (normalizedCategory === "anynooverlord" || normalizedCategory === "anyno" || normalizedCategory === "anynocreate" || normalizedCategory === "anync") {
+        if (normalizedCategory === "anynooverlord" || normalizedCategory === "anyno" || normalizedCategory === "no" || normalizedCategory === "anynocreate" || normalizedCategory === "anync" || normalizedCategory === "nc") {
             return "Any% No-Create";
         } else if (normalizedCategory === "profilecorruption" || normalizedCategory === "corruption") {
             return "Profile Corruption%"
