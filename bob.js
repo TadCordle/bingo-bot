@@ -165,6 +165,7 @@ client.on("message", (message) => {
         else if (message.content.startsWith("!exit") ||
                 message.content.startsWith("!unrace") ||
                 message.content.startsWith("!leave") ||
+                message.content.startsWith("!quit") ||
                 message.content.startsWith("!f"))
             forfeitCmd(message);
         
