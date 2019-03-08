@@ -277,11 +277,7 @@ raceCmd = (message) => {
 
     } else if (raceState.state === State.COUNTDOWN || raceState.state === State.ACTIVE) {
         // Can't join race that already started
-        if (isILRace()) {
-            message.author.send("Can't join because there's a race already in progress. Try again when everyone is done racing the current level!");
-        } else {
-            message.author.send("Can't join because there's a race already in progress. Sorry!");
-        }
+        message.author.send("Can't join because there's a race already in progress!");
     }
 }
 
@@ -308,37 +304,34 @@ ilRaceCmd = (message) => {
 
     } else if (raceState.state === State.COUNTDOWN || raceState.state === State.ACTIVE) {
         // Can't join race that already started
-        message.author.send("Can't join because there's a race already in progress. Try again when everyone is done racing the current level!");
+        message.author.send("Can't join because there's a race already in progress!");
     }
 }
 
 // !game
 gameCmd = (message) => {
     if (raceState.state === State.JOINING) {
-        // Change game name
         game = message.content.replace("!game", "").trim();
-        if (game !== null && game !== "") {
-            game = categories.normalizeGameName(game);
-            if (game !== null) {
-                if (gameName === game) {
-                    return;
-                }
-                gameName = game;
-                if (isILRace()) {
-                    levelName = (gameName === "LittleBigPlanet Karting" ? "Karting Lessons" : "Introduction");
-                    message.channel.send("Game / level updated to " + gameName + " / " + levelName + ".");
-                } else {
-                    message.channel.send("Game / category updated to " + gameName + " / " + categoryName + ".");
-                }
-            } else {
-                message.channel.send("Specified game name was not a valid LBP game, try something else.");
-            }
-        } else {
+        word = isILRace() ? "level" : "category";
+        name = isILRace() ? levelName : categoryName;
+
+        if (game === null || game !== "") {
+            message.channel.send("Game / " + word + " is currently set to " + gameName + " / " + name + ". Set the game using: `!game <game name>`");
+            return;
+        }
+
+        game = categories.normalizeGameName(game);
+        if (game === null) {
+            message.channel.send("Specified game name was not a valid LBP game, try something else.");
+            return;
+        }
+
+        if (gameName !== game) {
+            gameName = game;
             if (isILRace()) {
-                message.channel.send("Game / level is currently set to " + gameName + " / " + levelName + ". Set the game using: `!game <game name>`");
-            } else {
-                message.channel.send("Game / category is currently set to " + gameName + " / " + categoryName + ". Set the game using: `!game <game name>`");
+                levelName = (gameName === "LittleBigPlanet Karting" ? "Karting Lessons" : "Introduction");
             }
+            message.channel.send("Game / " + word + " updated to " + gameName + " / " + name + ".");
         }
     }
 }
@@ -346,73 +339,71 @@ gameCmd = (message) => {
 // !category
 categoryCmd = (message) => {
     if (raceState.state === State.JOINING) {
-        // Change category
         category = message.content.replace("!category", "").trim();
-        if (category !== null && category !== "") {
-            normalized = categories.normalizeCategory(gameName, category);
-            if (normalized !== null) {
-                // Switch to IL race if someone manually types it
-                if (normalized === "Individual Levels") {
-                    if (!isILRace()) {
-                        categoryName = normalized;
-                        message.channel.send("Switched to IL race. Use `!race` to join; use `!game` and `!level` to setup the race further (currently " + gameName + " / " + levelName + ").");
-                    }
-                    return;
-                }
-
-                // Switch game to LBP1 for An3% of An7%
-                if (normalized === "An3%" || normalized === "An7%") {
-                    gameName = "LittleBigPlanet";
-                }
-
-                if (isILRace()) {
-                    // Switch to full-game race if currently an IL race
-                    message.channel.send("Switching from IL race to full-game race (" + gameName + " / " + normalized + ").");
-                } else {
-                    message.channel.send("Category updated to " + normalized + ".");
-                }
-                categoryName = normalized;
-                prevCategoryName = normalized;
-            } else {
-                if (isILRace()) {
-                    // Switch to full-game/unofficial category if currently an IL race
-                    message.channel.send("Switching from IL race to full-game race (" + gameName + " / " + category + "). (This doesn't seem to be an official category, though; did you mean something else?)");
-                } else {
-                    message.channel.send("Category updated to " + category + ". (This doesn't seem to be an official category, though; did you mean something else?)");
-                }
-                categoryName = category;
-                prevCategoryName = category;
-            }
-        } else {
+        if (category === null || category === "") {
             if (isILRace()) {
                 message.channel.send("IL race is currently in progress. Current game / level is set to " + gameName + " / " + categoryName + ".");
             } else {
                 message.channel.send("Game / category is currently set to "  + gameName + " / " + categoryName + ". Set the category using: `!category <category name>`");
             }
+            return;
         }
+
+        normalized = categories.normalizeCategory(gameName, category);
+        if (normalized === null) {
+            if (isILRace()) {
+                message.channel.send("Switching from IL race to full-game race (" + gameName + " / " + category + "). (This doesn't seem to be an official category, though; did you mean something else?)");
+            } else {
+                message.channel.send("Category updated to " + category + ". (This doesn't seem to be an official category, though; did you mean something else?)");
+            }
+            categoryName = category;
+            prevCategoryName = category;
+            return;
+        }
+
+        if (normalized === "Individual Levels") {
+            if (!isILRace()) {
+                categoryName = normalized;
+                message.channel.send("Switched to IL race. Use `!race` to join; use `!game` and `!level` to setup the race further (currently " + gameName + " / " + levelName + ").");
+            }
+            return;
+        }
+
+        if (normalized === "An3%" || normalized === "An7%") {
+            gameName = "LittleBigPlanet";
+        }
+
+        if (isILRace()) {
+            message.channel.send("Switching from IL race to full-game race (" + gameName + " / " + normalized + ").");
+        } else {
+            message.channel.send("Category updated to " + normalized + ".");
+        }
+        categoryName = normalized;
+        prevCategoryName = normalized;
     }
 }
 
 // !level
 levelCmd = (message) => {
     if (isILRace() && raceState.state === State.JOINING) {
-        // Change level
         level = message.content.replace("!level", "").trim();
-        if (level !== null && level !== "") {
-            normalized = categories.normalizeLevel(gameName, level);
-            if (normalized !== null) {
-                levelName = normalized;
-                message.channel.send("Level updated to " + levelName + ".");
-            } else {
-                message.channel.send("\"" + level + "\" is not a level in " + gameName + ".");
-            }
-        } else {
+        if (level === null || level === "") {
             message.channel.send("Game / level is currently set to "
                     + gameName
                     + " / "
                     + levelName
                     + ". Set the level using: `!level <level name>`");
+            return;
         }
+
+        normalized = categories.normalizeLevel(gameName, level);
+        if (normalized === null) {
+            message.channel.send("\"" + level + "\" is not a level in " + gameName + ".");
+            return;
+        }
+
+        levelName = normalized;
+        message.channel.send("Level updated to " + levelName + ".");
     }
 }
 
