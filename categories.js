@@ -119,6 +119,9 @@ exports.normalizeLevel = (normalizedGame, level) => {
             .replace(new RegExp("&", 'g'), "and")
             .replace(new RegExp("!", 'g'), "")
             .replace(new RegExp(",", 'g'), "")
+            .replace(new RegExp("\\.", 'g'), "")
+            .replace(new RegExp("\\(", 'g'), "")
+            .replace(new RegExp("\\)", 'g'), "")
             .replace(new RegExp(" ", 'g'), "")
             .replace(new RegExp("the", 'g'), "");
     
@@ -348,6 +351,14 @@ exports.normalizeLevel = (normalizedGame, level) => {
             return "Bravery Test";
         } else if (level === "finaltest") {
             return "Final Test";
+        } else if (level === "hedgehopping") {
+            return "Hedge Hopping";
+        } else if (level === "towerofwhoop") {
+            return "Tower of Whoop";
+        } else if (level === "blockdrop") {
+            return "Block Drop";
+        } else if (level === "superblockdrop") {
+            return "Super Block Drop";
         }
 
         else if (level === "runawaytrain") {
@@ -360,6 +371,12 @@ exports.normalizeLevel = (normalizedGame, level) => {
             return "Currant Affairs";
         } else if (level === "klingklong") {
             return "Kling Klong";
+        } else if (level === "rodentderby") {
+            return "Rodent Derby";
+        } else if (level === "deathbyshockolate") {
+            return "Death by Shockolate";
+        } else if (level === "attackofmutantmarshmallows") {
+            return "Attack of the Mutant Marshmallows";
         }
 
         else if (level === "maximumsecurity") {
@@ -372,6 +389,12 @@ exports.normalizeLevel = (normalizedGame, level) => {
             return "Waste Disposal";
         } else if (level === "fowlplay") {
             return "Fowl Play";
+        } else if (level === "basketball") {
+            return "Basketball";
+        } else if (level === "splitpaths") {
+            return "Split Paths";
+        } else if (level === "sackbotbounce") {
+            return "Sackbot Bounce";
         }
 
         else if (level === "aaaa" || level === "avalonsadvancedarmamentsacademy") {
@@ -384,6 +407,12 @@ exports.normalizeLevel = (normalizedGame, level) => {
             return "Flying in the Face of Danger";
         } else if (level === "hpfhs" || level === "hugeperilforhugespaceship") {
             return "Huge Peril for Huge Spaceship";
+        } else if (level === "onburrowedtime") {
+            return "On Burrowed Time";
+        } else if (level === "gobotron") {
+            return "Gobotron";
+        } else if (level === "clickflick") {
+            return "Click Flick";
         }
 
         else if (level === "upandatem") {
@@ -396,6 +425,12 @@ exports.normalizeLevel = (normalizedGame, level) => {
             return "Casa del Higginbotham";
         } else if (level === "iotbi" || level === "invasionofthebodyinvaders") {
             return "Invasion of the Body Invaders";
+        } else if (level === "hungrycaterpillars") {
+            return "Hungry Caterpillars";
+        } else if (level === "mindcontrol") {
+            return "Mind Control";
+        } else if (level === "rootcanal") {
+            return "Root Canal";
         }
 
         else if (level === "stcfthotn" || level === "setcontrolsforheartofnegativatron") {
@@ -408,16 +443,211 @@ exports.normalizeLevel = (normalizedGame, level) => {
             return "Fight of the Bumblebee";
         } else if (level === "intoheartofnegativitron") {
             return "Into the Heart of the Negativitron";
+        } else if (level === "rocketfunland") {
+            return "Rocket Funland";
+        } else if (level === "pingpangpong") {
+            return "Ping Pang Pong";
+        } else if (level === "spacepool") {
+            return "Space Pool";
         }
-        // TODO: Side levels?
 
     } else if (normalizedGame === "LittleBigPlanet Vita") {
-        // TODO?
-        return null;
+        // LBPV levels
+        if (level === "intro" || level === "introduction") {
+            return "Introduction";
+        } else if (level === "firstlessonsinlocomotion") {
+            return "First Lessons In Loco-Motion";
+        } else if (level === "swingbopacrobatics") {
+            return "Swing-Bop Acrobatics";
+        } else if (level === "floundersjumpandjive") {
+            return "Flounder's Jump & Jive";
+        } else if (level === "palaceofpeculiar") {
+            return "Palace Of The Peculiar";
+        } else if (level === "pianoofperil") {
+            return "Piano of Peril";
+        } else if (level === "boncetappin") {
+            return "Bonce Tappin'";
+        } else if (level === "towerbuilder") {
+            return "Tower Builder";
+        } else if (level === "wallornothing") {
+            return "Wall Or Nothing";
+        }
+
+        else if (level === "awanderintoyonder") {
+            return "A Wander Into Yonder";
+        } else if (level === "cogwheelcreek") {
+            return "Cogwheel Creek";
+        } else if (level === "oddrocket") {
+            return "The Odd Rocket";
+        } else if (level === "mineothreat") {
+            return "Mine O'Threat";
+        } else if (level === "drillerthriller") {
+            return "Driller Thriller";
+        } else if (level === "flowerpop") {
+            return "Flower Pop";
+        } else if (level === "streamrace") {
+            return "Stream Race";
+        }
+
+        else if (level === "hooksandbeats") {
+            return "Hooks & Beats";
+        } else if (level === "discardfactory") {
+            return "The Discard Factory";
+        } else if (level === "hightechtunneling") {
+            return "High Tech Tunneling";
+        } else if (level === "mainframeheist") {
+            return "The Mainframe Heist";
+        } else if (level === "acapacitorforevil") {
+            return "A Capacitor For Evil";
+        } else if (level === "airhockey") {
+            return "Air Hockey";
+        } else if (level === "superboxing") {
+            return "Super Boxing";
+        } else if (level === "bouncebophop") {
+            return "Bounce Bop Hop";
+        } else if (level === "collisioncourse") {
+            return "Collision Course";
+        }
+
+        else if (level === "sparepartpursuit") {
+            return "Spare Part Pursuit";
+        } else if (level === "threewheeltracks") {
+            return "Three Wheel Tracks";
+        } else if (level === "makeshifttransportation") {
+            return "Makeshift Transportation";
+        } else if (level === "anappetiteformetal") {
+            return "An Appetite For Metal";
+        } else if (level === "flickabullseye") {
+            return "Flick-A-Bullseye";
+        } else if (level === "toytanks") {
+            return "Toy Tanks";
+        } else if (level === "chopperthrow") {
+            return "Chopper Throw";
+        }
+
+        else if (level === "sunshineandshadows") {
+            return "Sunshine & Shadows";
+        } else if (level === "arecipeforunpleasantness") {
+            return "A recipe For Unpleasantness";
+        } else if (level === "highpressurecellar") {
+            return "High Pressure Cellar";
+        } else if (level === "reanimationstation") {
+            return "Re-Animation Station";
+        } else if (level === "inclutchesofevil") {
+            return "In The Clutches Of Evil";
+        } else if (level === "zombiespringtime") {
+            return "Zombie Springtime";
+        } else if (level === "eyeballmaze") {
+            return "Eye Ball Maze";
+        } else if (level === "sortingpanic") {
+            return "Sorting Panic";
+        }
 
     } else if (normalizedGame === "LittleBigPlanet Karting") {
-        // TODO?
-        return null;
+        // LBPK levels
+        if (level === "intro" || level === "introduction" || level === "kartinglessons") {
+            return "Karting Lessons";
+        } else if (level === "gardengrip") {
+            return "Garden Grip";
+        } else if (level === "afterwedding") {
+            return "After The Wedding";
+        } else if (level === "serpentsshrine") {
+            return "Serpent's Shrine";
+        } else if (level === "minegap") {
+            return "Mine The Gap";
+        } else if (level === "kingscastle") {
+            return "King's Castle";
+        } else if (level === "trainingwheels") {
+            return "Training Wheels";
+        } else if (level === "targetpractice") {
+            return "Target Practice";
+        } else if (level === "selfdefence") {
+            return "Self Defence";
+        } else if (level === "savannahrally") {
+            return "Savannah Rally";
+        } else if (level === "craftworldgp") {
+            return "Craftworld GP";
+        } else if (level === "sackboyrc") {
+            return "Sackboy RC";
+        }
+
+        else if (level === "turtleisland") {
+            return "Turtle Island";
+        } else if (level === "emperorhasnoclues") {
+            return "The Emperor Has No Clues";
+        } else if (level === "hugemonsterrally") {
+            return "Huge Monster Rally";
+        } else if (level === "nightrider") {
+            return "Night Rider";
+        } else if (level === "eggkartin") {
+            return "Egg Kartin";
+        } else if (level === "egghunt") {
+            return "Egg Hunt";
+        } else if (level === "starfishin") {
+            return "Star Fishin'";
+        }
+
+        else if (level === "sugarrush") {
+            return "Sugar Rush";
+        } else if (level === "currentevents") {
+            return "Current Events";
+        } else if (level === "cakesonatrain") {
+            return "Cakes on a Train";
+        } else if (level === "dontgobakingmykart") {
+            return "Don't Go Baking My Kart";
+        }
+
+        else if (level === "futureperfect") {
+            return "Future Perfect";
+        } else if (level === "zeppelinsrule") {
+            return "Zeppelins Rule!";
+        } else if (level === "infalliblebreakfastmachine") {
+            return "The Infallible Breakfast Machine";
+        } else if (level === "worldsfairinloveandwar") {
+            return "World's Fair in Love and War";
+        } else if (level === "bestbeforedate") {
+            return "Best Before Date";
+        } else if (level === "monstertrucks") {
+            return "Monster Trucks";
+        } else if (level === "tankcombat") {
+            return "Tank Combat";
+        } else if (level === "stuckinjam") {
+            return "Stuck In Jam";
+        }
+
+        else if (level === "rootsofallevil") {
+            return "Roots Of All Evil";
+        } else if (level === "firebugcircuit") {
+            return "Firebug Circuit";
+        } else if (level === "onwormpath") {
+            return "On the Wormpath";
+        } else if (level === "venusspeedtraprc") {
+            return "Venus Speedtrap RC";
+        }
+
+        else if (level === "20beeornot20bee") {
+            return "2.0 Bee Or Not 2.0 Bee";
+        } else if (level === "robobuntestchamber") {
+            return "RoboBun Test Chamber";
+        } else if (level === "hugespaceship") {
+            return "Huge Spaceship";
+        } else if (level === "lostinbass") {
+            return "Lost In Bass";
+        } else if (level === "drumsmash") {
+            return "Drum Smash";
+        } else if (level === "funkholeandbeyond") {
+            return "The Funkhole (and Beyond?)";
+        } else if (level === "assaultonbatteries") {
+            return "Assault on Batteries";
+        } else if (level === "ridescroller") {
+            return "Ride Scroller";
+        } else if (level === "fulltilt") {
+            return "Full Tilt";
+        }
+
+        else if (level === "garageatendofcraftverse") {
+            return "The Garage at the End of the Craftverse";
+        }
 
     } else if (normalizedGame === "LittleBigPlanet 3") {
         // LBP3 levels
@@ -443,6 +673,16 @@ exports.normalizeLevel = (normalizedGame, level) => {
             return "Crumbling Crypts";
         } else if (level === "lightscameratraction") {
             return "Lights, Camera, Traction!";
+        } else if (level === "guesswhoscomingtodinner") {
+            return "Guess Who's Coming To Dinner?";
+        } else if (level === "backinsaddle") {
+            return "Back In The Saddle";
+        } else if (level === "twocompany") {
+            return "Two Company";
+        } else if (level === "wheeldeal") {
+            return "The Wheel Deal";
+        } else if (level === "racetostars") {
+            return "Race to the Stars";
         }
 
         else if (level === "goloco") {
@@ -454,21 +694,30 @@ exports.normalizeLevel = (normalizedGame, level) => {
         } else if (level === "tututango") {
             return "Tutu Tango";
         } else if (level === "onlinkofdisaster") {
-            return "On the Link of Disaster";
+            return "On The Link Of Disaster";
+        } else if (level === "bearwithus") {
+            return "Bear With Us";
+        } else if (level === "nodrainnogain") {
+            return "No Drain No Gain";
+        } else if (level === "herethereandeverywhere") {
+            return "Here, There and Everywhere";
         }
 
         else if (level === "masquemakerstower") {
             return "Masque Maker's Tower";
         } else if (level === "bellyofbeast") {
-            return "Belly of the Beast";
+            return "Belly Of The Beast";
         } else if (level === "cloudcaravan") {
             return "Cloud Caravan";
         } else if (level === "greatescape") {
             return "The Great Escape";
         } else if (level === "evenbosseswearhatssometimes") {
             return "Even Bosses Wear Hats Sometimes";
+        } else if (level === "battleofairwaves") {
+            return "Battle Of The Airwaves";
+        } else if (level === "joustintime") {
+            return "Joust In Time";
         }
-        // TODO: Side levels?
     }
 
     return null;

@@ -297,13 +297,7 @@ ilRaceCmd = (message) => {
     if (raceState.state === State.NO_RACE) {
         // Start race
         raceState.addEntrant(message);
-        message.channel.send(
-                mention(message.author) +
-                " has started a new IL race! Use `!race` to join; use `!game` and `!level` to setup the race further (currently "
-                + gameName
-                + " / "
-                + levelName
-                + ").");
+        message.channel.send(mention(message.author) + " has started a new IL race! Use `!race` to join; use `!game` and `!level` to setup the race further (currently " + gameName + " / " + levelName + ").");
         raceState.state = State.JOINING;
 
     } else if (raceState.state === State.JOINING) {
@@ -326,13 +320,25 @@ gameCmd = (message) => {
         if (game !== null && game !== "") {
             game = categories.normalizeGameName(game);
             if (game !== null) {
+                if (gameName === game) {
+                    return;
+                }
                 gameName = game;
-                message.channel.send("Game / category updated to " + gameName + " / " + categoryName + ".");
+                if (isILRace()) {
+                    levelName = (gameName === "LittleBigPlanet Karting" ? "Karting Lessons" : "Introduction");
+                    message.channel.send("Game / level updated to " + gameName + " / " + levelName + ".");
+                } else {
+                    message.channel.send("Game / category updated to " + gameName + " / " + categoryName + ".");
+                }
             } else {
                 message.channel.send("Specified game name was not a valid LBP game, try something else.");
             }
         } else {
-            message.channel.send("Game / category is currently set to " + gameName + " / " + categoryName + ". Set the game using: `!game <game name>`");
+            if (isILRace()) {
+                message.channel.send("Game / level is currently set to " + gameName + " / " + levelName + ". Set the game using: `!game <game name>`");
+            } else {
+                message.channel.send("Game / category is currently set to " + gameName + " / " + categoryName + ". Set the game using: `!game <game name>`");
+            }
         }
     }
 }
@@ -398,7 +404,7 @@ levelCmd = (message) => {
                 levelName = normalized;
                 message.channel.send("Level updated to " + levelName + ".");
             } else {
-                message.channel.send("\"" + level + "\" is not a level in " + gameName + ". If it is, yell at Rabid (note: LBP2/LBP3 side levels and LBPV/LBPK levels aren't supported yet).");
+                message.channel.send("\"" + level + "\" is not a level in " + gameName + ".");
             }
         } else {
             message.channel.send("Game / level is currently set to "
