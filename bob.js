@@ -124,6 +124,10 @@ client.on("ready", () => {
     client.addUserStat = sql.prepare("INSERT OR REPLACE INTO users (user_id, game, category, races, gold, silver, bronze, ffs, elo, pb) "
                                    + "VALUES (@user_id, @game, @category, @races, @gold, @silver, @bronze, @ffs, @elo, @pb);");
 
+    // Setup SQL query to show leaderboard
+    client.getLeaderboard = sql.prepare("SELECT DISTINCT results.user_name AS user_name, users.elo AS elo FROM results INNER JOIN users ON results.user_id = users.user_id "
+                                      + "WHERE results.game = ? AND results.category = ? AND users.game = ? AND users.category = ? ORDER BY users.elo DESC");
+
     // Set race ID to highest recorded race ID + 1
     raceId = client.getLastRaceID.get().id;
     if (!raceId) {
@@ -210,6 +214,10 @@ client.on("message", (message) => {
     else if (message.content.startsWith("!ilresults"))
         ilResultsCmd(message);
 
+    else if (message.content.startsWith("!elo") ||
+            message.content.startsWith("!leaderboard"))
+        leaderboardCmd(message);
+
     else if (message.content.startsWith("!s")) 
         statusCmd(message);
 });
@@ -240,8 +248,9 @@ helpCmd = (message) => {
 
 **Stat commands**
 \`!status\` - Shows current race status/entrants.
-\`!me <game name>\` - Shows your race statistics for the specified game (e.g. \`!me LBP\` shows your LBP1 stats).
 \`!results raceNum\` - Shows results of the specified race number (e.g. \`!results 2\`).
+\`!me <game name>\` - Shows your race statistics for the specified game (e.g. \`!me LBP\` shows your LBP1 stats).
+\`!elo <game name>/<category name>\` - Shows the ELO leaderboard for the given game/category (e.g. \`!elo lbp/die%\` shows the LBP1 Die% leaderboard).
 \`!help\` - Shows this message.
 
 **Admin/moderator only**
@@ -315,7 +324,7 @@ gameCmd = (message) => {
         word = isILRace() ? "level" : "category";
         name = isILRace() ? levelName : categoryName;
 
-        if (game === null || game !== "") {
+        if (game === null || game === "") {
             message.channel.send("Game / " + word + " is currently set to " + gameName + " / " + name + ". Set the game using: `!game <game name>`");
             return;
         }
@@ -582,7 +591,7 @@ statusCmd = (message) => {
         raceString = "**" + gameName + " / " + categoryName + " race is "
                 + (raceState.state === State.ACTIVE 
                         ? "in progress. Current time: " + formatTime(Date.now() / 1000 - raceState.startTime)
-                        : "done!" + (raceState.ffEntrants.length === raceState.entrants.size ? "" : "Results will be recorded soon."))
+                        : "done!" + (raceState.ffEntrants.length === raceState.entrants.size ? "" : " Results will be recorded soon."))
                 + "**\n";
 
         // List done entrants
@@ -775,6 +784,46 @@ ilResultsCmd = (message) => {
         msgs.forEach((msg, count) => {
             setTimeout(() => { message.channel.send(msg); }, 100 + count * 100);
         });
+    }
+}
+
+// !leaderboard
+leaderboardCmd = (message) => {
+    params = message.content.replace("!leaderboard ", "").trim().split('/');
+    if (params.length !== 2) {
+        message.channel.send("Usage: `!leaderboard <game name> / <category name>` (e.g. `!leaderboard lbp1 / any% no overlord`)");
+        return;
+    }
+
+    game = categories.normalizeGameName(params[0].trim());
+    if (game === null) {
+        message.channel.send("Unrecognized game name: " + game);
+        return;
+    }
+    category = categories.normalizeCategory(game, params[1].trim());
+    if (category === null) {
+        category = params[1].trim();
+    }
+
+    rows = client.getLeaderboard.all(game, category, game, category);
+    if (rows.length > 0) {
+        msgs = [];
+        messageString = "**ELO Rankings for " + game + " / " + category + ":**\n";
+        rows.forEach((row, num) => {
+            toAdd = "\t" + (num + 1) + ". (" + emotes.ppjSmug + " " + Math.floor(row.elo) + ") " + row.user_name + "\n";
+            if (messageString.length + toAdd.length > 2000) {
+                msgs.push(messageString);
+                messageString = "**ELO Rankings for " + game + " / " + category + " (cont):**\n";
+            }
+            messageString += toAdd;
+        });
+        msgs.push(messageString);
+        msgs.forEach((msg, count) => {
+            setTimeout(() => { message.channel.send(msg); }, 100 + count * 100);
+        });
+
+    } else {
+        message.channel.send("No rankings found for " + game + " / " + category + ".");
     }
 }
 

@@ -53,8 +53,9 @@ node bob.js
 
 **Stat commands**
 * `!status` - Shows current race status/entrants.
-* `!me <game name>` - Shows your race statistics for the specified game (e.g. \`!me LBP\` shows your LBP1 stats).
-* `!results <race num>` - Shows results of the specified race number (e.g. \`!results 2\`).
+* `!results <race num>` - Shows results of the specified race number (e.g. `!results 2`).
+* `!me <game name>` - Shows your race statistics for the specified game (e.g. `!me LBP`).
+* `!elo <game name>/<category name>` - Shows the ELO leaderboard for the given game/category (e.g. `!elo lbp/die%`).
 * `!help` - Shows the bot commands.
 
 **Admin/moderator only**
@@ -65,7 +66,6 @@ node bob.js
 
 ## Stuff I kinda want to do but might be too lazy:
 * `!coop` - Start a co-op race.
-* `!elo <game name>` - Show an ELO leaderboard for each category in the given game.
 
 ## Stuff that probably won't happen but would be cool:
 * Allow multiple simultaneous races (LBP isn't that popular of a speedgame, so this probably isn't necessary).
