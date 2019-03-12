@@ -125,8 +125,8 @@ client.on("ready", () => {
                                    + "VALUES (@user_id, @game, @category, @races, @gold, @silver, @bronze, @ffs, @elo, @pb);");
 
     // Setup SQL query to show leaderboard
-    client.getLeaderboard = sql.prepare("SELECT DISTINCT results.user_name AS user_name, users.elo AS elo FROM results INNER JOIN users ON results.user_id = users.user_id "
-                                      + "WHERE results.game = ? AND results.category = ? AND users.game = ? AND users.category = ? ORDER BY users.elo DESC");
+    client.getLeaderboard = sql.prepare("SELECT DISTINCT results.user_id AS user_id, results.user_name AS user_name, users.elo AS elo FROM results INNER JOIN users ON results.user_id = users.user_id "
+                                      + "WHERE results.game = ? AND results.category = ? AND users.game = ? AND users.category = ? GROUP BY results.user_id ORDER BY users.elo DESC");
 
     // Set race ID to highest recorded race ID + 1
     raceId = client.getLastRaceID.get().id;
@@ -789,7 +789,7 @@ ilResultsCmd = (message) => {
 
 // !leaderboard
 leaderboardCmd = (message) => {
-    params = message.content.replace("!leaderboard ", "").trim().split('/');
+    params = message.content.replace("!leaderboard ", "").replace("!elo ", "").trim().split('/');
     if (params.length !== 2) {
         message.channel.send("Usage: `!leaderboard <game name> / <category name>` (e.g. `!leaderboard lbp1 / any% no overlord`)");
         return;
