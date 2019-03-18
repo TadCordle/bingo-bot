@@ -170,6 +170,7 @@ client.on("message", (message) => {
                 message.content.startsWith("!unrace") ||
                 message.content.startsWith("!leave") ||
                 message.content.startsWith("!quit") ||
+                message.content.startsWith("!yeet") ||
                 message.content.startsWith("!f"))
             forfeitCmd(message);
         
@@ -179,7 +180,7 @@ client.on("message", (message) => {
         else if (message.content.startsWith("!unready"))
             unreadyCmd(message);
 
-        else if (message.content.startsWith("!d"))
+        else if (message.content.startsWith("!d") || message.content.startsWith("! d"))
             doneCmd(message);
 
         else if (message.content.startsWith("!ud") ||
@@ -407,7 +408,8 @@ levelCmd = (message) => {
 
         normalized = categories.normalizeLevel(gameName, level);
         if (normalized === null) {
-            message.channel.send("\"" + level + "\" is not a level in " + gameName + ".");
+            levelName = level;
+            message.channel.send("Level updated to " + levelName + ". (This doesn't seem to be a story level in " + gameName + "; try again if this isn't a community level/dlc level.)");
             return;
         }
 
