@@ -1,7 +1,4 @@
 Add timeout to clear il race lobby if people are inactive for too long
 Cleanup (adding IL races made everything really messy)
 !cooprace?
-sort IL results on !s
-!results with no id just shows previous race results
-make !d not case sensitive
 !leave after finishing an il in il race should let them leave lobby

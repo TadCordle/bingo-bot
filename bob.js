@@ -150,76 +150,77 @@ client.on("message", (message) => {
 
     // Race commands
     if (message.guild) {
-        if (message.content.startsWith("!race") ||
-                message.content.startsWith("!join"))
+        lowerMessage = message.content.toLowerCase();
+        if (lowerMessage.startsWith("!race") ||
+                lowerMessage.startsWith("!join"))
             raceCmd(message);
         
-        else if (message.content.startsWith("!ilrace"))
+        else if (lowerMessage.startsWith("!ilrace"))
             ilRaceCmd(message);
 
-        else if (message.content.startsWith("!game"))
+        else if (lowerMessage.startsWith("!game"))
             gameCmd(message);
 
-        else if (message.content.startsWith("!category"))
+        else if (lowerMessage.startsWith("!category"))
             categoryCmd(message);
 
-        else if (message.content.startsWith("!level"))
+        else if (lowerMessage.startsWith("!level"))
             levelCmd(message);
 
-        else if (message.content.startsWith("!exit") ||
-                message.content.startsWith("!unrace") ||
-                message.content.startsWith("!leave") ||
-                message.content.startsWith("!quit") ||
-                message.content.startsWith("!yeet") ||
-                message.content.startsWith("!f"))
+        else if (lowerMessage.startsWith("!exit") ||
+                lowerMessage.startsWith("!unrace") ||
+                lowerMessage.startsWith("!leave") ||
+                lowerMessage.startsWith("!quit") ||
+                lowerMessage.startsWith("!yeet") ||
+                lowerMessage.startsWith("!f"))
             forfeitCmd(message);
         
-        else if (message.content.startsWith("!ready"))
+        else if (lowerMessage.startsWith("!ready"))
             readyCmd(message);
         
-        else if (message.content.startsWith("!unready"))
+        else if (lowerMessage.startsWith("!unready"))
             unreadyCmd(message);
 
-        else if (message.content.startsWith("!d") || message.content.startsWith("! d"))
+        else if (lowerMessage.startsWith("!d") || lowerMessage.startsWith("! d"))
             doneCmd(message);
 
-        else if (message.content.startsWith("!ud") ||
-                message.content.startsWith("!undone"))
+        else if (lowerMessage.startsWith("!ud") ||
+                lowerMessage.startsWith("!undone"))
             undoneCmd(message);
 
-        else if (message.content.startsWith("!uf") ||
-                message.content.startsWith("!unforfeit"))
+        else if (lowerMessage.startsWith("!uf") ||
+                lowerMessage.startsWith("!unforfeit"))
             unforfeitCmd(message);
         
         // Admin/Mod only commands
         else if (message.member.roles.find("name", "Admin") || message.member.roles.find("name", "Moderator")) {
-            if (message.content.startsWith("!kick"))
+            if (lowerMessage.startsWith("!kick"))
                 kickCmd(message);
 
-            else if (message.content.startsWith("!clearrace"))
+            else if (lowerMessage.startsWith("!clearrace"))
                 clearRaceCmd(message);
         }
     }
     
     // Commands available anywhere
-    if (message.content.startsWith("!help") ||
-            message.content.startsWith("!commands"))
+    if (lowerMessage.startsWith("!help") ||
+            lowerMessage.startsWith("!commands"))
         helpCmd(message);
 
-    else if (message.content.startsWith("!me")) 
+    else if (lowerMessage.startsWith("!me"))
         meCmd(message);
 
-    else if (message.content.startsWith("!results"))
+    else if (lowerMessage.startsWith("!results"))
         resultsCmd(message);
 
-    else if (message.content.startsWith("!ilresults"))
+    else if (lowerMessage.startsWith("!ilresults"))
         ilResultsCmd(message);
 
-    else if (message.content.startsWith("!elo") ||
-            message.content.startsWith("!leaderboard"))
+    else if (lowerMessage.startsWith("!elo") ||
+            lowerMessage.startsWith("!leaderboard"))
         leaderboardCmd(message);
 
-    else if (message.content.startsWith("!s")) 
+    else if (lowerMessage.startsWith("!s"))
         statusCmd(message);
 });
 
@@ -577,15 +578,27 @@ statusCmd = (message) => {
                 + (raceState.entrants.size === 1 ? "" : "s") + ". Type `!race` to join!**\n";
         if (isILRace()) {
             raceString += "*Starting " + formatPlace(raceState.ilResults.length + 1) + " IL (" + levelName + " - id: " + raceId + ")*\n";
+            sortedEntrants = [];
+            raceState.entrants.forEach((entrant) => {
+                sortedEntrants.push(entrant);
+            });
+            sortedEntrants.sort((entrant1, entrant2) => {
+                score1 = raceState.getILScore(entrant1.message.author.id);
+                score2 = raceState.getILScore(entrant2.message.author.id);
+                if (score1 > score2) return -1;
+                if (score1 < score2) return 1;
+                return 0;
+            });
+            sortedEntrants.forEach((entrant) => {
+                raceString += entrant.ready ? "\t:white_check_mark: " : "\t:small_orange_diamond: ";
+                raceString += username(entrant.message) + " - " + raceState.getILScore(entrant.message.author.id) + "\n";
+            });
+        } else {
+            raceState.entrants.forEach((entrant) => {
+                raceString += entrant.ready ? "\t:white_check_mark: " : "\t:small_orange_diamond: ";
+                raceString += username(entrant.message) + "\n";
+            });
         }
-        raceState.entrants.forEach((entrant) => {
-            if (entrant.ready) {
-                raceString += "\t:white_check_mark: ";
-            } else {
-                raceString += "\t:small_orange_diamond: ";
-            }
-            raceString += username(entrant.message) + (isILRace() ? " - " + raceState.getILScore(entrant.message.author.id) : "") + "\n";
-        });
         message.channel.send(raceString);
 
     } else if (raceState.state === State.ACTIVE || raceState.state === State.DONE) {
@@ -725,7 +738,10 @@ meCmd = (message) => {
 
 // !results
 resultsCmd = (message) => {
-    raceNum = message.content.replace("!results ", "").trim();
+    raceNum = message.content.replace("!results", "").trim();
+    if (raceNum === "") {
+        raceNum = raceId - 1;
+    }
     rows = client.getResults.all(raceNum);
     if (rows.length > 0) {
         // Header
