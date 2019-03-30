@@ -10,7 +10,7 @@ exports.normalizeGameName = (game) => {
     if (game === "lbp" || game === "lbp1" || game === "1") {
         return "LittleBigPlanet";
 
-    } else if (game === "psp" || game === "lbppsp") {
+    } else if (game === "psp" || game === "lbppsp" || game === "p") {
         return "LittleBigPlanet PSP";
 
     } else if (game === "memes"
@@ -22,7 +22,8 @@ exports.normalizeGameName = (game) => {
             || game === "lbpspm"
             || game === "lbpsackboysprehistoricmoves"
             || game === "lbpprehistoricmemes"
-            || game === "lbpsackboysprehistoricmemes") {
+            || game === "lbpsackboysprehistoricmemes"
+            || game === "m") {
         return "Sackboy's Prehistoric Moves";
     
     } else if (game === "lbp2" || game === "2") {
@@ -625,7 +626,7 @@ exports.normalizeLevel = (normalizedGame, level) => {
             return "Venus Speedtrap RC";
         }
 
-        else if (level === "20beeornot20bee") {
+        else if (level === "20beeornot20bee" || level === "2beeornot2bee") {
             return "2.0 Bee Or Not 2.0 Bee";
         } else if (level === "robobuntestchamber") {
             return "RoboBun Test Chamber";
