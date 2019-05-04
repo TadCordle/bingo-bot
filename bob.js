@@ -862,12 +862,12 @@ doCountDown = (message) => {
 // Sets up a callback to record the race results
 doEndRace = (message) => {
     if (isILRace()) {
-        recordResults();
         if (raceState.doneEntrants.length === 0) {
             raceDoneWarningTimeout = setTimeout(() => { message.channel.send("Everyone forfeited. IL not counted."); }, 1000);
         } else {
             raceDoneWarningTimeout = setTimeout(() => { message.channel.send("Race complete (id: " + (raceId-1) + ")! Use `!level` to choose another level, or `!leave` to leave the lobby."); }, 1000);
         }
+        recordResults();
     } else {
         raceState.state = State.DONE;
 

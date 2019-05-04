@@ -151,7 +151,7 @@ exports.normalizeLevel = (normalizedGame, level) => {
         } else if (level === "burningforest") {
             return "Burning Forest";
         } else if (level === "meerkatkingdom") {
-            return "Meerkat Kingdom";
+            return "The Meerkat Kingdom";
         } else if (level === "flamingseesawseasy") {
             return "Flaming Seesaws - Easy";
         } else if (level === "flamingseesawsmedium") {
@@ -529,7 +529,7 @@ exports.normalizeLevel = (normalizedGame, level) => {
         else if (level === "sunshineandshadows") {
             return "Sunshine & Shadows";
         } else if (level === "arecipeforunpleasantness") {
-            return "A recipe For Unpleasantness";
+            return "A Recipe For Unpleasantness";
         } else if (level === "highpressurecellar") {
             return "High Pressure Cellar";
         } else if (level === "reanimationstation") {
