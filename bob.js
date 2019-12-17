@@ -149,8 +149,8 @@ client.on("message", (message) => {
     }
 
     // Race commands
+	lowerMessage = message.content.toLowerCase();
     if (message.guild) {
-        lowerMessage = message.content.toLowerCase();
         if (lowerMessage.startsWith("!race") ||
                 lowerMessage.startsWith("!join"))
             raceCmd(message);
