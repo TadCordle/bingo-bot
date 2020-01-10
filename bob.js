@@ -3,6 +3,7 @@ const emotes = require("./emotes.json");
 const categories = require("./categories.js");
 const Discord = require("discord.js");
 const SQLite = require("better-sqlite3");
+const https = require('https');
 
 const client = new Discord.Client();
 const sql = new SQLite('./race.sqlite');
@@ -404,6 +405,38 @@ levelCmd = (message) => {
                     + " / "
                     + levelName
                     + ". Set the level using: `!level <level name>`");
+            return;
+        }
+
+        if (level.includes("lbp.me/v/")) {
+            if (level.startsWith("http:")) {
+                level = level.replace("http:", "https:");
+            }
+            if (level.split("/").length < 6) {
+                level += "/topreviews";
+            }
+            "use-strict";
+            https.get(level, function (result) {
+                var { statusCode } = result;
+                if (statusCode !== 200) {
+                    message.channel.send("Failed to follow lbp.me link (" + level + "); got a " + statusCode + " response.");
+                    return;
+                }
+
+                var dataQueue = "";
+                result.on("data", function (dataBuffer) {
+                    dataQueue += dataBuffer;
+                });
+                result.on("end", function () {
+                    start = dataQueue.search("<title>") + 7;
+                    end = dataQueue.search(" - LBP.me</title>");
+                    titleAuthor = dataQueue.substring(start, end).trim();
+                    split = titleAuthor.split(" ");
+                    title = titleAuthor.substring(0, titleAuthor.search(split[split.length - 1])).trim();
+                    levelName = title + " - https://lbp.me/v/" + level.split("/")[4]; 
+                    message.channel.send("Level updated to " + levelName + ".");
+                });
+            });
             return;
         }
 
@@ -959,14 +992,14 @@ recordResults = () => {
                     // If both players forfeited, count them as tied
                     actualScore += 0.5;
                 } else {
-                    actualScore += 0.05;
+                    // No credit for FF
                 }
             } else if (p1Place < p2Place) {
                 // Ahead of opponent, count as win
                 actualScore += 1;
             } else {
-                // Weigh losses a bit less than wins
-                actualScore += 0.15;
+                // Give a little extra for finishing
+                actualScore += 0.05;
             }
             expectedScore += 1.0 / (1 + Math.pow(10, (playerStats.get(id2).elo - playerStats.get(id1).elo) / 400));
         });
