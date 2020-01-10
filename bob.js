@@ -168,6 +168,9 @@ client.on("message", (message) => {
         else if (lowerMessage.startsWith("!level"))
             levelCmd(message);
 
+        else if (lowerMessage.startsWith("!luckydip"))
+            luckyDipCmd(message);
+
         else if (lowerMessage.startsWith("!exit") ||
                 lowerMessage.startsWith("!unrace") ||
                 lowerMessage.startsWith("!leave") ||
@@ -246,7 +249,8 @@ helpCmd = (message) => {
 
 **IL race commands**
 \`!ilrace\` - Starts a new series of IL races.
-\`!level <level name>\` - Sets the next level to race. Default is "Introduction".
+\`!level <level name>|<lbp.me link>\` - Sets the next level to race. Default is "Introduction".
+\`!luckydip\` - Sets the next level to race to a random lucky dip level.
 \`!ilresults\` - Shows the ILs that have been played so far in a series, and the winner of each one.
 
 **Stat commands**
@@ -397,59 +401,125 @@ categoryCmd = (message) => {
 
 // !level
 levelCmd = (message) => {
-    if (isILRace() && raceState.state === State.JOINING) {
-        level = message.content.replace("!level", "").trim();
-        if (level === null || level === "") {
-            message.channel.send("Game / level is currently set to "
-                    + gameName
-                    + " / "
-                    + levelName
-                    + ". Set the level using: `!level <level name>`");
-            return;
-        }
-
-        if (level.includes("lbp.me/v/")) {
-            if (level.startsWith("http:")) {
-                level = level.replace("http:", "https:");
-            }
-            if (level.split("/").length < 6) {
-                level += "/topreviews";
-            }
-            "use-strict";
-            https.get(level, function (result) {
-                var { statusCode } = result;
-                if (statusCode !== 200) {
-                    message.channel.send("Failed to follow lbp.me link (" + level + "); got a " + statusCode + " response.");
-                    return;
-                }
-
-                var dataQueue = "";
-                result.on("data", function (dataBuffer) {
-                    dataQueue += dataBuffer;
-                });
-                result.on("end", function () {
-                    start = dataQueue.search("<title>") + 7;
-                    end = dataQueue.search(" - LBP.me</title>");
-                    titleAuthor = dataQueue.substring(start, end).trim();
-                    split = titleAuthor.split(" ");
-                    title = titleAuthor.substring(0, titleAuthor.search(split[split.length - 1])).trim();
-                    levelName = title + " - https://lbp.me/v/" + level.split("/")[4]; 
-                    message.channel.send("Level updated to " + levelName + ".");
-                });
-            });
-            return;
-        }
-
-        normalized = categories.normalizeLevel(gameName, level);
-        if (normalized === null) {
-            levelName = level;
-            message.channel.send("Level updated to " + levelName + ". (This doesn't seem to be a story level in " + gameName + "; try again if this isn't a community level/dlc level.)");
-            return;
-        }
-
-        levelName = normalized;
-        message.channel.send("Level updated to " + levelName + ".");
+    if (!isILRace() || raceState.state !== State.JOINING) {
+        return;
     }
+    
+    // Show current level
+    level = message.content.replace("!level", "").trim();
+    if (level === null || level === "") {
+        message.channel.send("Game / level is currently set to "
+                + gameName
+                + " / "
+                + levelName
+                + ". Set the level using: `!level <level name>`");
+        return;
+    }
+
+    // Choose community level
+    if (level.includes("lbp.me/v/")) {
+        chooseLbpMeLevel(level, message);
+        return;
+    }
+
+    normalized = categories.normalizeLevel(gameName, level);
+    if (normalized === null) {
+        // Choose other non-story level
+        levelName = level;
+        message.channel.send("Level updated to " + levelName + ". (This doesn't seem to be a story level in " + gameName + "; try again if this isn't a community level/dlc level.)");
+        return;
+    }
+
+    // Choose story level
+    levelName = normalized;
+    message.channel.send("Level updated to " + levelName + ".");
+}
+
+// !luckydip
+luckyDipCmd = (message) => {
+    if (!isILRace() || raceState.state !== State.JOINING) {
+        return;
+    }
+
+    levelRegex = new RegExp("-", '');
+    luckyDipUrl = "";
+    lastLetter = gameName.charAt(gameName.length - 1);
+    switch(lastLetter) {
+        case "t":
+            levelRegex = new RegExp("([^/]+)\" class=\"level-pic md no-frills lbp1", 'g');
+            luckyDipUrl = "https://lbp.me/levels?p=1&t=luckydip&g=lbp1";
+            break;
+        case "2":
+            levelRegex = new RegExp("([^/]+)\" class=\"level-pic md no-frills lbp2", 'g');
+            luckyDipUrl = "https://lbp.me/levels?p=1&t=luckydip&g=lbp2";
+            break;
+        case "3":
+            levelRegex = new RegExp("([^/]+)\" class=\"level-pic md no-frills lbp3", 'g');
+            luckyDipUrl = "https://lbp.me/levels?p=1&t=luckydip&g=lbp3";
+            break;
+        case "a":
+            levelRegex = new RegExp("/v/([^\"])+", 'g');
+            luckyDipUrl = "https://vita.lbp.me/search?t=luckydip";
+            break;
+        default:
+            message.channel.send("Random community levels are unsupported for " + gameName);
+            return;
+    }
+
+    "use-strict";
+    https.get(luckyDipUrl, function (result) {
+        var { statusCode } = result;
+        if (statusCode !== 200) {
+            message.channel.send("Error: Couldn't follow " + luckyDipUrl + "; got a " + statusCode + " response.");
+            return;
+        }
+        var dataQueue = "";
+        result.on("data", function (dataBuffer) {
+            dataQueue += dataBuffer;
+        });
+        result.on("end", function () {
+            match = dataQueue.match(levelRegex)[Math.floor(Math.random() * 12)];
+            level = ((lastLetter == "a") ? "https://vita.lbp.me/v/" : "https://lbp.me/v/")
+                .concat(match
+                    .replace(new RegExp("\".*", ''), "")
+                    .replace(new RegExp("/v/", ''), "")); //for LBP vita
+            chooseLbpMeLevel(level, message);
+        });
+    });
+    return;
+}
+
+// Sets the current level in an IL race to the level at the given lbp.me link
+chooseLbpMeLevel = (level, message) => {
+    isVita = level.includes("vita.lbp.me");
+    if (level.startsWith("http:")) {
+        level = level.replace("http:", "https:");
+    }
+    if (level.split("/").length < 6) {
+        level += "/topreviews";
+    }
+    "use-strict";
+    https.get(level, function (result) {
+        var { statusCode } = result;
+        if (statusCode !== 200) {
+            message.channel.send("Failed to follow lbp.me link (" + level + "); got a " + statusCode + " response.");
+            return;
+        }
+
+        var dataQueue = "";
+        result.on("data", function (dataBuffer) {
+            dataQueue += dataBuffer;
+        });
+        result.on("end", function () {
+            start = dataQueue.search("<title>") + 7;
+            end = dataQueue.search(" - LBP.me</title>");
+            titleAuthor = dataQueue.substring(start, end).trim();
+            split = titleAuthor.split(" ");
+            title = titleAuthor.substring(0, titleAuthor.search(split[split.length - 1])).trim();
+            levelName = title + (isVita ? " - https://vita.lbp.me/v/" : " - https://lbp.me/v/") + level.split("/")[4]; 
+            message.channel.send("Level updated to " + levelName + ".");
+        });
+    });
 }
 
 // !ff/!forfeit/!leave/!exit/!unrace
