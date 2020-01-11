@@ -48,7 +48,7 @@ node bob.js
 
 **IL race commands**
 * `!ilrace` - Starts a new series of IL races.
-* `!level <level name>|<lbp.me link>` - Sets the next level to race. Default is "Introduction".
+* `!level <level name>` - Sets the next level to race. Also accepts lbp.me links. Default is "Introduction".
 * `!luckydip` - Sets the next level to race to a random lucky dip level.
 * `!ilresults` - Shows the ILs that have been played so far in a series, and the winner of each one.
 
