@@ -1015,7 +1015,7 @@ recordResults = () => {
     raceRankings.forEach((id, i) => {
         statObj = client.getUserStatsForCategory.get(id, gameName, categoryName);
         if (!statObj) {
-            statObj = { user_id: `${id}`, game: `${gameName}`, category: `${categoryName}`, races: 0, gold: 0, silver: 0, bronze: 0, ffs: 0, elo: 500, pb: -1 };
+            statObj = { user_id: `${id}`, game: `${gameName}`, category: `${categoryName}`, races: 0, gold: 0, silver: 0, bronze: 0, ffs: 0, elo: 1200, pb: -1 };
         }
         newElos.set(id, statObj.elo);
 
@@ -1062,14 +1062,13 @@ recordResults = () => {
                     // If both players forfeited, count them as tied
                     actualScore += 0.5;
                 } else {
-                    // No credit for FF
+                    // Loss gives 0 points
                 }
             } else if (p1Place < p2Place) {
                 // Ahead of opponent, count as win
                 actualScore += 1;
             } else {
-                // Give a little extra for finishing
-                actualScore += 0.05;
+                // Loss gives 0 points
             }
             expectedScore += 1.0 / (1 + Math.pow(10, (playerStats.get(id2).elo - playerStats.get(id1).elo) / 400));
         });
