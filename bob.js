@@ -1056,11 +1056,13 @@ recordResults = () => {
             if (id1 === id2) {
                 return;
             }
+
+            expectedScore += 1.0 / (1 + Math.pow(10, (playerStats.get(id2).elo - playerStats.get(id1).elo) / 400));
             
             if (raceState.ffEntrants.includes(id1)) {
                 if (raceState.ffEntrants.includes(id2)) {
-                    // If both players forfeited, count them as tied
-                    actualScore += 0.5;
+                    // If both players forfeited, those two players won't affect each other's scores
+                    actualScore += expectedScore;
                 } else {
                     // Loss gives 0 points
                 }
@@ -1070,7 +1072,6 @@ recordResults = () => {
             } else {
                 // Loss gives 0 points
             }
-            expectedScore += 1.0 / (1 + Math.pow(10, (playerStats.get(id2).elo - playerStats.get(id1).elo) / 400));
         });
 
         newElos.set(id1, playerStats.get(id1).elo + 32 * (actualScore - expectedScore));

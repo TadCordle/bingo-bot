@@ -102,11 +102,13 @@ fixElosCmd = (message) => {
                     if (fixObj1 === fixObj2) {
                         return;
                     }
+
+                    expectedScore += 1.0 / (1 + Math.pow(10, (playerStats.get(fixObj2.userId).elo - playerStats.get(fixObj1.userId).elo) / 400));
                     
                     if (ffs.includes(fixObj1)) {
                         if (ffs.includes(fixObj2)) {
-                            // If both players forfeited, count them as tied
-                            actualScore += 0.5;
+                            // If both players forfeited, those two players won't affect each other's scores
+                            actualScore += expectedScore;
                         } else {
                             // Loss gives 0 points
                         }
@@ -116,7 +118,6 @@ fixElosCmd = (message) => {
                     } else {
                         // Loss gives 0 points
                     }
-                    expectedScore += 1.0 / (1 + Math.pow(10, (playerStats.get(fixObj2.userId).elo - playerStats.get(fixObj1.userId).elo) / 400));
                 });
 
                 newElos.set(fixObj1.userId, playerStats.get(fixObj1.userId).elo + 32 * (actualScore - expectedScore));
