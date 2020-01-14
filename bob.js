@@ -1015,7 +1015,7 @@ recordResults = () => {
     raceRankings.forEach((id, i) => {
         statObj = client.getUserStatsForCategory.get(id, gameName, categoryName);
         if (!statObj) {
-            statObj = { user_id: `${id}`, game: `${gameName}`, category: `${categoryName}`, races: 0, gold: 0, silver: 0, bronze: 0, ffs: 0, elo: 1200, pb: -1 };
+            statObj = { user_id: `${id}`, game: `${gameName}`, category: `${categoryName}`, races: 0, gold: 0, silver: 0, bronze: 0, ffs: 0, elo: 1500, pb: -1 };
         }
         newElos.set(id, statObj.elo);
 
@@ -1056,13 +1056,14 @@ recordResults = () => {
             if (id1 === id2) {
                 return;
             }
-
-            expectedScore += 1.0 / (1 + Math.pow(10, (playerStats.get(id2).elo - playerStats.get(id1).elo) / 400));
+                
+            expectedDiff = 1.0 / (1 + Math.pow(10, (playerStats.get(id2).elo - playerStats.get(id1).elo) / 400));
+            expectedScore += expectedDiff;
             
             if (raceState.ffEntrants.includes(id1)) {
                 if (raceState.ffEntrants.includes(id2)) {
                     // If both players forfeited, those two players won't affect each other's scores
-                    actualScore += expectedScore;
+                    actualScore += expectedDiff;
                 } else {
                     // Loss gives 0 points
                 }
@@ -1155,8 +1156,7 @@ isILRace = () => {
 }
 
 // The following code is based on https://github.com/intesso/decode-html to avoid additional dependencies ---------
-// Store markers outside of the function scope,
-// not to recreate them on every call
+// Store markers outside of the function scope, not to recreate them on every call
 const entities = {
   'amp': '&',
   'apos': '\'',
