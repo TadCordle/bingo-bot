@@ -513,7 +513,7 @@ chooseLbpMeLevel = (level, message) => {
         result.on("end", function () {
             start = dataQueue.search("<title>") + 7;
             end = dataQueue.search(" - LBP.me</title>");
-            titleAuthor = dataQueue.substring(start, end).trim();
+            titleAuthor = decodeHTML(dataQueue.substring(start, end).trim());
             split = titleAuthor.split(" ");
             title = titleAuthor.substring(0, titleAuthor.search(split[split.length - 1])).trim();
             levelName = title + (isVita ? " - https://vita.lbp.me/v/" : " - https://lbp.me/v/") + level.split("/")[4]; 
@@ -1153,5 +1153,31 @@ arrayRemove = (arr, value) => {
 isILRace = () => {
     return categoryName === "Individual Levels";
 }
+
+// The following code is based on https://github.com/intesso/decode-html to avoid additional dependencies ---------
+// Store markers outside of the function scope,
+// not to recreate them on every call
+const entities = {
+  'amp': '&',
+  'apos': '\'',
+  'lt': '<',
+  'gt': '>',
+  'quot': '"',
+  'nbsp': ' '
+};
+const entityPattern = RegExp("&([a-z]+);", "ig");
+
+decodeHTML = (text) => {
+  // A single replace pass with a static RegExp is faster than a loop
+  return text.replace(entityPattern, function(match, entity) {
+    entity = entity.toLowerCase();
+    if (entities.hasOwnProperty(entity)) {
+      return entities[entity];
+    }
+    // return original string if there is no matching entity (no replace)
+    return match;
+  });
+};
+// ----------------------------------------------------------------------------------------------------------------
 
 client.login(config.token);
