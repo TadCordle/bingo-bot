@@ -1132,7 +1132,9 @@ formatTime = (time) => {
 // Converts a number to its place, e.g. 1 -> 1st, 2 -> 2nd, etc.
 formatPlace = (place) => {
     placeDigit = place % 10;
-    if (placeDigit === 1) {
+    if (4 <= place && place <= 20) {
+        return place + "th";
+    } else if (placeDigit === 1) {
         return place + "st";
     } else if (placeDigit === 2) {
         return place + "nd";
