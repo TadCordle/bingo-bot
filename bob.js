@@ -136,7 +136,7 @@ client.on("ready", () => {
     }
     raceId += 1;
 
-    console.log("Ready! " + raceId);
+    console.log("Ready! Next race ID is " + raceId + ".");
 });
 
 client.on("message", (message) => {
@@ -150,10 +150,9 @@ client.on("message", (message) => {
     }
 
     // Race commands
-	lowerMessage = message.content.toLowerCase();
+    lowerMessage = message.content.toLowerCase();
     if (message.guild) {
-        if (lowerMessage.startsWith("!race") ||
-                lowerMessage.startsWith("!join"))
+        if (lowerMessage.startsWith("!race") || lowerMessage.startsWith("!join"))
             raceCmd(message);
         
         else if (lowerMessage.startsWith("!ilrace"))
@@ -188,12 +187,10 @@ client.on("message", (message) => {
         else if (lowerMessage.startsWith("!d") || lowerMessage.startsWith("! d"))
             doneCmd(message);
 
-        else if (lowerMessage.startsWith("!ud") ||
-                lowerMessage.startsWith("!undone"))
+        else if (lowerMessage.startsWith("!ud") || lowerMessage.startsWith("!undone"))
             undoneCmd(message);
 
-        else if (lowerMessage.startsWith("!uf") ||
-                lowerMessage.startsWith("!unforfeit"))
+        else if (lowerMessage.startsWith("!uf") || lowerMessage.startsWith("!unforfeit"))
             unforfeitCmd(message);
         
         // Admin/Mod only commands
@@ -207,8 +204,7 @@ client.on("message", (message) => {
     }
     
     // Commands available anywhere
-    if (lowerMessage.startsWith("!help") ||
-            lowerMessage.startsWith("!commands"))
+    if (lowerMessage.startsWith("!help") || lowerMessage.startsWith("!commands"))
         helpCmd(message);
 
     else if (lowerMessage.startsWith("!me"))
@@ -220,8 +216,7 @@ client.on("message", (message) => {
     else if (lowerMessage.startsWith("!ilresults"))
         ilResultsCmd(message);
 
-    else if (lowerMessage.startsWith("!elo") ||
-            lowerMessage.startsWith("!leaderboard"))
+    else if (lowerMessage.startsWith("!elo") || lowerMessage.startsWith("!leaderboard"))
         leaderboardCmd(message);
 
     else if (lowerMessage.startsWith("!s"))
@@ -240,7 +235,7 @@ helpCmd = (message) => {
 \`!exit\` - Leave the race.
 \`!ready\` - Indicate that you're ready to start.
 \`!unready\` - Indicate that you're not actually ready.
-        
+
 **Mid-race commands**
 \`!d\` / \`!done\` - Indicate that you finished.
 \`!ud\` / \`!undone\` - Get back in the race if you finished by accident.
@@ -276,13 +271,7 @@ raceCmd = (message) => {
     if (raceState.state === State.NO_RACE) {
         // Start race
         raceState.addEntrant(message);
-        message.channel.send(
-                mention(message.author) + 
-                " has started a new race! Use `!race` to join; use `!game` and `!category` to setup the race further (currently " 
-                + gameName 
-                + " / "
-                + categoryName
-                + ").");
+        message.channel.send(mention(message.author) + " has started a new race! Use `!race` to join; use `!game` and `!category` to setup the race further (currently " + gameName + " / " + categoryName + ").");
         raceState.state = State.JOINING;
 
     } else if (raceState.state === State.JOINING) {
@@ -358,9 +347,9 @@ categoryCmd = (message) => {
         category = message.content.replace("!category", "").trim();
         if (category === null || category === "") {
             if (isILRace()) {
-                message.channel.send("IL race is currently in progress. Current game / level is set to " + gameName + " / " + categoryName + ".");
+                message.channel.send("IL race is currently in progress. Current game / level is set to " + gameName + " / " + levelName + ".");
             } else {
-                message.channel.send("Game / category is currently set to "  + gameName + " / " + categoryName + ". Set the category using: `!category <category name>`");
+                message.channel.send("Game / category is currently set to " + gameName + " / " + categoryName + ". Set the category using: `!category <category name>`");
             }
             return;
         }
@@ -408,11 +397,7 @@ levelCmd = (message) => {
     // Show current level
     level = message.content.replace("!level", "").trim();
     if (level === null || level === "") {
-        message.channel.send("Game / level is currently set to "
-                + gameName
-                + " / "
-                + levelName
-                + ". Set the level using: `!level <level name>`");
+        message.channel.send("Game / level is currently set to " + gameName + " / " + levelName + ". Set the level using: `!level <level name>`");
         return;
     }
 
@@ -480,9 +465,9 @@ luckyDipCmd = (message) => {
         result.on("end", function () {
             match = dataQueue.match(levelRegex)[Math.floor(Math.random() * 12)];
             level = ((lastLetter == "a") ? "https://vita.lbp.me/v/" : "https://lbp.me/v/")
-                .concat(match
-                    .replace(new RegExp("\".*", ''), "")
-                    .replace(new RegExp("/v/", ''), "")); //for LBP vita
+                    .concat(match
+                        .replace(new RegExp("\".*", ''), "")
+                        .replace(new RegExp("/v/", ''), "")); //for LBP vita
             chooseLbpMeLevel(level, message);
         });
     });
@@ -730,14 +715,14 @@ statusCmd = (message) => {
                     + " (" + formatTime(entrant.doneTime) + ")\n";
         });
 
-        //  List racers still going
+        // List racers still going
         raceState.entrants.forEach((entrant) => {
             if (!raceState.doneEntrants.includes(entrant.message.author.id) && !raceState.ffEntrants.includes(entrant.message.author.id)) {
                 raceString += "\t:stopwatch: " + username(entrant.message) + "\n";
             }
         });
 
-        //  List forfeited/DQ'd entrants
+        // List forfeited/DQ'd entrants
         raceState.ffEntrants.forEach((id) => {
             entrant = raceState.entrants.get(id);
             raceString += "\t:x: " + username(entrant.message) + "\n";
@@ -1112,7 +1097,7 @@ username = (message) => {
 }
 
 // Gets a formatted string for @ing a user
-mention  = (user) => {
+mention = (user) => {
     return "<@" + user.id + ">"; 
 }
 
@@ -1160,25 +1145,25 @@ isILRace = () => {
 // The following code is based on https://github.com/intesso/decode-html to avoid additional dependencies ---------
 // Store markers outside of the function scope, not to recreate them on every call
 const entities = {
-  'amp': '&',
-  'apos': '\'',
-  'lt': '<',
-  'gt': '>',
-  'quot': '"',
-  'nbsp': ' '
+    'amp': '&',
+    'apos': '\'',
+    'lt': '<',
+    'gt': '>',
+    'quot': '"',
+    'nbsp': ' '
 };
 const entityPattern = RegExp("&([a-z]+);", "ig");
 
 decodeHTML = (text) => {
-  // A single replace pass with a static RegExp is faster than a loop
-  return text.replace(entityPattern, function(match, entity) {
-    entity = entity.toLowerCase();
-    if (entities.hasOwnProperty(entity)) {
-      return entities[entity];
-    }
-    // return original string if there is no matching entity (no replace)
-    return match;
-  });
+    // A single replace pass with a static RegExp is faster than a loop
+    return text.replace(entityPattern, function(match, entity) {
+        entity = entity.toLowerCase();
+        if (entities.hasOwnProperty(entity)) {
+            return entities[entity];
+        }
+        // return original string if there is no matching entity (no replace)
+        return match;
+    });
 };
 // ----------------------------------------------------------------------------------------------------------------
 
