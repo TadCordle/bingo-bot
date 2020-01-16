@@ -808,24 +808,25 @@ meCmd = (message) => {
     stats = client.getUserStatsForGame.all(message.author.id, game);
     if (stats.length > 0) {
         meString = "**" + game + "**\n";
-        var maxNumberLengths = [1, 1, 1, 1, 1, 1];
+        var maxNumberLength = {races: 1, gold: 1, silver: 1, bronze: 1, ffs: 1, elo: 1, pb: 4};
         stats.forEach((line) => {
-            maxNumberLengths[0] = Math.max(maxNumberLengths[0], line.races.toString().length);
-            maxNumberLengths[1] = Math.max(maxNumberLengths[1], line.gold.toString().length);
-            maxNumberLengths[2] = Math.max(maxNumberLengths[2], line.silver.toString().length);
-            maxNumberLengths[3] = Math.max(maxNumberLengths[3], line.bronze.toString().length);
-            maxNumberLengths[4] = Math.max(maxNumberLengths[4], line.ffs.toString().length);
-            maxNumberLengths[5] = Math.max(maxNumberLengths[5], Math.floor(line.elo).toString().length);
+            maxNumberLength.races = Math.max(maxNumberLength.races, line.races.toString().length);
+            maxNumberLength.gold = Math.max(maxNumberLength.gold, line.gold.toString().length);
+            maxNumberLength.silver = Math.max(maxNumberLength.silver, line.silver.toString().length);
+            maxNumberLength.bronze = Math.max(maxNumberLength.bronze, line.bronze.toString().length);
+            maxNumberLength.ffs = Math.max(maxNumberLength.ffs, line.ffs.toString().length);
+            maxNumberLength.elo = Math.max(maxNumberLength.elo, Math.floor(line.elo).toString().length);
+            maxNumberLength.pb = Math.max(maxNumberLength.pb, formatTimeLength(line.pb));
         });
         stats.forEach((line) => {
             meString += "  " + line.category
-                    + "\n    :checkered_flag: `" + addSpaces(line.races, maxNumberLengths[0])
-                    + "`   :first_place: `" + addSpaces(line.gold, maxNumberLengths[1])
-                    + "`   :second_place: `" + addSpaces(line.silver, maxNumberLengths[2])
-                    + "`   :third_place: `" + addSpaces(line.bronze, maxNumberLengths[3])
-                    + "`   :x: `" + addSpaces(line.ffs, maxNumberLengths[4])
-                    + "`   " + emotes.ppjSmug + " `" + addSpaces(Math.floor(line.elo), maxNumberLengths[5])
-                    + "`   :stopwatch: `" + (line.pb > 0 ? addSpaces(formatTime(line.pb), 11) : "--:--:--.--")
+                    + "\n    :checkered_flag: `" + addSpaces(line.races.toString(), maxNumberLength.races)
+                    + "`   :first_place: `" + addSpaces(line.gold.toString(), maxNumberLength.gold)
+                    + "`   :second_place: `" + addSpaces(line.silver.toString(), maxNumberLength.silver)
+                    + "`   :third_place: `" + addSpaces(line.bronze.toString(), maxNumberLength.bronze)
+                    + "`   :x: `" + addSpaces(line.ffs.toString(), maxNumberLength.ffs)
+                    + "`   " + emotes.ppjSmug + " `" + addSpaces(Math.floor(line.elo).toString(), maxNumberLength.elo)
+                    + "`   :stopwatch: `" + addSpaces((line.pb > 0 ? formatTime(line.pb) : "--:--:--.--".substring(11 - maxNumberLength.pb, 11)), maxNumberLength.pb)
                     + "`\n";
         });
         message.channel.send(meString);
@@ -1111,8 +1112,11 @@ mention = (user) => {
     return "<@" + user.id + ">";
 }
 
-// Formats a time in seconds in H:mm:ss
+// Formats a time in seconds in H:mm:ss.xx
 formatTime = (time, shorten) => {
+    if (typeof shorten === "undefined") {
+        shorten = true;
+    }
     var hrs = Math.floor(time / 3600);
     var min = Math.floor((time - (hrs * 3600)) / 60);
     var sec = Math.round((time - (hrs * 3600) - (min * 60)) * 100) / 100;
@@ -1125,10 +1129,26 @@ formatTime = (time, shorten) => {
     } else if ((sec * 10) % 1 == 0) {
         result += "0";
     }
-    if (shorten != false) {
-        result = result.replace(new RegExp("^[0:]{0,6}", ''), "");
+    if (shorten) {
+        return result.replace(new RegExp("^[0:]{0,6}", ''), "");
     }
     return result;
+}
+
+// Equal to formatTime(...).length but less effort than running that function
+formatTimeLength = (time) => {
+    if (time >= 36000) {
+        return "11";
+    } else if (time >= 3600) {
+        return "10";
+    } else if (time >= 600) {
+        return "8";
+    } else if (time >= 60) {
+        return "7";
+    } else if (time >= 10) {
+        return "5";
+    }
+    return "4";
 }
 
 // Converts a number to its place, e.g. 1 -> 1st, 2 -> 2nd, etc.
@@ -1158,10 +1178,10 @@ isILRace = () => {
 
 //e.g. 1 --> "  1"
 addSpaces = (input, outputLength) => {
-    var spaceCount = outputLength - input.length;
+    const spaceCount = outputLength - input.length;
     if (spaceCount > 0) {
         var spacesString = " ";
-        for (var i = 1; i < spaceCount; i++) {
+        for (let i = 1; i < spaceCount; i++) {
             spacesString += " ";
         }
         return spacesString + input;
