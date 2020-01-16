@@ -1117,7 +1117,7 @@ formatTime = (time) => {
     var min = Math.floor((time - (hrs * 3600)) / 60);
     var sec = Math.round((time - (hrs * 3600) - (min * 60)) * 100) / 100;
 
-    var result = (hrs);
+    var result = hrs.toString();
     result += ":" + (min < 10 ? "0" + min : min);
     result += ":" + (sec < 10 ? "0" + sec : sec);
     if (sec % 1 == 0) {
