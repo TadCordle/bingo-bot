@@ -713,7 +713,7 @@ statusCmd = (message) => {
             points = raceState.entrants.size - i;
             raceString += "**" + username(entrant.message) + "** "
                     + (isILRace() ? "(+" + points + " point" + (points === 1 ? "s" : "") + ")" : "")
-                    + " (" + formatTime(entrant.doneTime) + ")\n";
+                    + " (" + formatTime(entrant.doneTime, false) + ")\n";
         });
 
         // List racers still going
@@ -861,7 +861,7 @@ resultsCmd = (message) => {
                 } else {
                     messageString += "\t:checkered_flag: ";
                 }
-                messageString += row.user_name + " (" + formatTime(row.time) + ")\n";
+                messageString += row.user_name + " (" + formatTime(row.time, false) + ")\n";
                 placeCount += 1;
             }
         });
@@ -1112,7 +1112,7 @@ mention = (user) => {
 }
 
 // Formats a time in seconds in H:mm:ss
-formatTime = (time) => {
+formatTime = (time, shorten) => {
     var hrs = Math.floor(time / 3600);
     var min = Math.floor((time - (hrs * 3600)) / 60);
     var sec = Math.round((time - (hrs * 3600) - (min * 60)) * 100) / 100;
@@ -1125,7 +1125,10 @@ formatTime = (time) => {
     } else if ((sec * 10) % 1 == 0) {
         result += "0";
     }
-    return result.replace(new RegExp("^[0:]{0,7}", ''), "");
+    if (shorten != false) {
+        result = result.replace(new RegExp("^[0:]*", ''), "");
+    }
+    return result;
 }
 
 // Converts a number to its place, e.g. 1 -> 1st, 2 -> 2nd, etc.
@@ -1158,8 +1161,7 @@ addSpaces = (input, outputLength) => {
     var spaceCount = outputLength - input.length;
     if (spaceCount > 0) {
         var spacesString = " ";
-        var i = 1;
-        for (; i < spaceCount; i++) {
+        for (var i = 1; i < spaceCount; i++) {
             spacesString += " ";
         }
         return spacesString + input;
