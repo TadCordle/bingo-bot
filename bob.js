@@ -1125,7 +1125,7 @@ formatTime = (time) => {
     } else if ((sec * 10) % 1 == 0) {
         result += "0";
     }
-    return result.replace(new RegExp("^[0:]*", ''), "");
+    return result.replace(new RegExp("^[0:]{0,7}", ''), "");
 }
 
 // Converts a number to its place, e.g. 1 -> 1st, 2 -> 2nd, etc.
