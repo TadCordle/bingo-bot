@@ -1126,7 +1126,7 @@ formatTime = (time, shorten) => {
         result += "0";
     }
     if (shorten != false) {
-        result = result.replace(new RegExp("^[0:]*", ''), "");
+        result = result.replace(new RegExp("^[0:]{0,6}", ''), "");
     }
     return result;
 }
