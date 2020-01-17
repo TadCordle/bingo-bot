@@ -825,7 +825,7 @@ meCmd = (message) => {
                     + "`   :third_place: `" + addSpaces(line.bronze.toString(), maxNumberLength.bronze)
                     + "`   :x: `" + addSpaces(line.ffs.toString(), maxNumberLength.ffs)
                     + "`   " + emotes.ppjSmug + " `" + addSpaces(Math.floor(line.elo).toString(), maxNumberLength.elo)
-                    + "`   :stopwatch: `" + (line.pb > 0 ? formatTime(line.pb) : "--:--:--.--")
+                    + "`   :stopwatch: `" + formatTime(line.pb))
                     + "`\n";
         });
         message.channel.send(meString);
@@ -1113,6 +1113,10 @@ mention = (user) => {
 
 // Formats a time in seconds in H:mm:ss.xx
 formatTime = (time) => {
+    if (time === -1) {
+        return "--:--:--.--";
+    }
+
     var hrs = Math.floor(time / 3600);
     var min = Math.floor((time - (hrs * 3600)) / 60);
     var sec = Math.round((time - (hrs * 3600) - (min * 60)) * 100) / 100;
