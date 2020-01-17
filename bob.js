@@ -134,7 +134,7 @@ client.on("ready", () => {
     if (!raceId) {
         raceId = 0;
     }
-    raceId += 1;
+    raceId++;
 
     console.log("Ready! Next race ID is " + raceId + ".");
 });
@@ -411,7 +411,7 @@ levelCmd = (message) => {
     if (normalized === null) {
         // Choose other non-story level
         levelName = level;
-        message.channel.send("Level updated to " + levelName + ". (This doesn't seem to be a story level in " + gameName + "; try again if this isn't a community level/dlc level.)");
+        message.channel.send("Level updated to " + levelName + ". (This doesn't seem to be a story level in " + gameName + "; try again if this isn't a community level/DLC level.)");
         return;
     }
 
@@ -631,7 +631,7 @@ doneCmd = (message) => {
                         + " has finished in "
                         + formatPlace(raceState.doneEntrants.length)
                         + " place "
-                        + (isILRace() ? "(+" + points + " point" + (points === 1 ? "" : "s") + ") " : "")
+                        + (isILRace() ? "(+" + points + "\u00A0point" + (points > 1 ? "s" : "") + ") " : "")
                         + "with a time of " + formatTime(time)) + "! (Use `!undone` if this was a mistake.)";
             if (raceState.ffEntrants.length + raceState.doneEntrants.length === raceState.entrants.size) {
                 doEndRace(message);
@@ -696,37 +696,29 @@ statusCmd = (message) => {
                 + (raceState.state === State.ACTIVE
                         ? "in progress. Current time: " + formatTime(Date.now() / 1000 - raceState.startTime)
                         : "done!" + (raceState.ffEntrants.length === raceState.entrants.size ? "" : " Results will be recorded soon."))
-                + "**\n";
+                + "**";
 
         // List done entrants
         raceState.doneEntrants.forEach((id, i) => {
             entrant = raceState.entrants.get(id);
-            if (i === 0) {
-                raceString += "\t:first_place: ";
-            } else if (i === 1) {
-                raceString += "\t:second_place: ";
-            } else if (i === 2) {
-                raceString += "\t:third_place: ";
-            } else {
-                raceString += "\t:checkered_flag: ";
-            }
             points = raceState.entrants.size - i;
-            raceString += "**" + username(entrant.message) + "** "
-                    + (isILRace() ? "(+" + points + " point" + (points === 1 ? "s" : "") + ")" : "")
-                    + " (" + formatTime(entrant.doneTime) + ")\n";
+            raceString += "\n\t" + placeEmote(i)
+                    + " **" + username(entrant.message) + "** "
+                    + (isILRace() ? "(+" + points + " point" + (points > 1 ? "s" : "") + ")" : "")
+                    + " (" + formatTime(entrant.doneTime) + ")";
         });
 
         // List racers still going
         raceState.entrants.forEach((entrant) => {
             if (!raceState.doneEntrants.includes(entrant.message.author.id) && !raceState.ffEntrants.includes(entrant.message.author.id)) {
-                raceString += "\t:stopwatch: " + username(entrant.message) + "\n";
+                raceString += "\n\t:stopwatch: " + username(entrant.message);
             }
         });
 
         // List forfeited/DQ'd entrants
         raceState.ffEntrants.forEach((id) => {
             entrant = raceState.entrants.get(id);
-            raceString += "\t:x: " + username(entrant.message) + "\n";
+            raceString += "\n\t:x: " + username(entrant.message);
         });
 
         message.channel.send(raceString);
@@ -786,7 +778,7 @@ clearRaceCmd = (message) => {
     if (!raceId) {
         raceId = 0;
     }
-    raceId += 1;
+    raceId++;
     message.channel.send("Clearing race.");
 }
 
@@ -808,7 +800,7 @@ meCmd = (message) => {
     stats = client.getUserStatsForGame.all(message.author.id, game);
     if (stats.length > 0) {
         meString = "**" + game + "**\n";
-        var maxNumberLength = {races: 1, gold: 1, silver: 1, bronze: 1, ffs: 1, elo: 1, pb: 4};
+        var maxNumberLength = {races: 1, gold: 1, silver: 1, bronze: 1, ffs: 1, elo: 1};
         stats.forEach((line) => {
             maxNumberLength.races = Math.max(maxNumberLength.races, line.races.toString().length);
             maxNumberLength.gold = Math.max(maxNumberLength.gold, line.gold.toString().length);
@@ -819,13 +811,13 @@ meCmd = (message) => {
         });
         stats.forEach((line) => {
             meString += "  " + line.category
-                    + "\n    :checkered_flag: `" + addSpaces(line.races.toString(), maxNumberLength.races)
-                    + "`   :first_place: `" + addSpaces(line.gold.toString(), maxNumberLength.gold)
-                    + "`   :second_place: `" + addSpaces(line.silver.toString(), maxNumberLength.silver)
-                    + "`   :third_place: `" + addSpaces(line.bronze.toString(), maxNumberLength.bronze)
-                    + "`   :x: `" + addSpaces(line.ffs.toString(), maxNumberLength.ffs)
-                    + "`   " + emotes.ppjSmug + " `" + addSpaces(Math.floor(line.elo).toString(), maxNumberLength.elo)
-                    + "`   :stopwatch: `" + (line.pb > 0 ? formatTime(line.pb) : "--:--:--.--")
+                    + "\n    :checkered_flag:\u00A0`" + addSpaces(line.races.toString(), maxNumberLength.races)
+                    + "`   :first_place:\u00A0`" + addSpaces(line.gold.toString(), maxNumberLength.gold)
+                    + "`   :second_place:\u00A0`" + addSpaces(line.silver.toString(), maxNumberLength.silver)
+                    + "`   :third_place:\u00A0`" + addSpaces(line.bronze.toString(), maxNumberLength.bronze)
+                    + "`   :x:\u00A0`" + addSpaces(line.ffs.toString(), maxNumberLength.ffs)
+                    + "`   " + emotes.ppjSmug + "\u00A0`" + addSpaces(Math.floor(line.elo).toString(), maxNumberLength.elo)
+                    + "`   :stopwatch:\u00A0`" + (line.pb > 0 ? formatTime(line.pb) : "--:--:--.--")
                     + "`\n";
         });
         message.channel.send(meString);
@@ -843,7 +835,7 @@ resultsCmd = (message) => {
     rows = client.getResults.all(raceNum);
     if (rows.length > 0) {
         // Header
-        messageString = "Results for race #" + raceNum + " (" + rows[0].game + " / " + rows[0].category + "): \n";
+        messageString = "Results for race #" + raceNum + " (" + rows[0].game + " / " + rows[0].category + "):";
 
         // First list people who finished, but keep track of the forfeits
         ffd = [];
@@ -852,23 +844,14 @@ resultsCmd = (message) => {
             if (row.time < 0) {
                 ffd.push(row);
             } else {
-                if (placeCount === 0) {
-                    messageString += "\t:first_place: ";
-                } else if (placeCount === 1) {
-                    messageString += "\t:second_place: ";
-                } else if (placeCount === 2) {
-                    messageString += "\t:third_place: ";
-                } else {
-                    messageString += "\t:checkered_flag: ";
-                }
-                messageString += row.user_name + " (" + formatTime(row.time) + ")\n";
-                placeCount += 1;
+                messageString += "\n\t" + placeEmote(placeCount) + " " + row.user_name + " (" + formatTime(row.time) + ")\n";
+                placeCount++;
             }
         });
 
         // Now we can list forfeits
         ffd.forEach((row) => {
-            messageString += "\t:x: " + row.user_name + "\n";
+            messageString += "\n\t:x: " + row.user_name;
         });
         message.channel.send(messageString);
 
@@ -946,7 +929,7 @@ leaderboardCmd = (message) => {
 // Sets up a bunch of callbacks that send messages for the countdown
 doCountDown = (message) => {
     raceState.state = State.COUNTDOWN;
-    message.channel.send("Everyone is ready, gl;hf! " + emotes.ppjWink + " Starting race in 10 seconds...");
+    message.channel.send("Everyone is ready, gl;hf! " + emotes.ppjWink + " Starting race in 10\u00A0seconds...");
     countDownTimeout3 = setTimeout(() => { message.channel.send(emotes.ppjE + " 3..."); }, 7000);
     countDownTimeout2 = setTimeout(() => { message.channel.send(emotes.ppjE + " 2..."); }, 8000);
     countDownTimeout1 = setTimeout(() => { message.channel.send(emotes.ppjE + " 1..."); }, 9000);
@@ -1064,7 +1047,7 @@ recordResults = () => {
                 }
             } else if (p1Place < p2Place) {
                 // Ahead of opponent, count as win
-                actualScore += 1;
+                actualScore++;
             } else {
                 // Loss gives 0 points
             }
@@ -1154,13 +1137,27 @@ isILRace = () => {
     return categoryName === "Individual Levels";
 }
 
-//e.g. 1 --> "  1"
+// e.g. 1 --> "  1"
 addSpaces = (input, outputLength) => {
     var spacesString = "";
     for (let i = 0; i < outputLength - input.length; i++) {
         spacesString += " ";
     }
     return spacesString + input;
+}
+
+// Returns either ":..._place:" or ":checkered_flag:"
+placeEmote = (place) => {
+    switch (place) {
+        case 0:
+            return ":first_place:";
+        case 1:
+            return ":second_place:";
+        case 2:
+            return ":third_place:";
+        default:
+            return ":checkered_flag:";
+    }
 }
 
 // The following code is based on https://github.com/intesso/decode-html to avoid additional dependencies ---------
