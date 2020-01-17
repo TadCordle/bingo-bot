@@ -3,8 +3,7 @@ var exports = module.exports = {};
 // Given a string (game), returns the name of the closest matching LBP game.
 exports.normalizeGameName = (game) => {
     game = game.toLowerCase()
-            .replace(new RegExp(" ", 'g'), "")
-            .replace(new RegExp("'", 'g'), "")
+            .replace(/\W/g, "")
             .replace("littlebigplanet", "lbp");
     
     if (game === "lbp" || game === "lbp1" || game === "1") {
@@ -46,9 +45,7 @@ exports.normalizeGameName = (game) => {
 // Given a game name (normalizedGame) and a category string, returns the closest matching category name.
 exports.normalizeCategory = (normalizedGame, category) => {
     normalizedCategory = category.toLowerCase()
-            .replace(new RegExp(" ", 'g'), "")
-            .replace(new RegExp("-", 'g'), "")
-            .replace("%", "")
+            .replace(/\W/g, "")
             .replace("new game", "ng")
             .replace("plus", "+");
 
@@ -74,9 +71,9 @@ exports.normalizeCategory = (normalizedGame, category) => {
     if (normalizedGame === "LittleBigPlanet") {
         // LBP1-specific categories
         if (normalizedCategory === "anynooverlord" || normalizedCategory === "anyno" || normalizedCategory === "no") {
-            return "Any% No-Overlord";
+            return "Any% No Overlord";
         } else if (normalizedCategory === "100nooverlord" || normalizedCategory === "100no") {
-            return "100% No-Overlord";
+            return "100% No Overlord";
         } else if (normalizedCategory === "alllevels" || normalizedCategory === "al") {
             return "All Levels"
         } else if (normalizedCategory === "styrofoam") {
@@ -90,7 +87,7 @@ exports.normalizeCategory = (normalizedGame, category) => {
     } else if (normalizedGame === "LittleBigPlanet 2") {
         // LBP2-specific categories
         if (normalizedCategory === "anynooverlord" || normalizedCategory === "anyno" || normalizedCategory === "no" || normalizedCategory === "ng+" || normalizedCategory === "solong+") {
-            return "Any% No-Overlord";
+            return "Any% No Overlord";
         } else {
             return null;
         }
@@ -98,7 +95,7 @@ exports.normalizeCategory = (normalizedGame, category) => {
     } else if (normalizedGame === "LittleBigPlanet 3") {
         // LBP3-specific categories
         if (normalizedCategory === "anynooverlord" || normalizedCategory === "anyno" || normalizedCategory === "no" || normalizedCategory === "anynocreate" || normalizedCategory === "anync" || normalizedCategory === "nc") {
-            return "Any% No-Create";
+            return "Any% No Create";
         } else if (normalizedCategory === "profilecorruption" || normalizedCategory === "corruption") {
             return "Profile Corruption%"
         } else {
@@ -113,18 +110,8 @@ exports.normalizeCategory = (normalizedGame, category) => {
 // this function is so dumb
 exports.normalizeLevel = (normalizedGame, level) => {
     level = level.toLowerCase()
-            .replace(new RegExp("'", 'g'), "")
-            .replace(new RegExp("-", 'g'), "")
-            .replace(new RegExp(":", 'g'), "")
-            .replace(new RegExp("\\?", 'g'), "")
-            .replace(new RegExp("&", 'g'), "and")
-            .replace(new RegExp("!", 'g'), "")
-            .replace(new RegExp(",", 'g'), "")
-            .replace(new RegExp("\\.", 'g'), "")
-            .replace(new RegExp("\\(", 'g'), "")
-            .replace(new RegExp("\\)", 'g'), "")
-            .replace(new RegExp(" ", 'g'), "")
-            .replace(new RegExp("the", 'g'), "");
+            .replace(/\W|the/g, "")
+            .replace(/&/g, "and");
     
     if (normalizedGame === "LittleBigPlanet") {
         // LBP1 levels

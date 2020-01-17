@@ -8,8 +8,8 @@ const https = require('https');
 const client = new Discord.Client();
 const sql = new SQLite('./race.sqlite');
 var gameName = "LittleBigPlanet";
-var categoryName = "Any% No-Overlord";
-var prevCategoryName = "Any% No-Overlord"; // Used to save full game category when people do IL races
+var categoryName = "Any% No Overlord";
+var prevCategoryName = "Any% No Overlord"; // Used to save full game category when people do IL races
 var levelName = "Introduction";
 var raceId = 0;
 
@@ -231,7 +231,7 @@ helpCmd = (message) => {
 **Pre-race commands**
 \`!race\` - Starts a new full-game race, or joins the current open race if someone already started one.
 \`!game <game name>\` - Sets the game (e.g. \`!game LBP2\`). Default is "LittleBigPlanet".
-\`!category <category name>\` - Sets the category. Default is "Any% No-Overlord".
+\`!category <category name>\` - Sets the category. Default is "Any% No Overlord".
 \`!exit\` - Leave the race.
 \`!ready\` - Indicate that you're ready to start.
 \`!unready\` - Indicate that you're not actually ready.
@@ -333,10 +333,26 @@ gameCmd = (message) => {
 
         if (gameName !== game) {
             gameName = game;
+            lastLetter = gameName.charAt(gameName.length - 1);
             if (isILRace()) {
-                levelName = (gameName === "LittleBigPlanet Karting" ? "Karting Lessons" : "Introduction");
+                levelName = (lastLetter === "g" ? "Karting Lessons" : "Introduction");
+                name = levelName;
+            } else if (!(/([\dy]%|\+|al Levels)$/).test(categoryName)) { // That RegExp detects the categories that are common between all games
+                categoryName = "Any%";
+                switch (lastLetter) {
+                    case "t": case "2":
+                        categoryName += " No Overlord";
+                        break;
+                    case "3":
+                        categoryName += " No Create";
+                    default:
+                        break;
+                }
+                name = categoryName;
             }
             message.channel.send("Game / " + word + " updated to " + gameName + " / " + name + ".");
+        } else {
+            message.channel.send("Game / " + word + " was already set to " + gameName + " / " + name + ".");
         }
     }
 }
@@ -426,24 +442,24 @@ luckyDipCmd = (message) => {
         return;
     }
 
-    levelRegex = new RegExp("-", '');
+    levelRegex = /-/;
     luckyDipUrl = "";
     lastLetter = gameName.charAt(gameName.length - 1);
     switch(lastLetter) {
         case "t":
-            levelRegex = new RegExp("([^/]+)\" class=\"level-pic md no-frills lbp1", 'g');
+            levelRegex = /([^\/]+)" class="level-pic md no-frills lbp1/g;
             luckyDipUrl = "https://lbp.me/levels?p=1&t=luckydip&g=lbp1";
             break;
         case "2":
-            levelRegex = new RegExp("([^/]+)\" class=\"level-pic md no-frills lbp2", 'g');
+            levelRegex = /([^\/]+)" class="level-pic md no-frills lbp2/g;
             luckyDipUrl = "https://lbp.me/levels?p=1&t=luckydip&g=lbp2";
             break;
         case "3":
-            levelRegex = new RegExp("([^/]+)\" class=\"level-pic md no-frills lbp3", 'g');
+            levelRegex = /([^\/]+)" class="level-pic md no-frills lbp1/g;
             luckyDipUrl = "https://lbp.me/levels?p=1&t=luckydip&g=lbp3";
             break;
         case "a":
-            levelRegex = new RegExp("/v/([^\"])+", 'g');
+            levelRegex = /\/v\/([^"]+)/g;
             luckyDipUrl = "https://vita.lbp.me/search?t=luckydip";
             break;
         default:
@@ -463,11 +479,12 @@ luckyDipCmd = (message) => {
             dataQueue += dataBuffer;
         });
         result.on("end", function () {
-            match = dataQueue.match(levelRegex)[Math.floor(Math.random() * 12)];
+            matches = [];
+            dataQueue.replace(levelRegex, (wholeMatch, parenthesesContent) => {
+                matches.push(parenthesesContent);
+            });
             level = ((lastLetter === "a") ? "https://vita.lbp.me/v/" : "https://lbp.me/v/")
-                    .concat(match
-                        .replace(new RegExp("\".*", ''), "")
-                        .replace(new RegExp("/v/", ''), "")); //for LBP vita
+                    + matches[Math.floor(Math.random() * 12)];
             chooseLbpMeLevel(level, message);
         });
     });
@@ -489,7 +506,7 @@ chooseLbpMeLevel = (level, message) => {
     https.get(level, function (result) {
         var { statusCode } = result;
         if (statusCode !== 200) {
-            message.channel.send("Failed to follow lbp.me link (" + level + "); got a " + statusCode + " response.");
+            message.channel.send("Error: Couldn't follow " + level + "; got a " + statusCode + " response.");
             return;
         }
 
@@ -499,10 +516,10 @@ chooseLbpMeLevel = (level, message) => {
         });
         result.on("end", function () {
             start = dataQueue.search("<title>") + 7;
-            end = dataQueue.search(" - LBP.me</title>");
+            end = dataQueue.search(/ - LBP\.me( PS Vita)?<\/title>/);
             titleAuthor = decodeHTML(dataQueue.substring(start, end).trim());
             split = titleAuthor.split(" ");
-            title = titleAuthor.substring(0, titleAuthor.search(split[split.length - 1])).trim();
+            title = titleAuthor.substring(0, titleAuthor.search(split[split.length - (isVita ? 2 : 1)])).trim();
             levelName = title + (isVita ? " - https://vita.lbp.me/v/" : " - https://lbp.me/v/") + level.split("/")[4];
             message.channel.send("Level updated to " + levelName + ".");
         });
@@ -771,8 +788,8 @@ clearRaceCmd = (message) => {
     clearTimeout(raceDoneWarningTimeout);
     raceState = new RaceState();
     gameName = "LittleBigPlanet";
-    categoryName = "Any% No-Overlord";
-    prevCategoryName = "Any% No-Overlord";
+    categoryName = "Any% No Overlord";
+    prevCategoryName = "Any% No Overlord";
     levelName = "Introduction";
     raceId = client.getLastRaceID.get().id;
     if (!raceId) {
@@ -1166,6 +1183,7 @@ placeEmote = (place) => {
 }
 
 // The following code is based on https://github.com/intesso/decode-html to avoid additional dependencies ---------
+// (license: https://github.com/intesso/decode-html/blob/master/LICENSE)
 // Store markers outside of the function scope, not to recreate them on every call
 const entities = {
     'amp': '&',
@@ -1175,7 +1193,7 @@ const entities = {
     'quot': '"',
     'nbsp': ' '
 };
-const entityPattern = RegExp("&([a-z]+);", "ig");
+const entityPattern = /&([a-z]+);/ig;
 
 decodeHTML = (text) => {
     // A single replace pass with a static RegExp is faster than a loop
