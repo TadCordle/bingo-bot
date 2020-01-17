@@ -479,7 +479,7 @@ chooseLbpMeLevel = (level, message) => {
     isVita = level.includes("vita.lbp.me");
     if (level.startsWith("http:")) {
         level = level.replace("http:", "https:");
-    } else if (!level.startsWith("https:") {
+    } else if (!level.startsWith("https:")) {
         level = "https://" + level;
     }
     if (level.split("/").length < 6) {
@@ -816,7 +816,7 @@ meCmd = (message) => {
             maxNumberLength.bronze = Math.max(maxNumberLength.bronze, line.bronze.toString().length);
             maxNumberLength.ffs = Math.max(maxNumberLength.ffs, line.ffs.toString().length);
             maxNumberLength.elo = Math.max(maxNumberLength.elo, Math.floor(line.elo).toString().length);
-            maxNumberLength.pb = Math.max(maxNumberLength.pb, formatTimeLength(line.pb));
+            maxNumberLength.pb = Math.max(maxNumberLength.pb, formatTime(line.pb).length);
         });
         stats.forEach((line) => {
             meString += "  " + line.category
@@ -1113,10 +1113,7 @@ mention = (user) => {
 }
 
 // Formats a time in seconds in H:mm:ss.xx
-formatTime = (time, shorten) => {
-    if (typeof shorten === "undefined") {
-        shorten = true;
-    }
+formatTime = (time, shorten=true) => {
     var hrs = Math.floor(time / 3600);
     var min = Math.floor((time - (hrs * 3600)) / 60);
     var sec = Math.round((time - (hrs * 3600) - (min * 60)) * 100) / 100;
@@ -1129,26 +1126,8 @@ formatTime = (time, shorten) => {
     } else if ((sec * 10) % 1 == 0) {
         result += "0";
     }
-    if (shorten) {
-        return result.replace(new RegExp("^[0:]{0,6}", ''), "");
-    }
-    return result;
-}
 
-// Equal to formatTime(...).length but less effort than running that function
-formatTimeLength = (time) => {
-    if (time >= 36000) {
-        return "11";
-    } else if (time >= 3600) {
-        return "10";
-    } else if (time >= 600) {
-        return "8";
-    } else if (time >= 60) {
-        return "7";
-    } else if (time >= 10) {
-        return "5";
-    }
-    return "4";
+    return shorten ? result.replace(new RegExp("^[0:]{0,6}", ''), "") : result;
 }
 
 // Converts a number to its place, e.g. 1 -> 1st, 2 -> 2nd, etc.
@@ -1178,15 +1157,11 @@ isILRace = () => {
 
 //e.g. 1 --> "  1"
 addSpaces = (input, outputLength) => {
-    const spaceCount = outputLength - input.length;
-    if (spaceCount > 0) {
-        var spacesString = " ";
-        for (let i = 1; i < spaceCount; i++) {
-            spacesString += " ";
-        }
-        return spacesString + input;
+    var spacesString = "";
+    for (let i = 0; i < outputLength - input.length; i++) {
+        spacesString += " ";
     }
-    return input;
+    return spacesString + input;
 }
 
 // The following code is based on https://github.com/intesso/decode-html to avoid additional dependencies ---------
