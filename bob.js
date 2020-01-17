@@ -154,7 +154,7 @@ client.on("message", (message) => {
     if (message.guild) {
         if (lowerMessage.startsWith("!race") || lowerMessage.startsWith("!join"))
             raceCmd(message);
-        
+
         else if (lowerMessage.startsWith("!ilrace"))
             ilRaceCmd(message);
 
@@ -177,10 +177,10 @@ client.on("message", (message) => {
                 lowerMessage.startsWith("!yeet") ||
                 lowerMessage.startsWith("!f"))
             forfeitCmd(message);
-        
+
         else if (lowerMessage.startsWith("!ready"))
             readyCmd(message);
-        
+
         else if (lowerMessage.startsWith("!unready"))
             unreadyCmd(message);
 
@@ -192,7 +192,7 @@ client.on("message", (message) => {
 
         else if (lowerMessage.startsWith("!uf") || lowerMessage.startsWith("!unforfeit"))
             unforfeitCmd(message);
-        
+
         // Admin/Mod only commands
         else if (message.member.roles.find("name", "Admin") || message.member.roles.find("name", "Moderator")) {
             if (lowerMessage.startsWith("!kick"))
@@ -202,7 +202,7 @@ client.on("message", (message) => {
                 clearRaceCmd(message);
         }
     }
-    
+
     // Commands available anywhere
     if (lowerMessage.startsWith("!help") || lowerMessage.startsWith("!commands"))
         helpCmd(message);
@@ -393,7 +393,7 @@ levelCmd = (message) => {
     if (!isILRace() || raceState.state !== State.JOINING) {
         return;
     }
-    
+
     // Show current level
     level = message.content.replace("!level", "").trim();
     if (level === null || level === "") {
@@ -479,6 +479,8 @@ chooseLbpMeLevel = (level, message) => {
     isVita = level.includes("vita.lbp.me");
     if (level.startsWith("http:")) {
         level = level.replace("http:", "https:");
+    } else if (!level.startsWith("https:") {
+        level = "https://" + level;
     }
     if (level.split("/").length < 6) {
         level += "/topreviews";
@@ -501,7 +503,7 @@ chooseLbpMeLevel = (level, message) => {
             titleAuthor = decodeHTML(dataQueue.substring(start, end).trim());
             split = titleAuthor.split(" ");
             title = titleAuthor.substring(0, titleAuthor.search(split[split.length - 1])).trim();
-            levelName = title + (isVita ? " - https://vita.lbp.me/v/" : " - https://lbp.me/v/") + level.split("/")[4]; 
+            levelName = title + (isVita ? " - https://vita.lbp.me/v/" : " - https://lbp.me/v/") + level.split("/")[4];
             message.channel.send("Level updated to " + levelName + ".");
         });
     });
@@ -625,8 +627,7 @@ doneCmd = (message) => {
             raceState.entrants.get(message.author.id).doneTime = time;
             raceState.doneEntrants.push(message.author.id);
             points = raceState.entrants.size - raceState.doneEntrants.length + 1;
-            message.channel.send(
-                    mention(message.author)
+            message.channel.send(mention(message.author)
                         + " has finished in "
                         + formatPlace(raceState.doneEntrants.length)
                         + " place "
@@ -660,9 +661,9 @@ undoneCmd = (message) => {
 statusCmd = (message) => {
     if (raceState.state === State.NO_RACE) {
         message.channel.send("No race currently happening.");
-        
+
     } else if (raceState.state === State.JOINING) {
-        raceString = "**" + gameName + " / " + categoryName + " race is currently open with " + raceState.entrants.size + " entrant" 
+        raceString = "**" + gameName + " / " + categoryName + " race is currently open with " + raceState.entrants.size + " entrant"
                 + (raceState.entrants.size === 1 ? "" : "s") + ". Type `!race` to join!**\n";
         if (isILRace()) {
             raceString += "*Starting " + formatPlace(raceState.ilResults.length + 1) + " IL (" + levelName + " - id: " + raceId + ")*\n";
@@ -692,7 +693,7 @@ statusCmd = (message) => {
     } else if (raceState.state === State.ACTIVE || raceState.state === State.DONE) {
         // Say race is done if it is, otherwise say it's in progress and show the time
         raceString = "**" + gameName + " / " + categoryName + " race is "
-                + (raceState.state === State.ACTIVE 
+                + (raceState.state === State.ACTIVE
                         ? "in progress. Current time: " + formatTime(Date.now() / 1000 - raceState.startTime)
                         : "done!" + (raceState.ffEntrants.length === raceState.entrants.size ? "" : " Results will be recorded soon."))
                 + "**\n";
@@ -712,7 +713,7 @@ statusCmd = (message) => {
             points = raceState.entrants.size - i;
             raceString += "**" + username(entrant.message) + "** "
                     + (isILRace() ? "(+" + points + " point" + (points === 1 ? "s" : "") + ")" : "")
-                    + " (" + formatTime(entrant.doneTime) + ")\n";
+                    + " (" + formatTime(entrant.doneTime, false) + ")\n";
         });
 
         // List racers still going
@@ -807,16 +808,26 @@ meCmd = (message) => {
     stats = client.getUserStatsForGame.all(message.author.id, game);
     if (stats.length > 0) {
         meString = "**" + game + "**\n";
+        var maxNumberLength = {races: 1, gold: 1, silver: 1, bronze: 1, ffs: 1, elo: 1, pb: 4};
         stats.forEach((line) => {
-            meString += "  " + line.category + "\n "
-                    + "   :checkered_flag: " + line.races
-                    + "   :first_place: " + line.gold
-                    + "   :second_place: " + line.silver
-                    + "   :third_place: " + line.bronze
-                    + "   :x: " + line.ffs
-                    + "   " + emotes.ppjSmug + " " + Math.floor(line.elo)
-                    + "   :stopwatch: " + (line.pb > 0 ? formatTime(line.pb) : "--:--:--")
-                    + "\n";
+            maxNumberLength.races = Math.max(maxNumberLength.races, line.races.toString().length);
+            maxNumberLength.gold = Math.max(maxNumberLength.gold, line.gold.toString().length);
+            maxNumberLength.silver = Math.max(maxNumberLength.silver, line.silver.toString().length);
+            maxNumberLength.bronze = Math.max(maxNumberLength.bronze, line.bronze.toString().length);
+            maxNumberLength.ffs = Math.max(maxNumberLength.ffs, line.ffs.toString().length);
+            maxNumberLength.elo = Math.max(maxNumberLength.elo, Math.floor(line.elo).toString().length);
+            maxNumberLength.pb = Math.max(maxNumberLength.pb, formatTimeLength(line.pb));
+        });
+        stats.forEach((line) => {
+            meString += "  " + line.category
+                    + "\n    :checkered_flag: `" + addSpaces(line.races.toString(), maxNumberLength.races)
+                    + "`   :first_place: `" + addSpaces(line.gold.toString(), maxNumberLength.gold)
+                    + "`   :second_place: `" + addSpaces(line.silver.toString(), maxNumberLength.silver)
+                    + "`   :third_place: `" + addSpaces(line.bronze.toString(), maxNumberLength.bronze)
+                    + "`   :x: `" + addSpaces(line.ffs.toString(), maxNumberLength.ffs)
+                    + "`   " + emotes.ppjSmug + " `" + addSpaces(Math.floor(line.elo).toString(), maxNumberLength.elo)
+                    + "`   :stopwatch: `" + addSpaces((line.pb > 0 ? formatTime(line.pb) : "--:--:--.--".substring(11 - maxNumberLength.pb, 11)), maxNumberLength.pb)
+                    + "`\n";
         });
         message.channel.send(meString);
     } else {
@@ -834,7 +845,7 @@ resultsCmd = (message) => {
     if (rows.length > 0) {
         // Header
         messageString = "Results for race #" + raceNum + " (" + rows[0].game + " / " + rows[0].category + "): \n";
-        
+
         // First list people who finished, but keep track of the forfeits
         ffd = [];
         placeCount = 0;
@@ -851,7 +862,7 @@ resultsCmd = (message) => {
                 } else {
                     messageString += "\t:checkered_flag: ";
                 }
-                messageString += row.user_name + " (" + formatTime(row.time) + ")\n";
+                messageString += row.user_name + " (" + formatTime(row.time, false) + ")\n";
                 placeCount += 1;
             }
         });
@@ -1041,10 +1052,10 @@ recordResults = () => {
             if (id1 === id2) {
                 return;
             }
-                
+
             expectedDiff = 1.0 / (1 + Math.pow(10, (playerStats.get(id2).elo - playerStats.get(id1).elo) / 400));
             expectedScore += expectedDiff;
-            
+
             if (raceState.ffEntrants.includes(id1)) {
                 if (raceState.ffEntrants.includes(id2)) {
                     // If both players forfeited, those two players won't affect each other's scores
@@ -1098,41 +1109,64 @@ username = (message) => {
 
 // Gets a formatted string for @ing a user
 mention = (user) => {
-    return "<@" + user.id + ">"; 
+    return "<@" + user.id + ">";
 }
 
-// Formats a time in seconds in H:mm:ss
-formatTime = (time) => {
+// Formats a time in seconds in H:mm:ss.xx
+formatTime = (time, shorten) => {
+    if (typeof shorten === "undefined") {
+        shorten = true;
+    }
     var hrs = Math.floor(time / 3600);
     var min = Math.floor((time - (hrs * 3600)) / 60);
-    var sec = time - (hrs * 3600) - (min * 60);
-    sec = Math.round(sec * 100) / 100;
+    var sec = Math.round((time - (hrs * 3600) - (min * 60)) * 100) / 100;
 
-    var result = (hrs < 10 ? "0" + hrs : hrs);
+    var result = hrs.toString();
     result += ":" + (min < 10 ? "0" + min : min);
     result += ":" + (sec < 10 ? "0" + sec : sec);
+    if (sec % 1 == 0) {
+        result += ".00";
+    } else if ((sec * 10) % 1 == 0) {
+        result += "0";
+    }
+    if (shorten) {
+        return result.replace(new RegExp("^[0:]{0,6}", ''), "");
+    }
     return result;
+}
+
+// Equal to formatTime(...).length but less effort than running that function
+formatTimeLength = (time) => {
+    if (time >= 36000) {
+        return "11";
+    } else if (time >= 3600) {
+        return "10";
+    } else if (time >= 600) {
+        return "8";
+    } else if (time >= 60) {
+        return "7";
+    } else if (time >= 10) {
+        return "5";
+    }
+    return "4";
 }
 
 // Converts a number to its place, e.g. 1 -> 1st, 2 -> 2nd, etc.
 formatPlace = (place) => {
     placeDigit = place % 10;
-    if (4 <= place && place <= 20) {
+    if (placeDigit > 3 || (3 < place % 100 && place % 100 < 21)) {
         return place + "th";
     } else if (placeDigit === 1) {
         return place + "st";
     } else if (placeDigit === 2) {
         return place + "nd";
-    } else if (placeDigit === 3) {
-        return place + "rd";
-    } else {
-        return place + "th";
     }
+    return place + "rd";
 }
 
 // Helper for removing an object (value) from an array (arr)
 arrayRemove = (arr, value) => {
-    return arr.filter(function(element){
+    return arr.filter((element) => {
         return element != value;
     });
 }
@@ -1140,6 +1174,19 @@ arrayRemove = (arr, value) => {
 // Returns true if there is an IL race series in progress
 isILRace = () => {
     return categoryName === "Individual Levels";
+}
+
+//e.g. 1 --> "  1"
+addSpaces = (input, outputLength) => {
+    const spaceCount = outputLength - input.length;
+    if (spaceCount > 0) {
+        var spacesString = " ";
+        for (let i = 1; i < spaceCount; i++) {
+            spacesString += " ";
+        }
+        return spacesString + input;
+    }
+    return input;
 }
 
 // The following code is based on https://github.com/intesso/decode-html to avoid additional dependencies ---------
@@ -1156,7 +1203,7 @@ const entityPattern = RegExp("&([a-z]+);", "ig");
 
 decodeHTML = (text) => {
     // A single replace pass with a static RegExp is faster than a loop
-    return text.replace(entityPattern, function(match, entity) {
+    return text.replace(entityPattern, (match, entity) => {
         entity = entity.toLowerCase();
         if (entities.hasOwnProperty(entity)) {
             return entities[entity];
