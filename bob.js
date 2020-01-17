@@ -799,7 +799,7 @@ meCmd = (message) => {
     // Show stats
     stats = client.getUserStatsForGame.all(message.author.id, game);
     if (stats.length > 0) {
-        meString = "**" + game + "**\n";
+        meString = "**" + game + "**";
         var maxNumberLength = {races: 1, gold: 1, silver: 1, bronze: 1, ffs: 1, elo: 1};
         stats.forEach((line) => {
             maxNumberLength.races = Math.max(maxNumberLength.races, line.races.toString().length);
@@ -810,15 +810,15 @@ meCmd = (message) => {
             maxNumberLength.elo = Math.max(maxNumberLength.elo, Math.floor(line.elo).toString().length);
         });
         stats.forEach((line) => {
-            meString += "  " + line.category
+            meString += "\n  " + line.category
                     + "\n    :checkered_flag:\u00A0`" + addSpaces(line.races.toString(), maxNumberLength.races)
                     + "`   :first_place:\u00A0`" + addSpaces(line.gold.toString(), maxNumberLength.gold)
                     + "`   :second_place:\u00A0`" + addSpaces(line.silver.toString(), maxNumberLength.silver)
                     + "`   :third_place:\u00A0`" + addSpaces(line.bronze.toString(), maxNumberLength.bronze)
                     + "`   :x:\u00A0`" + addSpaces(line.ffs.toString(), maxNumberLength.ffs)
                     + "`   " + emotes.ppjSmug + "\u00A0`" + addSpaces(Math.floor(line.elo).toString(), maxNumberLength.elo)
-                    + "`   :stopwatch:\u00A0`" + (line.pb > 0 ? formatTime(line.pb) : "--:--:--.--")
-                    + "`\n";
+                    + "`   :stopwatch:\u00A0`" + formatTime(line.pb)
+                    + "`";
         });
         message.channel.send(meString);
     } else {
@@ -1053,7 +1053,7 @@ recordResults = () => {
             }
         });
 
-        newElos.set(id1, playerStats.get(id1).elo + 32 * (actualScore - expectedScore));
+        newElos.set(id1, playerStats.get(id1).elo + ((actualScore - expectedScore) << 5));
     });
 
     // Update/save stats with new ELOs
@@ -1096,6 +1096,10 @@ mention = (user) => {
 
 // Formats a time in seconds in H:mm:ss.xx
 formatTime = (time) => {
+    if (time === -1) {
+        return "--:--:--.--";
+    }
+
     var hrs = Math.floor(time / 3600);
     var min = Math.floor((time - (hrs * 3600)) / 60);
     var sec = Math.round((time - (hrs * 3600) - (min * 60)) * 100) / 100;
@@ -1103,9 +1107,10 @@ formatTime = (time) => {
     var result = (hrs < 10 ? "0" : "") + hrs;
     result += ":" + (min < 10 ? "0" + min : min);
     result += ":" + (sec < 10 ? "0" + sec : sec);
-    if (sec % 1 == 0) {
-        result += ".00";
-    } else if ((sec * 10) % 1 == 0) {
+    if (sec % 1 === 0) {
+        result += ".0";
+    }
+    if ((sec * 10) % 1 === 0) {
         result += "0";
     }
 
