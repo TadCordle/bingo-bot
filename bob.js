@@ -713,7 +713,7 @@ statusCmd = (message) => {
             points = raceState.entrants.size - i;
             raceString += "**" + username(entrant.message) + "** "
                     + (isILRace() ? "(+" + points + " point" + (points === 1 ? "s" : "") + ")" : "")
-                    + " (" + formatTime(entrant.doneTime, false) + ")\n";
+                    + " (" + formatTime(entrant.doneTime) + ")\n";
         });
 
         // List racers still going
@@ -816,7 +816,6 @@ meCmd = (message) => {
             maxNumberLength.bronze = Math.max(maxNumberLength.bronze, line.bronze.toString().length);
             maxNumberLength.ffs = Math.max(maxNumberLength.ffs, line.ffs.toString().length);
             maxNumberLength.elo = Math.max(maxNumberLength.elo, Math.floor(line.elo).toString().length);
-            maxNumberLength.pb = Math.max(maxNumberLength.pb, formatTime(line.pb).length);
         });
         stats.forEach((line) => {
             meString += "  " + line.category
@@ -826,7 +825,7 @@ meCmd = (message) => {
                     + "`   :third_place: `" + addSpaces(line.bronze.toString(), maxNumberLength.bronze)
                     + "`   :x: `" + addSpaces(line.ffs.toString(), maxNumberLength.ffs)
                     + "`   " + emotes.ppjSmug + " `" + addSpaces(Math.floor(line.elo).toString(), maxNumberLength.elo)
-                    + "`   :stopwatch: `" + addSpaces((line.pb > 0 ? formatTime(line.pb) : "--:--:--.--".substring(11 - maxNumberLength.pb, 11)), maxNumberLength.pb)
+                    + "`   :stopwatch: `" + (line.pb > 0 ? formatTime(line.pb) : "--:--:--.--")
                     + "`\n";
         });
         message.channel.send(meString);
@@ -862,7 +861,7 @@ resultsCmd = (message) => {
                 } else {
                     messageString += "\t:checkered_flag: ";
                 }
-                messageString += row.user_name + " (" + formatTime(row.time, false) + ")\n";
+                messageString += row.user_name + " (" + formatTime(row.time) + ")\n";
                 placeCount += 1;
             }
         });
@@ -1113,12 +1112,12 @@ mention = (user) => {
 }
 
 // Formats a time in seconds in H:mm:ss.xx
-formatTime = (time, shorten=true) => {
+formatTime = (time) => {
     var hrs = Math.floor(time / 3600);
     var min = Math.floor((time - (hrs * 3600)) / 60);
     var sec = Math.round((time - (hrs * 3600) - (min * 60)) * 100) / 100;
 
-    var result = hrs.toString();
+    var result = (hrs < 10 ? "0" : "") + hrs;
     result += ":" + (min < 10 ? "0" + min : min);
     result += ":" + (sec < 10 ? "0" + sec : sec);
     if (sec % 1 == 0) {
@@ -1127,7 +1126,7 @@ formatTime = (time, shorten=true) => {
         result += "0";
     }
 
-    return shorten ? result.replace(new RegExp("^[0:]{0,6}", ''), "") : result;
+    return result;
 }
 
 // Converts a number to its place, e.g. 1 -> 1st, 2 -> 2nd, etc.
