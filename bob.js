@@ -825,7 +825,7 @@ meCmd = (message) => {
                     + "`   :third_place: `" + addSpaces(line.bronze.toString(), maxNumberLength.bronze)
                     + "`   :x: `" + addSpaces(line.ffs.toString(), maxNumberLength.ffs)
                     + "`   " + emotes.ppjSmug + " `" + addSpaces(Math.floor(line.elo).toString(), maxNumberLength.elo)
-                    + "`   :stopwatch: `" + formatTime(line.pb))
+                    + "`   :stopwatch: `" + formatTime(line.pb)
                     + "`\n";
         });
         message.channel.send(meString);
