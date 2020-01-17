@@ -464,7 +464,7 @@ luckyDipCmd = (message) => {
         });
         result.on("end", function () {
             match = dataQueue.match(levelRegex)[Math.floor(Math.random() * 12)];
-            level = ((lastLetter == "a") ? "https://vita.lbp.me/v/" : "https://lbp.me/v/")
+            level = ((lastLetter === "a") ? "https://vita.lbp.me/v/" : "https://lbp.me/v/")
                     .concat(match
                         .replace(new RegExp("\".*", ''), "")
                         .replace(new RegExp("/v/", ''), "")); //for LBP vita
