@@ -648,7 +648,7 @@ doneCmd = (message) => {
                         + " has finished in "
                         + formatPlace(raceState.doneEntrants.length)
                         + " place "
-                        + (isILRace() ? "(+" + points + "\u00A0point" + (points > 1 ? "s" : "") + ") " : "")
+                        + (isILRace() ? "(+" + points + " point" + (points > 1 ? "s" : "") + ") " : "")
                         + "with a time of " + formatTime(time)) + "! (Use `!undone` if this was a mistake.)";
             if (raceState.ffEntrants.length + raceState.doneEntrants.length === raceState.entrants.size) {
                 doEndRace(message);
@@ -816,12 +816,9 @@ meCmd = (message) => {
     // Show stats
     stats = client.getUserStatsForGame.all(message.author.id, game);
     if (stats.length > 0) {
-        meString = "**" + game;
-        ILString = "";
-        if (stats.length > 1 || stats[0].category !== "Individual Levels") {
-            meString += "\nCategories:";
-        }
-        meString += "**";
+        title = "**" + game + "**";
+        meString = "";
+        ilString = "";
         var maxNumberLength = {races: 1, gold: 1, silver: 1, bronze: 1, ffs: 1, elo: 1};
         stats.forEach((line) => {
             maxNumberLength.races = Math.max(maxNumberLength.races, line.races.toString().length);
@@ -841,12 +838,12 @@ meCmd = (message) => {
                     + "`   :stopwatch:\u00A0`" + formatTime(line.pb)
                     + "`";
             if (line.category === "Individual Levels") {
-                ILString = "\n**Individual Levels:**" + lineString;
+                ilString = "\n  " + line.category + lineString;
             } else {
                 meString += "\n  " + line.category + lineString;
             }
         });
-        message.channel.send(meString + ILString);
+        message.channel.send(title + ilString + meString);
     } else {
         message.channel.send("No stats found; you haven't done any races in " + game + " yet.");
     }
@@ -955,7 +952,7 @@ leaderboardCmd = (message) => {
 // Sets up a bunch of callbacks that send messages for the countdown
 doCountDown = (message) => {
     raceState.state = State.COUNTDOWN;
-    message.channel.send("Everyone is ready, gl;hf! " + emotes.ppjWink + " Starting race in 10\u00A0seconds...");
+    message.channel.send("Everyone is ready, gl;hf! " + emotes.ppjWink + " Starting race in 10 seconds...");
     countDownTimeout3 = setTimeout(() => { message.channel.send(emotes.ppjE + " 3..."); }, 7000);
     countDownTimeout2 = setTimeout(() => { message.channel.send(emotes.ppjE + " 2..."); }, 8000);
     countDownTimeout1 = setTimeout(() => { message.channel.send(emotes.ppjE + " 1..."); }, 9000);
