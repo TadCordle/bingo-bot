@@ -113,7 +113,7 @@ for (categoryIndex = 0; categoryIndex < categoriesFix.length; categoryIndex++) {
                     }
                 } else if (p1Place < p2Place) {
                     // Ahead of opponent, count as win
-                    actualScore += 1;
+                    actualScore++;
                 } else {
                     // Loss gives 0 points
                 }

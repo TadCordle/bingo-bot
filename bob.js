@@ -8,8 +8,8 @@ const https = require('https');
 const client = new Discord.Client();
 const sql = new SQLite('./race.sqlite');
 var gameName = "LittleBigPlanet";
-var categoryName = "Any% No-Overlord";
-var prevCategoryName = "Any% No-Overlord"; // Used to save full game category when people do IL races
+var categoryName = "Any% No Overlord";
+var prevCategoryName = "Any% No Overlord"; // Used to save full game category when people do IL races
 var levelName = "Introduction";
 var raceId = 0;
 
@@ -134,7 +134,7 @@ client.on("ready", () => {
     if (!raceId) {
         raceId = 0;
     }
-    raceId += 1;
+    raceId++;
 
     console.log("Ready! Next race ID is " + raceId + ".");
 });
@@ -231,7 +231,7 @@ helpCmd = (message) => {
 **Pre-race commands**
 \`!race\` - Starts a new full-game race, or joins the current open race if someone already started one.
 \`!game <game name>\` - Sets the game (e.g. \`!game LBP2\`). Default is "LittleBigPlanet".
-\`!category <category name>\` - Sets the category. Default is "Any% No-Overlord".
+\`!category <category name>\` - Sets the category. Default is "Any% No Overlord".
 \`!exit\` - Leave the race.
 \`!ready\` - Indicate that you're ready to start.
 \`!unready\` - Indicate that you're not actually ready.
@@ -333,10 +333,26 @@ gameCmd = (message) => {
 
         if (gameName !== game) {
             gameName = game;
+            lastLetter = gameName.charAt(gameName.length - 1);
             if (isILRace()) {
-                levelName = (gameName === "LittleBigPlanet Karting" ? "Karting Lessons" : "Introduction");
+                levelName = (lastLetter === "g" ? "Karting Lessons" : "Introduction");
+                name = levelName;
+            } else {
+                categoryName = "Any%";
+                switch (lastLetter) {
+                    case "t": case "2":
+                        categoryName += " No Overlord";
+                        break;
+                    case "3":
+                        categoryName += " No Create";
+                    default:
+                        break;
+                }
+                name = categoryName;
             }
             message.channel.send("Game / " + word + " updated to " + gameName + " / " + name + ".");
+        } else {
+            message.channel.send("Game / " + word + " was already set to " + gameName + " / " + name + ".");
         }
     }
 }
@@ -411,7 +427,7 @@ levelCmd = (message) => {
     if (normalized === null) {
         // Choose other non-story level
         levelName = level;
-        message.channel.send("Level updated to " + levelName + ". (This doesn't seem to be a story level in " + gameName + "; try again if this isn't a community level/dlc level.)");
+        message.channel.send("Level updated to " + levelName + ". (This doesn't seem to be a story level in " + gameName + "; try again if this isn't a community level/DLC level.)");
         return;
     }
 
@@ -426,24 +442,24 @@ luckyDipCmd = (message) => {
         return;
     }
 
-    levelRegex = new RegExp("-", '');
+    levelRegex = /-/;
     luckyDipUrl = "";
     lastLetter = gameName.charAt(gameName.length - 1);
     switch(lastLetter) {
         case "t":
-            levelRegex = new RegExp("([^/]+)\" class=\"level-pic md no-frills lbp1", 'g');
+            levelRegex = /([^\/]+)" class="level-pic md no-frills lbp1/g;
             luckyDipUrl = "https://lbp.me/levels?p=1&t=luckydip&g=lbp1";
             break;
         case "2":
-            levelRegex = new RegExp("([^/]+)\" class=\"level-pic md no-frills lbp2", 'g');
+            levelRegex = /([^\/]+)" class="level-pic md no-frills lbp2/g;
             luckyDipUrl = "https://lbp.me/levels?p=1&t=luckydip&g=lbp2";
             break;
         case "3":
-            levelRegex = new RegExp("([^/]+)\" class=\"level-pic md no-frills lbp3", 'g');
+            levelRegex = /([^\/]+)" class="level-pic md no-frills lbp3/g;
             luckyDipUrl = "https://lbp.me/levels?p=1&t=luckydip&g=lbp3";
             break;
         case "a":
-            levelRegex = new RegExp("/v/([^\"])+", 'g');
+            levelRegex = /\/v\/([^"]+)/g;
             luckyDipUrl = "https://vita.lbp.me/search?t=luckydip";
             break;
         default:
@@ -463,11 +479,12 @@ luckyDipCmd = (message) => {
             dataQueue += dataBuffer;
         });
         result.on("end", function () {
-            match = dataQueue.match(levelRegex)[Math.floor(Math.random() * 12)];
-            level = ((lastLetter == "a") ? "https://vita.lbp.me/v/" : "https://lbp.me/v/")
-                    .concat(match
-                        .replace(new RegExp("\".*", ''), "")
-                        .replace(new RegExp("/v/", ''), "")); //for LBP vita
+            matches = [];
+            dataQueue.replace(levelRegex, (wholeMatch, parenthesesContent) => {
+                matches.push(parenthesesContent);
+            });
+            level = ((lastLetter === "a") ? "https://vita.lbp.me/v/" : "https://lbp.me/v/")
+                    + matches[Math.floor(Math.random() * 12)];
             chooseLbpMeLevel(level, message);
         });
     });
@@ -489,7 +506,7 @@ chooseLbpMeLevel = (level, message) => {
     https.get(level, function (result) {
         var { statusCode } = result;
         if (statusCode !== 200) {
-            message.channel.send("Failed to follow lbp.me link (" + level + "); got a " + statusCode + " response.");
+            message.channel.send("Error: Couldn't follow " + level + "; got a " + statusCode + " response.");
             return;
         }
 
@@ -499,10 +516,10 @@ chooseLbpMeLevel = (level, message) => {
         });
         result.on("end", function () {
             start = dataQueue.search("<title>") + 7;
-            end = dataQueue.search(" - LBP.me</title>");
+            end = dataQueue.search(/ - LBP\.me( PS Vita)?<\/title>/);
             titleAuthor = decodeHTML(dataQueue.substring(start, end).trim());
             split = titleAuthor.split(" ");
-            title = titleAuthor.substring(0, titleAuthor.search(split[split.length - 1])).trim();
+            title = titleAuthor.substring(0, titleAuthor.search(split[split.length - (isVita ? 2 : 1)])).trim(); // On vita.lbp.me there is a "By" between level name and author
             levelName = title + (isVita ? " - https://vita.lbp.me/v/" : " - https://lbp.me/v/") + level.split("/")[4];
             message.channel.send("Level updated to " + levelName + ".");
         });
@@ -631,7 +648,7 @@ doneCmd = (message) => {
                         + " has finished in "
                         + formatPlace(raceState.doneEntrants.length)
                         + " place "
-                        + (isILRace() ? "(+" + points + " point" + (points === 1 ? "" : "s") + ") " : "")
+                        + (isILRace() ? "(+" + points + "\u00A0point" + (points > 1 ? "s" : "") + ") " : "")
                         + "with a time of " + formatTime(time)) + "! (Use `!undone` if this was a mistake.)";
             if (raceState.ffEntrants.length + raceState.doneEntrants.length === raceState.entrants.size) {
                 doEndRace(message);
@@ -696,37 +713,29 @@ statusCmd = (message) => {
                 + (raceState.state === State.ACTIVE
                         ? "in progress. Current time: " + formatTime(Date.now() / 1000 - raceState.startTime)
                         : "done!" + (raceState.ffEntrants.length === raceState.entrants.size ? "" : " Results will be recorded soon."))
-                + "**\n";
+                + "**";
 
         // List done entrants
         raceState.doneEntrants.forEach((id, i) => {
             entrant = raceState.entrants.get(id);
-            if (i === 0) {
-                raceString += "\t:first_place: ";
-            } else if (i === 1) {
-                raceString += "\t:second_place: ";
-            } else if (i === 2) {
-                raceString += "\t:third_place: ";
-            } else {
-                raceString += "\t:checkered_flag: ";
-            }
             points = raceState.entrants.size - i;
-            raceString += "**" + username(entrant.message) + "** "
-                    + (isILRace() ? "(+" + points + " point" + (points === 1 ? "s" : "") + ")" : "")
-                    + " (" + formatTime(entrant.doneTime) + ")\n";
+            raceString += "\n\t" + placeEmote(i)
+                    + " **" + username(entrant.message) + "** "
+                    + (isILRace() ? "(+" + points + " point" + (points > 1 ? "s" : "") + ")" : "")
+                    + " (" + formatTime(entrant.doneTime) + ")";
         });
 
         // List racers still going
         raceState.entrants.forEach((entrant) => {
             if (!raceState.doneEntrants.includes(entrant.message.author.id) && !raceState.ffEntrants.includes(entrant.message.author.id)) {
-                raceString += "\t:stopwatch: " + username(entrant.message) + "\n";
+                raceString += "\n\t:stopwatch: " + username(entrant.message);
             }
         });
 
         // List forfeited/DQ'd entrants
         raceState.ffEntrants.forEach((id) => {
             entrant = raceState.entrants.get(id);
-            raceString += "\t:x: " + username(entrant.message) + "\n";
+            raceString += "\n\t:x: " + username(entrant.message);
         });
 
         message.channel.send(raceString);
@@ -779,14 +788,14 @@ clearRaceCmd = (message) => {
     clearTimeout(raceDoneWarningTimeout);
     raceState = new RaceState();
     gameName = "LittleBigPlanet";
-    categoryName = "Any% No-Overlord";
-    prevCategoryName = "Any% No-Overlord";
+    categoryName = "Any% No Overlord";
+    prevCategoryName = "Any% No Overlord";
     levelName = "Introduction";
     raceId = client.getLastRaceID.get().id;
     if (!raceId) {
         raceId = 0;
     }
-    raceId += 1;
+    raceId++;
     message.channel.send("Clearing race.");
 }
 
@@ -807,8 +816,13 @@ meCmd = (message) => {
     // Show stats
     stats = client.getUserStatsForGame.all(message.author.id, game);
     if (stats.length > 0) {
-        meString = "**" + game + "**\n";
-        var maxNumberLength = {races: 1, gold: 1, silver: 1, bronze: 1, ffs: 1, elo: 1, pb: 4};
+        meString = "**" + game;
+        ILString = "";
+        if (stats.length > 1 || stats[0].category !== "Individual Levels") {
+            meString += "\nCategories:";
+        }
+        meString += "**";
+        var maxNumberLength = {races: 1, gold: 1, silver: 1, bronze: 1, ffs: 1, elo: 1};
         stats.forEach((line) => {
             maxNumberLength.races = Math.max(maxNumberLength.races, line.races.toString().length);
             maxNumberLength.gold = Math.max(maxNumberLength.gold, line.gold.toString().length);
@@ -818,17 +832,21 @@ meCmd = (message) => {
             maxNumberLength.elo = Math.max(maxNumberLength.elo, Math.floor(line.elo).toString().length);
         });
         stats.forEach((line) => {
-            meString += "  " + line.category
-                    + "\n    :checkered_flag: `" + addSpaces(line.races.toString(), maxNumberLength.races)
-                    + "`   :first_place: `" + addSpaces(line.gold.toString(), maxNumberLength.gold)
-                    + "`   :second_place: `" + addSpaces(line.silver.toString(), maxNumberLength.silver)
-                    + "`   :third_place: `" + addSpaces(line.bronze.toString(), maxNumberLength.bronze)
-                    + "`   :x: `" + addSpaces(line.ffs.toString(), maxNumberLength.ffs)
-                    + "`   " + emotes.ppjSmug + " `" + addSpaces(Math.floor(line.elo).toString(), maxNumberLength.elo)
-                    + "`   :stopwatch: `" + formatTime(line.pb)
-                    + "`\n";
+            lineString = "\n    :checkered_flag:\u00A0`" + addSpaces(line.races.toString(), maxNumberLength.races)
+                    + "`   :first_place:\u00A0`" + addSpaces(line.gold.toString(), maxNumberLength.gold)
+                    + "`   :second_place:\u00A0`" + addSpaces(line.silver.toString(), maxNumberLength.silver)
+                    + "`   :third_place:\u00A0`" + addSpaces(line.bronze.toString(), maxNumberLength.bronze)
+                    + "`   :x:\u00A0`" + addSpaces(line.ffs.toString(), maxNumberLength.ffs)
+                    + "`   " + emotes.ppjSmug + "\u00A0`" + addSpaces(Math.floor(line.elo).toString(), maxNumberLength.elo)
+                    + "`   :stopwatch:\u00A0`" + formatTime(line.pb)
+                    + "`";
+            if (line.category === "Individual Levels") {
+                ILString = "\n**Individual Levels:**" + lineString;
+            } else {
+                meString += "\n  " + line.category + lineString;
+            }
         });
-        message.channel.send(meString);
+        message.channel.send(meString + ILString);
     } else {
         message.channel.send("No stats found; you haven't done any races in " + game + " yet.");
     }
@@ -843,7 +861,7 @@ resultsCmd = (message) => {
     rows = client.getResults.all(raceNum);
     if (rows.length > 0) {
         // Header
-        messageString = "Results for race #" + raceNum + " (" + rows[0].game + " / " + rows[0].category + "): \n";
+        messageString = "Results for race #" + raceNum + " (" + rows[0].game + " / " + rows[0].category + "):";
 
         // First list people who finished, but keep track of the forfeits
         ffd = [];
@@ -852,23 +870,14 @@ resultsCmd = (message) => {
             if (row.time < 0) {
                 ffd.push(row);
             } else {
-                if (placeCount === 0) {
-                    messageString += "\t:first_place: ";
-                } else if (placeCount === 1) {
-                    messageString += "\t:second_place: ";
-                } else if (placeCount === 2) {
-                    messageString += "\t:third_place: ";
-                } else {
-                    messageString += "\t:checkered_flag: ";
-                }
-                messageString += row.user_name + " (" + formatTime(row.time) + ")\n";
-                placeCount += 1;
+                messageString += "\n\t" + placeEmote(placeCount) + " " + row.user_name + " (" + formatTime(row.time) + ")";
+                placeCount++;
             }
         });
 
         // Now we can list forfeits
         ffd.forEach((row) => {
-            messageString += "\t:x: " + row.user_name + "\n";
+            messageString += "\n\t:x: " + row.user_name;
         });
         message.channel.send(messageString);
 
@@ -946,7 +955,7 @@ leaderboardCmd = (message) => {
 // Sets up a bunch of callbacks that send messages for the countdown
 doCountDown = (message) => {
     raceState.state = State.COUNTDOWN;
-    message.channel.send("Everyone is ready, gl;hf! " + emotes.ppjWink + " Starting race in 10 seconds...");
+    message.channel.send("Everyone is ready, gl;hf! " + emotes.ppjWink + " Starting race in 10\u00A0seconds...");
     countDownTimeout3 = setTimeout(() => { message.channel.send(emotes.ppjE + " 3..."); }, 7000);
     countDownTimeout2 = setTimeout(() => { message.channel.send(emotes.ppjE + " 2..."); }, 8000);
     countDownTimeout1 = setTimeout(() => { message.channel.send(emotes.ppjE + " 1..."); }, 9000);
@@ -1064,7 +1073,7 @@ recordResults = () => {
                 }
             } else if (p1Place < p2Place) {
                 // Ahead of opponent, count as win
-                actualScore += 1;
+                actualScore++;
             } else {
                 // Loss gives 0 points
             }
@@ -1124,9 +1133,10 @@ formatTime = (time) => {
     var result = (hrs < 10 ? "0" : "") + hrs;
     result += ":" + (min < 10 ? "0" + min : min);
     result += ":" + (sec < 10 ? "0" + sec : sec);
-    if (sec % 1 == 0) {
-        result += ".00";
-    } else if ((sec * 10) % 1 == 0) {
+    if (sec % 1 === 0) {
+        result += ".0";
+    }
+    if ((sec * 10) % 1 === 0) {
         result += "0";
     }
 
@@ -1158,7 +1168,7 @@ isILRace = () => {
     return categoryName === "Individual Levels";
 }
 
-//e.g. 1 --> "  1"
+// e.g. 1 --> "  1"
 addSpaces = (input, outputLength) => {
     var spacesString = "";
     for (let i = 0; i < outputLength - input.length; i++) {
@@ -1167,7 +1177,22 @@ addSpaces = (input, outputLength) => {
     return spacesString + input;
 }
 
+// Returns either ":..._place:" or ":checkered_flag:"
+placeEmote = (place) => {
+    switch (place) {
+        case 0:
+            return ":first_place:";
+        case 1:
+            return ":second_place:";
+        case 2:
+            return ":third_place:";
+        default:
+            return ":checkered_flag:";
+    }
+}
+
 // The following code is based on https://github.com/intesso/decode-html to avoid additional dependencies ---------
+// (license: https://github.com/intesso/decode-html/blob/master/LICENSE)
 // Store markers outside of the function scope, not to recreate them on every call
 const entities = {
     'amp': '&',
@@ -1177,7 +1202,7 @@ const entities = {
     'quot': '"',
     'nbsp': ' '
 };
-const entityPattern = RegExp("&([a-z]+);", "ig");
+const entityPattern = /&([a-z]+);/ig;
 
 decodeHTML = (text) => {
     // A single replace pass with a static RegExp is faster than a loop
