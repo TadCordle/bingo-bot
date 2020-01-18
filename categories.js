@@ -45,20 +45,19 @@ exports.normalizeGameName = (game) => {
 // Given a game name (normalizedGame) and a category string, returns the closest matching category name.
 exports.normalizeCategory = (normalizedGame, category) => {
     normalizedCategory = category.toLowerCase()
-            .replace(/\W/g, "")
-            .replace("new game", "ng")
-            .replace("plus", "+");
+            .replace(/\W|plus/g, "")
+            .replace("newgame", "ng");
 
     // Categories common between all games
     if (normalizedCategory === "any") {
         return "Any%";
     } else if (normalizedCategory === "100") {
         return "100%";
-    } else if (normalizedCategory === "coop" || normalizedCategory === "coopng+" || normalizedCategory === "2pcoop" || normalizedCategory === "2pcoopng+") {
+    } else if (normalizedCategory === "coop" || normalizedCategory === "coopng" || normalizedCategory === "2pcoop" || normalizedCategory === "2pcoopng") {
         return "2p Co-op NG+";
-    } else if (normalizedCategory === "3pcoop" || normalizedCategory === "3pcoopng+") {
+    } else if (normalizedCategory === "3pcoop" || normalizedCategory === "3pcoopng") {
         return "3p Co-op NG+";
-    } else if (normalizedCategory === "4pcoop" || normalizedCategory === "4pcoopng+") {
+    } else if (normalizedCategory === "4pcoop" || normalizedCategory === "4pcoopng") {
         return "4p Co-op NG+";
     } else if (normalizedCategory === "an3") {
         return "An3%";
@@ -86,7 +85,7 @@ exports.normalizeCategory = (normalizedGame, category) => {
 
     } else if (normalizedGame === "LittleBigPlanet 2") {
         // LBP2-specific categories
-        if (normalizedCategory === "anynooverlord" || normalizedCategory === "anyno" || normalizedCategory === "no" || normalizedCategory === "ng+" || normalizedCategory === "solong+") {
+        if (normalizedCategory === "anynooverlord" || normalizedCategory === "anyno" || normalizedCategory === "no" || normalizedCategory === "ng" || normalizedCategory === "solong") {
             return "Any% No Overlord";
         } else {
             return null;
@@ -110,8 +109,8 @@ exports.normalizeCategory = (normalizedGame, category) => {
 // this function is so dumb
 exports.normalizeLevel = (normalizedGame, level) => {
     level = level.toLowerCase()
-            .replace(/\W|the/g, "")
-            .replace(/&/g, "and");
+            .replace(/&/g, "and")
+            .replace(/\W|the/g, "");
     
     if (normalizedGame === "LittleBigPlanet") {
         // LBP1 levels
@@ -129,7 +128,7 @@ exports.normalizeLevel = (normalizedGame, level) => {
             return "Castle Climb Challenge";
         } else if (level === "skateboardfreefall") {
             return "Skateboard Freefall";
-        } else if (level === "die" || level === "die%") {
+        } else if (level === "die") {
             return "Die%";
         }
 
@@ -149,7 +148,7 @@ exports.normalizeLevel = (normalizedGame, level) => {
             return "Tunnel Plunge";
         } else if (level === "meerkatbounce") {
             return "Meerkat Bounce";
-        } else if (level === "styrofoam" || level === "styrofoam%") {
+        } else if (level === "styrofoam") {
             return "Styrofoam%";
         }
 

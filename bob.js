@@ -337,7 +337,7 @@ gameCmd = (message) => {
             if (isILRace()) {
                 levelName = (lastLetter === "g" ? "Karting Lessons" : "Introduction");
                 name = levelName;
-            } else if (!(/([\dy]%|\+|al Levels)$/).test(categoryName)) { // That RegExp detects the categories that are common between all games
+            } else {
                 categoryName = "Any%";
                 switch (lastLetter) {
                     case "t": case "2":
@@ -455,7 +455,7 @@ luckyDipCmd = (message) => {
             luckyDipUrl = "https://lbp.me/levels?p=1&t=luckydip&g=lbp2";
             break;
         case "3":
-            levelRegex = /([^\/]+)" class="level-pic md no-frills lbp1/g;
+            levelRegex = /([^\/]+)" class="level-pic md no-frills lbp3/g;
             luckyDipUrl = "https://lbp.me/levels?p=1&t=luckydip&g=lbp3";
             break;
         case "a":
@@ -519,7 +519,7 @@ chooseLbpMeLevel = (level, message) => {
             end = dataQueue.search(/ - LBP\.me( PS Vita)?<\/title>/);
             titleAuthor = decodeHTML(dataQueue.substring(start, end).trim());
             split = titleAuthor.split(" ");
-            title = titleAuthor.substring(0, titleAuthor.search(split[split.length - (isVita ? 2 : 1)])).trim();
+            title = titleAuthor.substring(0, titleAuthor.search(split[split.length - (isVita ? 2 : 1)])).trim(); // On vita.lbp.me there is a "By" between level name and author
             levelName = title + (isVita ? " - https://vita.lbp.me/v/" : " - https://lbp.me/v/") + level.split("/")[4];
             message.channel.send("Level updated to " + levelName + ".");
         });
@@ -816,7 +816,12 @@ meCmd = (message) => {
     // Show stats
     stats = client.getUserStatsForGame.all(message.author.id, game);
     if (stats.length > 0) {
-        meString = "**" + game + "**";
+        meString = "**" + game;
+        ILString = "";
+        if (stats.length > 1 || stats[0].category !== "Individual Levels") {
+            meString += "\nCategories:";
+        }
+        meString += "**";
         var maxNumberLength = {races: 1, gold: 1, silver: 1, bronze: 1, ffs: 1, elo: 1};
         stats.forEach((line) => {
             maxNumberLength.races = Math.max(maxNumberLength.races, line.races.toString().length);
@@ -827,8 +832,7 @@ meCmd = (message) => {
             maxNumberLength.elo = Math.max(maxNumberLength.elo, Math.floor(line.elo).toString().length);
         });
         stats.forEach((line) => {
-            meString += "\n  " + line.category
-                    + "\n    :checkered_flag:\u00A0`" + addSpaces(line.races.toString(), maxNumberLength.races)
+            lineString = "\n    :checkered_flag:\u00A0`" + addSpaces(line.races.toString(), maxNumberLength.races)
                     + "`   :first_place:\u00A0`" + addSpaces(line.gold.toString(), maxNumberLength.gold)
                     + "`   :second_place:\u00A0`" + addSpaces(line.silver.toString(), maxNumberLength.silver)
                     + "`   :third_place:\u00A0`" + addSpaces(line.bronze.toString(), maxNumberLength.bronze)
@@ -836,8 +840,13 @@ meCmd = (message) => {
                     + "`   " + emotes.ppjSmug + "\u00A0`" + addSpaces(Math.floor(line.elo).toString(), maxNumberLength.elo)
                     + "`   :stopwatch:\u00A0`" + formatTime(line.pb)
                     + "`";
+            if (line.category === "Individual Levels") {
+                ILString = "\n**Individual Levels:**" + lineString;
+            } else {
+                meString += "\n  " + line.category + lineString;
+            }
         });
-        message.channel.send(meString);
+        message.channel.send(meString + ILString);
     } else {
         message.channel.send("No stats found; you haven't done any races in " + game + " yet.");
     }
@@ -861,7 +870,7 @@ resultsCmd = (message) => {
             if (row.time < 0) {
                 ffd.push(row);
             } else {
-                messageString += "\n\t" + placeEmote(placeCount) + " " + row.user_name + " (" + formatTime(row.time) + ")\n";
+                messageString += "\n\t" + placeEmote(placeCount) + " " + row.user_name + " (" + formatTime(row.time) + ")";
                 placeCount++;
             }
         });
@@ -1070,7 +1079,7 @@ recordResults = () => {
             }
         });
 
-        newElos.set(id1, playerStats.get(id1).elo + ((actualScore - expectedScore) << 5));
+        newElos.set(id1, playerStats.get(id1).elo + 32 * (actualScore - expectedScore));
     });
 
     // Update/save stats with new ELOs
