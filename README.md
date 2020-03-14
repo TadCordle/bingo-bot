@@ -59,6 +59,9 @@ node bob.js
 * `!elo <game name>/<category name>` - Shows the ELO leaderboard for the given game/category (e.g. `!elo lbp/die%`).
 * `!help` - Shows the bot commands.
 
+**Fun command**
+* `!nr` / `!newrunner` - Mixes two halves of the names of random LBP runners (that have a full-game run on sr.c) together.
+
 **Admin/moderator only**
 * `!kick @user` - Kicks someone from the race (in case they're afk or something).
 * `!clearrace` - Resets the bot; forces ending the race without recording any results.
