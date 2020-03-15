@@ -1,6 +1,7 @@
 const config = require("./config.json");
 const emotes = require("./emotes.json");
 const categories = require("./categories.js");
+const fun = require("./fun.js");
 const Discord = require("discord.js");
 const SQLite = require("better-sqlite3");
 const https = require('https');
@@ -221,6 +222,8 @@ client.on("message", (message) => {
 
     else if (lowerMessage.startsWith("!s"))
         statusCmd(message);
+
+    else fun.funCmds(lowerMessage, message);
 });
 
 client.on('error', console.error);
@@ -254,6 +257,9 @@ helpCmd = (message) => {
 \`!me <game name>\` - Shows your race statistics for the specified game (e.g. \`!me LBP\` shows your LBP1 stats).
 \`!elo <game name>/<category name>\` - Shows the ELO leaderboard for the given game/category (e.g. \`!elo lbp/die%\` shows the LBP1 Die% leaderboard).
 \`!help\` - Shows this message.
+
+**Fun command**
+\`!nr\` / \`!newrunner\` - Mixes two halves of the names of random LBP runners (that have a full-game run on sr.c) together.
 
 **Admin/moderator only**
 \`!kick @user\` - Kicks someone from the race (in case they're afk or something).
@@ -640,7 +646,7 @@ unreadyCmd = (message) => {
 doneCmd = (message) => {
     if (raceState.state === State.ACTIVE) {
         if (raceState.entrants.has(message.author.id) && !raceState.doneEntrants.includes(message.author.id) && !raceState.ffEntrants.includes(message.author.id)) {
-            time = Date.now() / 1000 - raceState.startTime;
+            time = message.createdTimestamp / 1000 - raceState.startTime;
             raceState.entrants.get(message.author.id).doneTime = time;
             raceState.doneEntrants.push(message.author.id);
             points = raceState.entrants.size - raceState.doneEntrants.length + 1;
