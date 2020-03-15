@@ -223,7 +223,7 @@ client.on("message", (message) => {
     else if (lowerMessage.startsWith("!s"))
         statusCmd(message);
 
-    else funCmds(lowerMessage, message);
+    else fun.funCmds(lowerMessage, message);
 });
 
 client.on('error', console.error);
