@@ -4,7 +4,8 @@ var exports = module.exports = {};
 exports.normalizeGameName = (game) => {
     game = game.toLowerCase()
             .replace(/\W/g, "")
-            .replace("littlebigplanet", "lbp");
+            .replace("littlebigplanet", "lbp")
+            .replace("psv", "v");
     
     if (game === "lbp" || game === "lbp1" || game === "1") {
         return "LittleBigPlanet";
@@ -29,7 +30,7 @@ exports.normalizeGameName = (game) => {
         return "LittleBigPlanet 2";
 
     } else if (game === "lbpv" || game === "lbpvita" || game === "v" || game === "vita") {
-        return "LittleBigPlanet Vita";
+        return "LittleBigPlanet PS Vita";
     
     } else if (game === "lbpk" || game === "lbpkarting" || game === "k" || game === "karting") {
         return "LittleBigPlanet Karting";
@@ -189,7 +190,7 @@ exports.normalizeLevel = (normalizedGame, level) => {
         else if (level === "lowrider") {
             return "Lowrider";
         } else if (level === "subway") {
-            return "The Subway";
+            return "Subway";
         } else if (level === "constructionsite") {
             return "The Construction Site";
         } else if (level === "dragrace") {
@@ -215,7 +216,7 @@ exports.normalizeLevel = (normalizedGame, level) => {
         }
 
         else if (level === "dancerscourt") {
-            return "The Dancer's Court";
+            return "The Dancers' Court";
         } else if (level === "elephanttemple") {
             return "Elephant Temple";
         } else if (level === "greatmagicianspalace") {
@@ -247,13 +248,13 @@ exports.normalizeLevel = (normalizedGame, level) => {
     } else if (normalizedGame === "LittleBigPlanet PSP") {
         // PSP levels
         if (level === "intro" || level === "introduction") {
-            return "Introduction";
+            return "The Introduction";
         } else if (level === "walkabout") {
             return "Walkabout";
         } else if (level === "giftofgrab") {
             return "Gift of the Grab";
-        } else if (level === "didgeridoodidgeridont") {
-            return "Didgeridoo Didgeridon't";
+        } else if (level === "didgeridodidgeridont" || level === "didgeridoodidgeridont") {
+            return "Didgerido Didgeridon’t";
         } else if (level === "dreamtime") {
             return "Dreamtime";
         }
@@ -269,9 +270,9 @@ exports.normalizeLevel = (normalizedGame, level) => {
         else if (level === "cheekymonkey") {
             return "Cheeky Monkey";
         } else if (level === "thievesden") {
-            return "Thieves' Den";
-        } else if (level === "rugsnkisses" || level === "highonrugs") {
-            return "Rugs n Kisses";
+            return "Thieves' Den"; // This level uses ' instead of ’ for some reason
+        } else if (level === "rugsandkisses" || level === "highonrugs" || level === "rugsnkisses") {
+            return "Rugs and Kisses";
         }
 
         else if (level === "gethump") {
@@ -283,7 +284,7 @@ exports.normalizeLevel = (normalizedGame, level) => {
         }
 
         else if (level === "mountinexcitement") {
-            return "Mountin' Excitement";
+            return "Mountin’ Excitement";
         } else if (level === "peakperformance") {
             return "Peak Performance";
         } else if (level === "doggeddetermination") {
@@ -296,16 +297,16 @@ exports.normalizeLevel = (normalizedGame, level) => {
             return "Frying Saucers";
         } else if (level === "sewnidentity") {
             return "The Sewn Identity";
+        } else if (level === "openingfright") {
+            return "Opening Fright";
         }
 
-        else if (level === "openingfright") {
-            return "Opening Fright";
-        } else if (level === "crashingparty") {
+        else if (level === "crashingparty") {
             return "Crashing the Party";
         } else if (level === "roadtojoy") {
             return "Road to Joy";
-        } else if (level === "carnival") {
-            return "The Carnival";
+        } else if (level === "carnival" || level === "procession") {
+            return "The Procession";
         }
 
     } else if (normalizedGame === "Sackboy's Prehistoric Moves") {
@@ -325,7 +326,7 @@ exports.normalizeLevel = (normalizedGame, level) => {
         }
         
     } else if (normalizedGame === "LittleBigPlanet 2") {
-        // LBP2 levels
+        // LBP2 levels; the capitalization is weird
         if (level === "intro" || level === "introduction") {
             return "Introduction";
         } else if (level === "rookietest") {
@@ -353,7 +354,7 @@ exports.normalizeLevel = (normalizedGame, level) => {
         } else if (level === "brainycakes") {
             return "Brainy Cakes";
         } else if (level === "cakeinator") {
-            return "Cakeinator";
+            return "The Cakeinator";
         } else if (level === "currantaffairs") {
             return "Currant Affairs";
         } else if (level === "klingklong") {
@@ -387,13 +388,13 @@ exports.normalizeLevel = (normalizedGame, level) => {
         else if (level === "aaaa" || level === "avalonsadvancedarmamentsacademy") {
             return "Avalon's Advanced Armaments Academy";
         } else if (level === "gothump") {
-            return "Got the Hump";
+            return "Got The Hump";
         } else if (level === "sackbotredemption") {
             return "The Sackbot Redemption";
         } else if (level === "fitfod" || level === "flyinginfaceofdanger") {
-            return "Flying in the Face of Danger";
+            return "Flying In The Face Of Danger";
         } else if (level === "hpfhs" || level === "hugeperilforhugespaceship") {
-            return "Huge Peril for Huge Spaceship";
+            return "Huge Peril For Huge Spaceship";
         } else if (level === "onburrowedtime") {
             return "On Burrowed Time";
         } else if (level === "gobotron") {
@@ -403,15 +404,15 @@ exports.normalizeLevel = (normalizedGame, level) => {
         }
 
         else if (level === "upandatem") {
-            return "Up and At 'Em";
+            return "Up And At 'Em";
         } else if (level === "patientsareavirtue") {
-            return "Patients Are a Virtue";
+            return "Patients Are A Virtue";
         } else if (level === "fwyhf" || level === "ffwyhf" || level === "fireflieswhenyourehavingfun") {
             return "Fireflies When You're Having Fun";
         } else if (level === "casadelhigginbotham") {
-            return "Casa del Higginbotham";
+            return "Casa Del Higginbotham";
         } else if (level === "iotbi" || level === "invasionofthebodyinvaders") {
-            return "Invasion of the Body Invaders";
+            return "Invasion Of The Body Invaders";
         } else if (level === "hungrycaterpillars") {
             return "Hungry Caterpillars";
         } else if (level === "mindcontrol") {
@@ -421,15 +422,15 @@ exports.normalizeLevel = (normalizedGame, level) => {
         }
 
         else if (level === "stcfthotn" || level === "setcontrolsforheartofnegativatron") {
-            return "Set the Controls for the Heart of the Negativatron";
+            return "Set The Controls For The Heart Of The Negativatron";
         } else if (level === "fullmetalrabbit") {
             return "Full Metal Rabbit";
         } else if (level === "witwiac" || level === "whereinworldisavaloncentrifuge") {
-            return "Where in the World is Avalon Centrifuge?";
-        } else if (level === "fightofthebumblebee") {
-            return "Fight of the Bumblebee";
+            return "Where In The World Is Avalon Centrifuge?";
+        } else if (level === "fightofbumblebees" || level === "fightofbumblebee") {
+            return "Fight of the Bumblebees"; //yes, this capitalization is correct
         } else if (level === "intoheartofnegativitron") {
-            return "Into the Heart of the Negativitron";
+            return "Into The Heart Of The Negativitron";
         } else if (level === "rocketfunland") {
             return "Rocket Funland";
         } else if (level === "pingpangpong") {
@@ -438,7 +439,7 @@ exports.normalizeLevel = (normalizedGame, level) => {
             return "Space Pool";
         }
 
-    } else if (normalizedGame === "LittleBigPlanet Vita") {
+    } else if (normalizedGame === "LittleBigPlanet PS Vita") {
         // LBPV levels
         if (level === "intro" || level === "introduction") {
             return "Introduction";
@@ -653,7 +654,7 @@ exports.normalizeLevel = (normalizedGame, level) => {
         else if (level === "highstakesheist") {
             return "High Stakes Heist";
         } else if (level === "deepspacedrivein") {
-            return "Deep Space Drive-In";
+            return "Deep Space Drive-in";
         } else if (level === "shakerattleandroll") {
             return "Shake, Rattle & Roll";
         } else if (level === "crumblingcrypts") {

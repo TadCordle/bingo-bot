@@ -341,7 +341,13 @@ gameCmd = (message) => {
             gameName = game;
             lastLetter = gameName.charAt(gameName.length - 1);
             if (isILRace()) {
-                levelName = (lastLetter === "g" ? "Karting Lessons" : "Introduction");
+                switch(lastLetter) {
+                    case "g":
+                        levelName = "Karting Lessons";
+                    case "P":
+                        levelName = "The Introduction";
+                    case "s":
+                        levelName = "Learning to Move";
                 name = levelName;
             } else {
                 categoryName = "Any%";
