@@ -1,0 +1,32 @@
+{
+  "name": "bingo-bot",
+  "version": "1.0.0",
+  "description": "LittleBigPlanet speedrunning race bot for Discord",
+  "main": "bob.js",
+  "scripts": {
+    "start": "[ -f ./config.json ] && node ./bob.js || printf '\\e[0;31mERROR:\\e[0m Please create a file \"config.json\" and write:\\n\\n{\\n    \"token\": \"discord auth token goes here\"\\n}\\n'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TadCordle/bingo-bot.git"
+  },
+  "keywords": [],
+  "author": {
+    "name": "RbdJellyfish",
+    "url": "https://tadcordle.github.io/"
+  },
+  "contributors": [
+    {
+      "name": "KaDiWa"
+    }
+  ],
+  "bugs": {
+    "url": "https://github.com/TadCordle/bingo-bot/issues"
+  },
+  "homepage": "https://github.com/TadCordle/bingo-bot#readme",
+  "dependencies": {
+    "better-sqlite3": "^6.0.1",
+    "discord.js": "^12.1.1",
+    "node-gyp": "^6.1.0"
+  }
+}

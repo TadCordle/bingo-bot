@@ -2,9 +2,9 @@
 
 LittleBigPlanet speedrunning race bot for Discord.
 
-# Setup
+## Setup
 
-Install nodejs (version 6.x or higher).
+Install Node.js (version 6.x or higher).
 
 Get build tools.
 * Windows: Install "VC++ 2015.3 v14.00 (v140) toolset for desktop" through VS Installer
@@ -12,12 +12,13 @@ Get build tools.
 
 Get dependencies.
 
-* `npm init -y`
-* `npm i discord.js node-gyp better-sqlite3`
+```
+npm i
+```
 
 Create config.json in same directory as bob.js with your auth token.
 
-```
+```JSON
 {
     "token": "discord auth token goes here"
 }
@@ -26,10 +27,10 @@ Create config.json in same directory as bob.js with your auth token.
 Run bot.
 
 ```
-node bob.js
+npm start
 ```
 
-# Features
+## Features
 
 **Pre-race commands**
 
