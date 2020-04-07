@@ -43,7 +43,7 @@ class RaceState {
         this.ilResults = [];
     }
 
-    // Adds an entrant. Returns true if succesful, returns false if the user has already joined.
+    // Adds an entrant. Returns true if successful, returns false if the user has already joined.
     addEntrant(message) {
         if (this.entrants.has(message.author.id)) {
             return false;
@@ -52,7 +52,7 @@ class RaceState {
         return true;
     }
 
-    // Removes an entrant. Returns true if succesful, returns false if the user isn't an entrant.
+    // Removes an entrant. Returns true if successful, returns false if the user isn't an entrant.
     removeEntrant(id) {
         if (this.entrants.has(id)) {
             this.entrants.delete(id);
@@ -924,7 +924,7 @@ ilResultsCmd = (message) => {
     }
 }
 
-// !leaderboard
+// !leaderboard/!elo
 leaderboardCmd = (message) => {
     params = message.content.replace("!leaderboard ", "").replace("!elo ", "").trim().split('/');
     if (params.length !== 2) {
