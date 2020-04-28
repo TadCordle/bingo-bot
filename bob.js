@@ -195,7 +195,7 @@ client.on("message", (message) => {
             unforfeitCmd(message);
 
         // Admin/Mod only commands
-        else if (message.member.roles.find("name", "Admin") || message.member.roles.find("name", "Moderator")) {
+        else if (message.member.roles.cache.some(role => role.name === "Admin" || role.name === "Moderator")) {
             if (lowerMessage.startsWith("!kick"))
                 kickCmd(message);
 
