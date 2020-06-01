@@ -33,7 +33,6 @@ npm start
 ## Features
 
 **Pre-race commands**
-
 * `!race` - Starts a new full-game race, or joins the current open race if someone already started one.
 * `!game <game name>` - Sets the game (e.g. `!game LBP2`).
 * `!category <category name>` - Sets the category (e.g. `!category styrofoam%`).
@@ -66,6 +65,14 @@ npm start
 **Admin/moderator only**
 * `!kick @user` - Kicks someone from the race (in case they're afk or something).
 * `!clearrace` - Resets the bot; forces ending the race without recording any results.
+
+**speedrun.com role commands**
+*Using the keyword `all` requires admin/mod rights.*
+* `!roles reload categories` - Reloads all categories.
+* `!roles reload leaderboard <game name>` / `all` - Reloads the runs on the specified sr.c leaderboard / all leaderboards.
+* `!roles reload discordaccount <sr.c name>` / `all` - Reloads the Discord account data entered on sr.c of the user / everyone.
+* `!roles reload all` - Reloads everything. Don't use this unless it's necessary.
+* `!roles connect <sr.c name>/@user` / `<sr.c name>/auto` - Connects a sr.c profile with a discord account or switches the sr.c profile back to auto connect mode. (admin/mod-only)
 
 # Upcoming Features?
 
