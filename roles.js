@@ -1,6 +1,5 @@
 const categories = require('./categories.js');
-//CHANGE const emotes = require('./emotes.json');
-const emotes = require('./myemotes.json');
+const emotes = require('./emotes.json');
 const fs = require('fs');
 const https = require('https');
 
@@ -32,7 +31,7 @@ const fullGameCategoriesThatAreActuallyILs = [
 
 exports.init = (c) => {
     client = c;
-    /*guild = client.guilds.cache.get('129652811754504192'); //CHANGE
+    guild = client.guilds.cache.get('129652811754504192');
     roles = {
         "369pp31l": guild.roles.cache.get("716015233256390696"),
         "pd0n821e": guild.roles.cache.get("716015332040507503"),
@@ -43,23 +42,11 @@ exports.init = (c) => {
         "k6qw8z6g": guild.roles.cache.get("716015547984117872"),
         "wr": guild.roles.cache.get("716014433121337504")
     };
-    botDev = guild.members.cache.get("81612266826379264").user;*/
-    guild = client.guilds.cache.get('686609956119642185');
-    roles = {
-        "369pp31l": guild.roles.cache.get("717050028610289724"),
-        "pd0n821e": guild.roles.cache.get("717050063104245790"),
-        "4d704r17": guild.roles.cache.get("717050103700914277"),
-        "pdvzzk6w": guild.roles.cache.get("717050042678247485"),
-        "369vz81l": guild.roles.cache.get("717050231291641868"),
-        "pd0n531e": guild.roles.cache.get("717050114383806499"),
-        "k6qw8z6g": guild.roles.cache.get("717050052811685970"),
-        "wr": guild.roles.cache.get("717050248945467504")
-    };
+    botDev = guild.members.cache.get("81612266826379264").user;
     if (Object.values(roles).includes(undefined)) {
         sendError(message, "Couldn't find all roles.");
         process.exit(1);
     }
-    botDev = guild.members.cache.get("191571794161958913").user;
     botDev.createDM();
     try {
         data = JSON.parse(fs.readFileSync("./src_data.json"));
