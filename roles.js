@@ -8,6 +8,53 @@ var apiCallTimestamp = Date.now();
 var leaderboards = {};
 var users = {};
 
+/*
+leaderboards: {
+    <game ID>: {
+        leaderboards: {
+            <category ID>: Set { <sr.c username>, <sr.c username 2>, ... },
+            <category ID 2>: Set { ... },
+            ...
+        },
+        ilCategories: {
+            <IL category ID>: Set { <sr.c username>, <sr.c username 2>, ... },
+            <IL category ID 2>: Set { ... },
+            ...
+        }
+    },
+    <game ID 2>: { ... },
+    ...
+}
+
+users: {
+    <sr.c username>: {
+        games: {
+            <game ID>: {
+                leaderboards: {
+                    <category ID>: "run"/"wr",
+                    <category ID 2>: ...,
+                    ...
+                },
+                ilCategories: {
+                    <IL category ID>: "run",
+                    <IL category ID 2>: "run",
+                    ...
+                }
+            },
+            <game ID 2>: { ... },
+            ...
+        },
+        discord: {
+            username: <discord username>,
+            discriminator: <discord tag>,
+            auto: <false if username was manually entered, otherwise true>
+        }
+    },
+    <sr.c username 2>: { ... },
+    ...
+}
+*/
+
 var recursiveUpdating = true;
 
 var client;
@@ -68,6 +115,7 @@ exports.roleCmds = (lowerMessage, message) => {
         connectCmd(message);
 }
 
+// !roles reload categories
 reloadCategoriesCmd = (message) => {
     getCategories(() => {
         message.channel.send("Updated category data.");
@@ -75,6 +123,7 @@ reloadCategoriesCmd = (message) => {
     });
 }
 
+// !roles reload leaderboards
 reloadLeaderboardsCmd = (message) => {
     if (Object.keys(leaderboards).length === 0) {
         message.channel.send("No category data found, try running `!reload categories` first.");
@@ -103,6 +152,7 @@ reloadLeaderboardsCmd = (message) => {
     }
 }
 
+// !roles reload discordaccount
 reloadDiscordAccountCmd = (message) => {
     username = message.content.replace(/^!roles reload discordaccount/i, "").trim();
     if (/[ !#\$%&'()*+,:;=?@\[\]`´"§{}.°]/.test(username)) {
@@ -125,6 +175,7 @@ reloadDiscordAccountCmd = (message) => {
     });
 }
 
+// !roles reload all
 reloadAllCmd = (message) => {
     getCategories(message, () => {
         getUsers(message, () => {
@@ -134,6 +185,7 @@ reloadAllCmd = (message) => {
     });
 }
 
+// !roles connect
 connectCmd = (message) => {
     ifUserIsAdmin(message, () => {
         params = message.content.replace(/^!roles connect/i, "").trim().split('/');
@@ -167,6 +219,7 @@ connectCmd = (message) => {
     });
 }
 
+// Updates all usernames on all leaderboards
 getUsers = (message, whenDone) => {
     let i = 1;
     for (gameName in gameIDs) {
@@ -176,6 +229,7 @@ getUsers = (message, whenDone) => {
     }
 }
 
+// Updates all usernames on all leaderboards of the specified game
 getUsersFromGame = (message, gameID, whenDone) => {
     let i = 1;
     numberOfCategories = Object.keys(leaderboards[gameID].leaderboards).length + Object.keys(leaderboards[gameID].ilCategories).length;
@@ -192,6 +246,7 @@ getUsersFromGame = (message, gameID, whenDone) => {
     }
 }
 
+// Execute the specified function if the user is an admin/mod
 ifUserIsAdmin = (message, ifTrue) => {
     if (message.member.roles.cache.some(role => role.name === "Admin" || role.name === "Moderator"))
         ifTrue();
@@ -199,6 +254,7 @@ ifUserIsAdmin = (message, ifTrue) => {
         message.channel.send("You are not a mod/admin.");
 }
 
+// Updates discord roles of the specified user and optionally changes the user's discord data
 updateRoles = (message, username, newDiscordName, newDiscordDiscriminator, auto) => {
     discordData = users[username].discord;
     if (newDiscordName) {
@@ -230,6 +286,7 @@ updateRoles = (message, username, newDiscordName, newDiscordDiscriminator, auto)
     return true;
 }
 
+// Sends error to the channel where the command was send or DMs it to the bot dev if the error wasn't caused by a command
 sendError = (message, error) => {
     if (typeof message === 'undefined')
         botDev.dmChannel.send("Error while trying to update roles using the sr.c API:\n" + error);
@@ -237,6 +294,10 @@ sendError = (message, error) => {
         message.channel.send(error);
 }
 
+// Gets data from speedrun.com
+// - delay after API call: 1 sec
+// - delay after downloading any other sr.c page: 10 sec
+// API: https://github.com/speedruncomorg/api/tree/master/version1
 callSrcApi = (path, onEnd, message) => {
     if (message)
         message.react(emotes.bingo);
@@ -270,6 +331,7 @@ callSrcApi = (path, onEnd, message) => {
     }
 }
 
+// Updates all category and game IDs
 getCategories = (message, whenDone = () => { }) => {
     callSrcApi("/api/v1/series/v7emqr49/games?embed=categories", (dataQueue) => {
         JSON.parse(dataQueue).data.forEach((game) => {
@@ -306,6 +368,7 @@ getCategories = (message, whenDone = () => { }) => {
     }, message);
 }
 
+// Deletes a category from both leaderboard and user data
 deleteCategory = (gameID, type, categoryID) => {
     leaderboards[gameID][type][categoryID].toArray().forEach((username) => {
         deleteUserRun(username, gameID, type, categoryID);
@@ -313,6 +376,7 @@ deleteCategory = (gameID, type, categoryID) => {
     delete leaderboards[gameID][type][categoryID];
 }
 
+// Updates all usernames on the specified leaderboard
 getUsersFromLeaderboard = (message, gameID, categoryID, whenDone = () => { }) => {
     callSrcApi("/api/v1/leaderboards/" + gameID + "/category/" + categoryID + "?embed=players", (dataQueue) => {
         updatedUsers = new Set();
@@ -353,6 +417,7 @@ getUsersFromLeaderboard = (message, gameID, categoryID, whenDone = () => { }) =>
     }, message);
 }
 
+// Updates all usernames in the specified IL category
 getUsersFromILCategory = (message, endOfUri, whenDone = () => { }) => {
     callSrcApi("/api/v1/runs?status=verified&max=200&embed=players&category=" + endOfUri, (dataQueue) => {
         apiResponse = JSON.parse(dataQueue);
@@ -401,11 +466,13 @@ getUsersFromILCategory = (message, endOfUri, whenDone = () => { }) => {
     }, message);
 }
 
+// Deletes a specified run from both user and category data
 deleteUserFromCategory = (gameID, type, categoryID, username) => {
     deleteUserRun(username, gameID, type, categoryID);
     leaderboards[gameID][type][categoryID].delete(username);
 }
 
+// Deletes a specified run from user data
 deleteUserRun = (username, gameID, type, categoryID) => {
     delete users[username].games[gameID][type][categoryID];
     if (Object.keys(users[username].games[gameID].leaderboards).length === 0 && Object.keys(users[username].games[gameID].ilCategories).length === 0)
@@ -414,6 +481,7 @@ deleteUserRun = (username, gameID, type, categoryID) => {
         delete users[username];
 }
 
+// Updates a specified person's discord data
 getDiscordDataFromUserPage = (message, username, whenDone = () => { }) => {
     if (users[username].discord && !users[username].discord.auto)
         return;
@@ -433,6 +501,7 @@ getDiscordDataFromUserPage = (message, username, whenDone = () => { }) => {
     }, message);
 }
 
+// Saves data to a file
 saveData = () => {
     fs.writeFile('./src_data.json', JSON.stringify({
         leaderboards: leaderboards,
