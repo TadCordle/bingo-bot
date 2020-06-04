@@ -85,6 +85,8 @@ const fullGameCategoriesThatAreActuallyILs = [
     "9d8pgl6k"
 ];
 
+const srcDataFile = "./src_data.json";
+
 exports.init = (c) => {
     client = c;
     guild = client.guilds.cache.get('129652811754504192');
@@ -93,8 +95,8 @@ exports.init = (c) => {
         "pd0n821e": guild.roles.cache.get("716015332040507503"),
         "4d704r17": guild.roles.cache.get("716015421878435891"),
         "pdvzzk6w": guild.roles.cache.get("716015284183367701"),
-        "369vz81l": guild.roles.cache.get("716015510797680741"),
-        "pd0n531e": guild.roles.cache.get("716015465024979085"),
+        "369vz81l": guild.roles.cache.get("716015465024979085"),
+        "pd0n531e": guild.roles.cache.get("716015510797680741"),
         "k6qw8z6g": guild.roles.cache.get("716015547984117872"),
         "wr": guild.roles.cache.get("716014433121337504")
     };
@@ -105,14 +107,14 @@ exports.init = (c) => {
     }
     botDev.createDM();
     try {
-        data = JSON.parse(fs.readFileSync("./src_data.json"));
+        data = JSON.parse(fs.readFileSync(srcDataFile));
         leaderboards = data.leaderboards;
         users = data.users;
-    } catch { }
-
-    now = new Date();
-    setTimeout(getUsers, Date.now() +
-        1000 * (86400 - ((now.getUTCHours() * 60) + now.getUTCMinutes()) * 60 + now.getUTCSeconds()));
+    } catch { 
+        console.log("Failed to load things; run !reload all I guess");
+        return;
+    }
+    setTimeout(getUsers, 86400000);
 }
 
 exports.roleCmds = (lowerMessage, message) => {
@@ -145,14 +147,16 @@ reloadLeaderboardsCmd = (message) => {
 
     game = message.content.replace(/^!roles reload leaderboards/i, "").trim();
 
-    if (game.toLowerCase() === "all")
-        ifUserIsAdmin(message, () => {
-            getUsers(message, () => {
-                message.channel.send("Updated leaderboard data.");
-                saveData();
-            });
+    if (game.toLowerCase() === "all") {
+        if (!userIsAdmin(message)) {
+            message.channel.send("You are not a mod/admin.");
+            return;
+        }
+        getUsers(message, () => {
+            message.channel.send("Updated leaderboard data.");
+            saveData();
         });
-    else {
+    } else {
         game = categories.normalizeGameName(game);
         if (game === null) {
             message.channel.send("Specified game name was not a valid LBP game, try something else.");
@@ -168,13 +172,18 @@ reloadLeaderboardsCmd = (message) => {
 // !roles reload discordaccount
 reloadDiscordAccountCmd = (message) => {
     username = message.content.replace(/^!roles reload discordaccount/i, "").trim();
-    if (/[ !#\$%&'()*+,:;=?@\[\]`´"§{}.°]/.test(username)) {
+
+    // Make sure argument is a valid discord username
+    if (/[ !#\$%&'()*+,:;=?@\[\]`"{}.]/.test(username)) {
         message.channel.send("Usage: `!roles reload discordaccount <sr.c name>`");
         return;
     }
+    
     if (!users[username]) {
         message.channel.send("`" + username + "` is not on any LBP leaderboards. Use `!roles reload leaderboard <game name>` to reload a leaderboard.");
+        return;
     }
+
     getDiscordDataFromUserPage(message, username, (success, name, discriminator) => {
         if (success) {
             message.channel.send("Updated " + username + "'s discord account to " + name + "#" + discriminator + ".");
@@ -183,8 +192,9 @@ reloadDiscordAccountCmd = (message) => {
             users[username].discord.auto = true;
             message.channel.send("Activated auto connect mode but failed to connect discord account.");
             saveData();
-        } else
+        } else {
             message.channel.send("Failed to connect discord account.");
+        }
     });
 }
 
@@ -200,51 +210,79 @@ reloadAllCmd = (message) => {
 
 // !roles connect
 connectCmd = (message) => {
-    ifUserIsAdmin(message, () => {
-        params = message.content.replace(/^!roles connect/i, "").trim().split('/');
-        username = params[0].trim();
-        id = params[1].replace("<@", "").replace(">", "").trim();
-        if (parameters.length !== 2 || /[ !#\$%&'\(\)\*\+,:;=\?@\[\]`´"§]/.test(username) || !(/^(\d+|auto)$/.test(id))) {
-            message.channel.send("Usage: `!roles connect <sr.c name>/@user` or `<sr.c name>/auto`");
-            return;
-        }
-        if (!users[username]) {
-            message.channel.send("`" + username + "` is not on any LBP leaderboards. Use `!roles reload leaderboard <game name>` to reload a leaderboard.");
-        }
-        if (/^auto$/i.test(id)) {
-            if (users[username].discord)
+    if (!userIsAdmin(message)) {
+        message.channel.send("You are not a mod/admin.");
+        return;
+    }
+
+    params = message.content.replace(/^!roles connect/i, "").trim().split('/');
+    if (params.length !== 1 && params.length !== 2) {
+        message.channel.send("Usage: `!roles connect <sr.c name>/@user` or `<sr.c name>/auto`");
+        return;
+    }
+
+    if (params.length === 1 && /^all$/i.test(params[0].trim())) {
+        for (username in users) {
+            if (users[username].discord) {
                 users[username].discord.auto = true;
+            }
             getDiscordDataFromUserPage(message, username, (success, name, discriminator) => {
-                if (success)
-                    message.channel.send("Updated " + username + "'s discord account to " + name + "#" + discriminator + ".");
-                else
-                    message.channel.send("Activated auto connect mode but failed to connect discord account.");
+                if (success) {
+                    console.log("Updated " + name + "#" + discriminator + ".");
+                } else {
+                    console.log("Activated auto connect mode but failed to connect discord account.");
+                }
                 saveData();
             });
-            return;
         }
-        member = guild.members.cache.get(id);
-        if (updateRoles(message, username, member.username, member.discriminator, false)) {
-            message.channel.send("Updated " + username + "'s discord account to " + member.username + "#" + member.id + ".");
+        message.channel.send("Updated all server roles.");
+        return;
+    }
+
+    username = params[0].trim();
+    id = params[1].replace("<@", "").replace(">", "").trim();
+    if (/[ !#\$%&'\(\)\*\+,:;=\?@\[\]`"]/.test(username) || !(/^(\d+|auto)$/.test(id))) {
+        message.channel.send("Usage: `!roles connect <sr.c name>/@user` or `<sr.c name>/auto`");
+        return;
+    }
+    if (!users[username]) {
+        message.channel.send("`" + username + "` is not on any LBP leaderboards. Use `!roles reload leaderboard <game name>` to reload a leaderboard.");
+        return;
+    }
+    if (/^auto$/i.test(id)) {
+        if (users[username].discord) {
+            users[username].discord.auto = true;
+        }
+        getDiscordDataFromUserPage(message, username, (success, name, discriminator) => {
+            if (success) {
+                message.channel.send("Updated " + username + "'s discord account to " + name + "#" + discriminator + ".");
+            } else {
+                message.channel.send("Activated auto connect mode but failed to connect discord account.");
+            }
             saveData();
-        } else
-            message.channel.send("Failed to connect discord account.");
-    });
+        });
+        return;
+    }
+    member = guild.members.cache.get(id);
+    if (updateRoles(message, username, member.username, member.discriminator, false)) {
+        message.channel.send("Updated " + username + "'s discord account to " + member.username + "#" + member.id + ".");
+        saveData();
+    } else {
+        message.channel.send("Failed to connect discord account.");
+    }
 }
 
 // Updates all usernames on all leaderboards
 getUsers = (message, whenDone) => {
     let i = 1;
     for (gameName in gameIDs) {
-        getUsersFromGame(message, gameIDs[gameName],
-            (i === Object.keys(gameIDs).length ? whenDone : () => { }));
+        getUsersFromGame(message, gameIDs[gameName], (i === Object.keys(gameIDs).length ? whenDone : () => { }));
         i++;
     }
-    if (autoRefreshTimeout && !autoRefreshTimeout._destroyed)
+    if (autoRefreshTimeout && !autoRefreshTimeout._destroyed) {
         clearTimeout(autoRefreshTimeout);
-    now = new Date();
-    setTimeout(getUsers, Date.now() +
-        1000 * (86400 - ((now.getUTCHours() * 60) + now.getUTCMinutes()) * 60 + now.getUTCSeconds()));
+    }
+    setTimeout(getUsers, 86400000);
 }
 
 // Updates all usernames on all leaderboards of the specified game
@@ -252,24 +290,19 @@ getUsersFromGame = (message, gameID, whenDone) => {
     let i = 1;
     numberOfCategories = Object.keys(leaderboards[gameID].leaderboards).length + Object.keys(leaderboards[gameID].ilCategories).length;
     for (categoryID in leaderboards[gameID].leaderboards) {
-        getUsersFromLeaderboard(message, gameID, categoryID,
-            (i === numberOfCategories ? whenDone : () => { }));
+        getUsersFromLeaderboard(message, gameID, categoryID, (i === numberOfCategories ? whenDone : () => { }));
         i++;
     }
 
     for (categoryID in leaderboards[gameID].ilCategories) {
-        getUsersFromILCategory(message, gameID, categoryID, categoryID,
-            (i === numberOfCategories ? whenDone : () => { }));
+        getUsersFromILCategory(message, gameID, categoryID, categoryID, (i === numberOfCategories ? whenDone : () => { }));
         i++;
     }
 }
 
 // Execute the specified function if the user is an admin/mod
-ifUserIsAdmin = (message, ifTrue) => {
-    if (message.member.roles.cache.some(role => role.name === "Admin" || role.name === "Moderator"))
-        ifTrue();
-    else
-        message.channel.send("You are not a mod/admin.");
+userIsAdmin = (message) => {
+    return message.member.roles.cache.some(role => role.name === "Admin" || role.name === "Moderator");
 }
 
 // Updates discord roles of the specified user and optionally changes the user's discord data
@@ -290,18 +323,20 @@ updateRoles = (message, username, newDiscordName, newDiscordDiscriminator, auto)
         };
     }
     member = guild.members.cache.find(user => user.user.username === newDiscordName && user.user.discriminator === newDiscordDiscriminator);
-    if (!member)
+    if (!member) {
         return false;
+    }
     hasWR = false;
     for (gameID in users[username].games) {
         member.roles.add(roles[gameID]);
-        if (Object.values(users[username].games[gameID]).includes("wr")) {
+        fullGameRuns = Object.values(users[username].games[gameID])[0];
+        if (Object.values(fullGameRuns).includes("wr")) {
             hasWR = true;
             break;
         }
     }
     if (hasWR) {
-        member.roles.add(roles.wr);
+        member.roles.add(roles["wr"]);
     }
     return true;
 }
@@ -319,8 +354,9 @@ sendError = (message, error) => {
 // - delay after downloading any other sr.c page: 10 sec
 // API: https://github.com/speedruncomorg/api/tree/master/version1
 callSrcApi = (path, onEnd, message) => {
-    if (message)
+    if (message) {
         message.react(emotes.bingo);
+    }
     afterPause = () => {
         console.log("API call: " + path);
         https.get({
@@ -361,28 +397,34 @@ getCategories = (message, whenDone = () => { }) => {
                 leaderboards: {},
                 ilCategories: {}
             };
-            if (!leaderboards[game.id])
+            if (!leaderboards[game.id]) {
                 leaderboards[game.id] = updatedCategories;
+            }
             expectedNumberOfRemainingCategories = Object.keys(leaderboards[game.id].leaderboards).length;
                 + Object.keys(leaderboards[game.id].ilCategories).length;
             game.categories.data.forEach((category) => {
                 type = (category.type === "per-level" ? "ilCategories" : "leaderboards");
                 updatedCategories[type][category.id] = null;
-                if (leaderboards[game.id][type][category.id])
+                if (leaderboards[game.id][type][category.id]) {
                     expectedNumberOfRemainingCategories--;
-                else {
+                } else {
                     leaderboards[game.id][type][category.id] = {};
-                    if (recursiveUpdating)
+                    if (recursiveUpdating) {
                         getUsersFromLeaderboard(message, game.id, category.id);
+                    }
                 }
             });
             if (expectedNumberOfRemainingCategories > 0) {
-                for (categoryID in leaderboards[game.id].leaderboards)
-                    if (!updatedCategories.leaderboards.hasOwnProperty(categoryID))
+                for (categoryID in leaderboards[game.id].leaderboards) {
+                    if (!updatedCategories.leaderboards.hasOwnProperty(categoryID)) {
                         deleteCategory(game.id, "leaderboards", categoryID);
-                for (categoryID in leaderboards[game.id].ilCategories)
-                    if (!updatedCategories.ilCategories.hasOwnProperty(categoryID))
+                    }
+                }
+                for (categoryID in leaderboards[game.id].ilCategories) {
+                    if (!updatedCategories.ilCategories.hasOwnProperty(categoryID)) {
                         deleteCategory(game.id, "ilCategories", categoryID);
+                    }
+                }
             }
         });
         whenDone();
@@ -404,8 +446,9 @@ getUsersFromLeaderboard = (message, gameID, categoryID, whenDone = () => { }) =>
         expectedNumberOfRemainingUsers = leaderboards[gameID].leaderboards[categoryID].size;
         JSON.parse(dataQueue).data.players.data.forEach((player, place) => {
             // If the player is a guest, skip them
-            if (player.rel !== "user")
+            if (player.rel !== "user") {
                 return;
+            }
             let username = player.weblink.substring(30);
             updatedUsers[username] = null;
             if (leaderboards[gameID].leaderboards[categoryID][username]) {
@@ -416,8 +459,9 @@ getUsersFromLeaderboard = (message, gameID, categoryID, whenDone = () => { }) =>
                     users[username] = {
                         games: {}
                     };
-                    if (recursiveUpdating)
+                    if (recursiveUpdating) {
                         getDiscordDataFromUserPage(message, username);
+                    }
                 }
 
                 if (!users[username].games.hasOwnProperty(gameID))
@@ -429,11 +473,13 @@ getUsersFromLeaderboard = (message, gameID, categoryID, whenDone = () => { }) =>
                     (place === 0 && !fullGameCategoriesThatAreActuallyILs.includes(categoryID) ? "wr" : null);
             }
         });
-        if (expectedNumberOfRemainingUsers > 0)
+        if (expectedNumberOfRemainingUsers > 0) {
             leaderboards[gameID].leaderboards[categoryID].forEach((username) => {
-                if (!updatedUsers[username])
+                if (!updatedUsers[username]) {
                     deleteUserFromCategory(gameID, "leaderboards", categoryID, username);
+                }
             });
+        }
         whenDone();
     }, message);
 }
@@ -450,8 +496,9 @@ getUsersFromILCategory = (message, gameID, categoryID, endOfUri, whenDone = () =
         apiResponse.data.forEach((run) => {
             run.players.data.forEach((player) => {
                 // If the player is a guest, skip them
-                if (player.rel !== "user")
+                if (player.rel !== "user") {
                     return;
+                }
                 let username = player.weblink.substring(30);
                 updatedUsers[username] = null;
                 if (leaderboards[gameID].ilCategories[categoryID][username]) {
@@ -462,26 +509,30 @@ getUsersFromILCategory = (message, gameID, categoryID, endOfUri, whenDone = () =
                         users[username] = {
                             games: {}
                         };
-                        if (recursiveUpdating)
+                        if (recursiveUpdating) {
                             getDiscordDataFromUserPage(message, username);
+                        }
                     }
-                    if (!users[username].games.hasOwnProperty(gameID))
+                    if (!users[username].games.hasOwnProperty(gameID)) {
                         users[username].games[gameID] = {
                             leaderboards: {},
                             ilCategories: {}
                         };
+                    }
                     users[username].games[gameID].ilCategories[categoryID] = null;
                 }
             });
         });
-        if (nextLink)
+        if (nextLink) {
             getUsersFromILCategory(message, gameID, categoryID, nextLink.uri.substring(84), whenDone);
-        else {
-            if (expectedNumberOfRemainingUsers > 0)
+        } else {
+            if (expectedNumberOfRemainingUsers > 0) {
                 leaderboards[gameID].ilCategories[categoryID].forEach((username) => {
-                    if (!updatedUsers[username])
+                    if (!updatedUsers[username]) {
                         deleteUserFromCategory(gameID, "ilCategories", categoryID, username);
+                    }
                 });
+            }
             whenDone();
         }
     }, message);
@@ -496,19 +547,25 @@ deleteUserFromCategory = (gameID, type, categoryID, username) => {
 // Deletes a specified run from user data
 deleteUserRun = (username, gameID, type, categoryID) => {
     delete users[username].games[gameID][type][categoryID];
-    if (Object.keys(users[username].games[gameID].leaderboards).length === 0 && Object.keys(users[username].games[gameID].ilCategories).length === 0)
+    if (Object.keys(users[username].games[gameID].leaderboards).length === 0 && Object.keys(users[username].games[gameID].ilCategories).length === 0) {
         delete users[username].games[gameID];
-    if (Object.keys(users[username].games).length === 0)
+    }
+    if (Object.keys(users[username].games).length === 0) {
         delete users[username];
+    }
 }
 
 // Updates a specified person's discord data
 getDiscordDataFromUserPage = (message, username, whenDone = () => { }) => {
-    if (users[username].discord && !users[username].discord.auto)
+    if (users[username].discord && !users[username].discord.auto) {
         return;
+    }
     callSrcApi("/user/" + username, (dataQueue) => {
         apiCallTimestamp = Date.now() + 10000;
         foundName = false;
+        name = "";
+        discriminator = "";
+        success = false;
         // To-do: Fix "Oops! The site's under a lot of pressure right now. Please check back later."
         dataQueue.replace(/data-original-title="Discord: ([^#]+#\d{4})"/, (wholeMatch, parenthesesContent) => {
             parenthesesContent = decodeHTML(parenthesesContent)
@@ -517,15 +574,16 @@ getDiscordDataFromUserPage = (message, username, whenDone = () => { }) => {
             success = updateRoles(message, username, name, discriminator, true);
             foundName = true;
         });
-        if (!foundName && users[username].discord && dataQueue.match(/class=['"]username/))
+        if (!foundName && users[username].discord && dataQueue.match(/class=['"]username/)) {
             delete users[username].discord;
+        }
         whenDone(success, name, discriminator);
     }, message);
 }
 
 // Saves data to a file
 saveData = () => {
-    fs.writeFile('./src_data.json', JSON.stringify({
+    fs.writeFile(srcDataFile, JSON.stringify({
         leaderboards: leaderboards,
         users: users
     }), () => { });

@@ -18,7 +18,7 @@ npm i
 
 Create config.json in same directory as bob.js with your auth token.
 
-```JSON
+```json
 {
     "token": "discord auth token goes here"
 }
@@ -72,13 +72,13 @@ npm start
 * `!roles reload leaderboard <game name>` / `all` - Reloads the runs on the specified sr.c leaderboard / all leaderboards.
 * `!roles reload discordaccount <sr.c name>` - Reloads the user's Discord account data entered on sr.c.
 * `!roles reload all` - Reloads everything. Don't use this unless it's necessary.
-* `!roles connect <sr.c name>/@user` / `<sr.c name>/auto` - Connects a sr.c profile with a discord account or switches the sr.c profile back to auto connect mode. (admin/mod-only)
+* `!roles connect <sr.c name>/@user` / `<sr.c name>/auto` / `all` - Connects a sr.c profile with a discord account or switches the sr.c profile back to auto connect mode, or auto-connects all src accounts. (admin/mod-only)
 
-# Upcoming Features?
+## Upcoming Features?
 
-## Stuff I kinda want to do but might be too lazy:
+**Stuff I kinda want to do but might be too lazy**
 * `!coop` - Start a co-op race.
 
-## Stuff that probably won't happen but would be cool:
+**Stuff that probably won't happen but would be cool**
 * Allow multiple simultaneous races (LBP isn't that popular of a speedgame, so this probably isn't necessary).
 * Bingo support (would make the bot name fit a little better, but how would LBP bingo even work?).
