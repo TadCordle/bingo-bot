@@ -7,6 +7,7 @@ var exports = module.exports = {};
 var apiCallTimestamp = Date.now();
 var leaderboards = {};
 var users = {};
+var autoRefreshTimeout;
 
 /*
 leaderboards: {
@@ -108,6 +109,10 @@ exports.init = (c) => {
         leaderboards = data.leaderboards;
         users = data.users;
     } catch { }
+
+    now = new Date();
+    setTimeout(getUsers, Date.now() +
+        1000 * (86400 - ((now.getUTCHours() * 60) + now.getUTCMinutes()) * 60 + now.getUTCSeconds()));
 }
 
 exports.roleCmds = (lowerMessage, message) => {
@@ -235,6 +240,11 @@ getUsers = (message, whenDone) => {
             (i === Object.keys(gameIDs).length ? whenDone : () => { }));
         i++;
     }
+    if (autoRefreshTimeout && !autoRefreshTimeout._destroyed)
+        clearTimeout(autoRefreshTimeout);
+    now = new Date();
+    setTimeout(getUsers, Date.now() +
+        1000 * (86400 - ((now.getUTCHours() * 60) + now.getUTCMinutes()) * 60 + now.getUTCSeconds()));
 }
 
 // Updates all usernames on all leaderboards of the specified game
