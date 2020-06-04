@@ -4,3 +4,4 @@ node_modules/
 config.json
 *.sqlite*
 *.html
+src_data.json
