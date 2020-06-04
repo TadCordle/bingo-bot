@@ -2,6 +2,7 @@ const config = require("./config.json");
 const emotes = require("./emotes.json");
 const categories = require("./categories.js");
 const fun = require("./fun.js");
+const roles = require("./roles.js");
 const Discord = require("discord.js");
 const SQLite = require("better-sqlite3");
 const https = require('https');
@@ -43,7 +44,7 @@ class RaceState {
         this.ilResults = [];
     }
 
-    // Adds an entrant. Returns true if succesful, returns false if the user has already joined.
+    // Adds an entrant. Returns true if successful, returns false if the user has already joined.
     addEntrant(message) {
         if (this.entrants.has(message.author.id)) {
             return false;
@@ -52,7 +53,7 @@ class RaceState {
         return true;
     }
 
-    // Removes an entrant. Returns true if succesful, returns false if the user isn't an entrant.
+    // Removes an entrant. Returns true if successful, returns false if the user isn't an entrant.
     removeEntrant(id) {
         if (this.entrants.has(id)) {
             this.entrants.delete(id);
@@ -137,6 +138,8 @@ client.on("ready", () => {
     }
     raceId++;
 
+    roles.init(client);
+
     console.log("Ready! Next race ID is " + raceId + ".");
 });
 
@@ -195,7 +198,7 @@ client.on("message", (message) => {
             unforfeitCmd(message);
 
         // Admin/Mod only commands
-        else if (message.member.roles.find("name", "Admin") || message.member.roles.find("name", "Moderator")) {
+        else if (message.member.roles.cache.some(role => role.name === "Admin" || role.name === "Moderator")) {
             if (lowerMessage.startsWith("!kick"))
                 kickCmd(message);
 
@@ -223,7 +226,10 @@ client.on("message", (message) => {
     else if (lowerMessage.startsWith("!s"))
         statusCmd(message);
 
-    else fun.funCmds(lowerMessage, message);
+    else {
+        fun.funCmds(lowerMessage, message);
+        roles.roleCmds(lowerMessage, message);
+    }
 });
 
 client.on('error', console.error);
@@ -261,9 +267,17 @@ helpCmd = (message) => {
 **Fun command**
 \`!nr\` / \`!newrunner\` - Mixes two halves of the names of random LBP runners (that have a full-game run on sr.c) together.
 
-**Admin/moderator only**
+**Admin/moderator only (mid-race)**
 \`!kick @user\` - Kicks someone from the race (in case they're afk or something).
 \`!clearrace\` - Resets the bot; forces ending the race without recording any results.
+
+**speedrun.com role commands**
+*Using the keyword \`all\` requires admin/mod rights.*
+\`!roles reload categories\` - Reloads all categories.
+\`!roles reload leaderboard <game name>\` / \`all\` - Reloads the runs on the specified sr.c leaderboard / all leaderboards.
+\`!roles reload discordaccount <sr.c name>\` - Reloads the user's Discord account data entered on sr.c.
+\`!roles reload all\` - Reloads everything. Don't use this unless it's necessary.
+\`!roles connect <sr.c name>/@user\` / \`<sr.c name>/auto\` - Connects a sr.c profile with a discord account or switches the sr.c profile back to auto connect mode. (admin/mod-only)
 `);}
 
 // !race/!join
@@ -322,7 +336,7 @@ ilRaceCmd = (message) => {
 // !game
 gameCmd = (message) => {
     if (raceState.state === State.JOINING) {
-        game = message.content.replace("!game", "").trim();
+        game = message.content.replace(/^!game/i, "").trim();
         word = isILRace() ? "level" : "category";
         name = isILRace() ? levelName : categoryName;
 
@@ -341,7 +355,19 @@ gameCmd = (message) => {
             gameName = game;
             lastLetter = gameName.charAt(gameName.length - 1);
             if (isILRace()) {
-                levelName = (lastLetter === "g" ? "Karting Lessons" : "Introduction");
+                switch (lastLetter) {
+                    case "g":
+                        levelName = "Karting Lessons";
+                        break;
+                    case "P":
+                        levelName = "The Introduction";
+                        break;
+                    case "s":
+                        levelName = "Learning to Move";
+                        break;
+                    default:
+                        levelName = "Introduction";
+                }
                 name = levelName;
             } else {
                 categoryName = "Any%";
@@ -366,7 +392,7 @@ gameCmd = (message) => {
 // !category
 categoryCmd = (message) => {
     if (raceState.state === State.JOINING) {
-        category = message.content.replace("!category", "").trim();
+        category = message.content.replace(/^!category/i, "").trim();
         if (category === null || category === "") {
             if (isILRace()) {
                 message.channel.send("IL race is currently in progress. Current game / level is set to " + gameName + " / " + levelName + ".");
@@ -417,7 +443,7 @@ levelCmd = (message) => {
     }
 
     // Show current level
-    level = message.content.replace("!level", "").trim();
+    level = message.content.replace(/^!level/i, "").trim();
     if (level === null || level === "") {
         message.channel.send("Game / level is currently set to " + gameName + " / " + levelName + ". Set the level using: `!level <level name>`");
         return;
@@ -477,7 +503,7 @@ luckyDipCmd = (message) => {
     https.get(luckyDipUrl, function (result) {
         var { statusCode } = result;
         if (statusCode !== 200) {
-            message.channel.send("Error: Couldn't follow " + luckyDipUrl + "; got a " + statusCode + " response.");
+            message.channel.send("Couldn't follow " + luckyDipUrl + "; got a " + statusCode + " response.");
             return;
         }
         var dataQueue = "";
@@ -512,7 +538,7 @@ chooseLbpMeLevel = (level, message) => {
     https.get(level, function (result) {
         var { statusCode } = result;
         if (statusCode !== 200) {
-            message.channel.send("Error: Couldn't follow " + level + "; got a " + statusCode + " response.");
+            message.channel.send("Couldn't follow " + level + "; got a " + statusCode + " response.");
             return;
         }
 
@@ -750,7 +776,7 @@ statusCmd = (message) => {
 
 // !kick
 kickCmd = (message) => {
-    id = message.content.replace("!kick <@", "").replace(">", "").trim();
+    id = message.content.replace(/^!kick <@/i, "").replace(">", "").trim();
 
     if (raceState.state === State.JOINING) {
         // Just remove user from race
@@ -808,7 +834,7 @@ clearRaceCmd = (message) => {
 // !me
 meCmd = (message) => {
     // Parse game name
-    game = message.content.replace("!me", "").trim();
+    game = message.content.replace(/^!me/i, "").trim();
     if (game === null || game === "") {
         message.channel.send("Usage: `!me <game name>` (e.g. `!me LBP1`)");
         return;
@@ -857,7 +883,7 @@ meCmd = (message) => {
 
 // !results
 resultsCmd = (message) => {
-    raceNum = message.content.replace("!results", "").trim();
+    raceNum = message.content.replace(/^!results/i, "").trim();
     if (raceNum === "") {
         raceNum = raceId - 1;
     }
@@ -915,9 +941,9 @@ ilResultsCmd = (message) => {
     }
 }
 
-// !leaderboard
+// !leaderboard/!elo
 leaderboardCmd = (message) => {
-    params = message.content.replace("!leaderboard ", "").replace("!elo ", "").trim().split('/');
+    params = message.content.replace(/^!leaderboard/i, "").replace(/^!elo/i, "").trim().split('/');
     if (params.length !== 2) {
         message.channel.send("Usage: `!leaderboard <game name> / <category name>` (e.g. `!leaderboard lbp1 / any% no overlord`)");
         return;

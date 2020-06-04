@@ -2,9 +2,9 @@
 
 LittleBigPlanet speedrunning race bot for Discord.
 
-# Setup
+## Setup
 
-Install nodejs (version 6.x or higher).
+Install Node.js (version 6.x or higher).
 
 Get build tools.
 * Windows: Install "VC++ 2015.3 v14.00 (v140) toolset for desktop" through VS Installer
@@ -12,12 +12,13 @@ Get build tools.
 
 Get dependencies.
 
-* `npm init -y`
-* `npm i discord.js node-gyp better-sqlite3`
+```
+npm i
+```
 
 Create config.json in same directory as bob.js with your auth token.
 
-```
+```JSON
 {
     "token": "discord auth token goes here"
 }
@@ -26,13 +27,12 @@ Create config.json in same directory as bob.js with your auth token.
 Run bot.
 
 ```
-node bob.js
+npm start
 ```
 
-# Features
+## Features
 
 **Pre-race commands**
-
 * `!race` - Starts a new full-game race, or joins the current open race if someone already started one.
 * `!game <game name>` - Sets the game (e.g. `!game LBP2`).
 * `!category <category name>` - Sets the category (e.g. `!category styrofoam%`).
@@ -65,6 +65,14 @@ node bob.js
 **Admin/moderator only**
 * `!kick @user` - Kicks someone from the race (in case they're afk or something).
 * `!clearrace` - Resets the bot; forces ending the race without recording any results.
+
+**speedrun.com role commands**
+*Using the keyword `all` requires admin/mod rights.*
+* `!roles reload categories` - Reloads all categories.
+* `!roles reload leaderboard <game name>` / `all` - Reloads the runs on the specified sr.c leaderboard / all leaderboards.
+* `!roles reload discordaccount <sr.c name>` - Reloads the user's Discord account data entered on sr.c.
+* `!roles reload all` - Reloads everything. Don't use this unless it's necessary.
+* `!roles connect <sr.c name>/@user` / `<sr.c name>/auto` - Connects a sr.c profile with a discord account or switches the sr.c profile back to auto connect mode. (admin/mod-only)
 
 # Upcoming Features?
 
