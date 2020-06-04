@@ -12,13 +12,21 @@ var users = {};
 leaderboards: {
     <game ID>: {
         leaderboards: {
-            <category ID>: Set { <sr.c username>, <sr.c username 2>, ... },
-            <category ID 2>: Set { ... },
+            <category ID>: {
+                <sr.c username>: null,
+                <sr.c username 2>: null,
+                ...
+            },
+            <category ID 2>: { ... },
             ...
         },
         ilCategories: {
-            <IL category ID>: Set { <sr.c username>, <sr.c username 2>, ... },
-            <IL category ID 2>: Set { ... },
+            <IL category ID>: {
+                <sr.c username>: null,
+                <sr.c username 2>: null,
+                ...
+            },
+            <IL category ID 2>: { ... },
             ...
         }
     },
@@ -31,13 +39,13 @@ users: {
         games: {
             <game ID>: {
                 leaderboards: {
-                    <category ID>: "run"/"wr",
+                    <category ID>: null / "wr",
                     <category ID 2>: ...,
                     ...
                 },
                 ilCategories: {
-                    <IL category ID>: "run",
-                    <IL category ID 2>: "run",
+                    <IL category ID>: null,
+                    <IL category ID 2>: null,
                     ...
                 }
             },
@@ -223,8 +231,8 @@ connectCmd = (message) => {
 getUsers = (message, whenDone) => {
     let i = 1;
     for (gameName in gameIDs) {
-        getUsersFromGame(message, leaderboards[gameIDs[gameName]],
-            (i === gameIDs.length ? whenDone : () => { }));
+        getUsersFromGame(message, gameIDs[gameName],
+            (i === Object.keys(gameIDs).length ? whenDone : () => { }));
         i++;
     }
 }
@@ -240,7 +248,7 @@ getUsersFromGame = (message, gameID, whenDone) => {
     }
 
     for (categoryID in leaderboards[gameID].ilCategories) {
-        getUsersFromILCategory(message, categoryID,
+        getUsersFromILCategory(message, gameID, categoryID, categoryID,
             (i === numberOfCategories ? whenDone : () => { }));
         i++;
     }
@@ -258,9 +266,9 @@ ifUserIsAdmin = (message, ifTrue) => {
 updateRoles = (message, username, newDiscordName, newDiscordDiscriminator, auto) => {
     discordData = users[username].discord;
     if (newDiscordName) {
-        member = guild.members.cache.find(user => user.username === discordData.username && user.discriminator === discordData.username);
+        member = guild.members.cache.find(user => user.user.username === newDiscordName && user.user.discriminator === newDiscordDiscriminator);
         if (member) {
-            for (gameID in Objects.assign({ wr: 0 }, users[username].games)) {
+            for (gameID in Object.assign({ wr: 0 }, users[username].games)) {
                 if (member.roles.cache.has(roles[gameID]))
                     member.roles.remove(roles[gameID]);
             }
@@ -271,14 +279,16 @@ updateRoles = (message, username, newDiscordName, newDiscordDiscriminator, auto)
             auto: auto
         };
     }
-    member = guild.members.cache.find(user => user.username === discordData.username && user.discriminator === discordData.username);
+    member = guild.members.cache.find(user => user.user.username === newDiscordName && user.user.discriminator === newDiscordDiscriminator);
     if (!member)
         return false;
     hasWR = false;
     for (gameID in users[username].games) {
         member.roles.add(roles[gameID]);
-        if (Object.values(users[username].games[gameID]).includes("wr"))
+        if (Object.values(users[username].games[gameID]).includes("wr")) {
             hasWR = true;
+            break;
+        }
     }
     if (hasWR) {
         member.roles.add(roles.wr);
@@ -302,9 +312,11 @@ callSrcApi = (path, onEnd, message) => {
     if (message)
         message.react(emotes.bingo);
     afterPause = () => {
+        console.log("API call: " + path);
         https.get({
             hostname: "www.speedrun.com",
             path: path,
+            port: 443,
             headers: { 'User-Agent': 'bingo-bot/1.0' }
         }, (result) => {
             var { statusCode } = result;
@@ -345,12 +357,11 @@ getCategories = (message, whenDone = () => { }) => {
                 + Object.keys(leaderboards[game.id].ilCategories).length;
             game.categories.data.forEach((category) => {
                 type = (category.type === "per-level" ? "ilCategories" : "leaderboards");
-                // This is set to zero because its value really doesn't matter as long as it has any value
-                updatedCategories[type][category.id] = 0;
+                updatedCategories[type][category.id] = null;
                 if (leaderboards[game.id][type][category.id])
                     expectedNumberOfRemainingCategories--;
                 else {
-                    leaderboards[game.id][type][category.id] = new Set();
+                    leaderboards[game.id][type][category.id] = {};
                     if (recursiveUpdating)
                         getUsersFromLeaderboard(message, game.id, category.id);
                 }
@@ -370,7 +381,7 @@ getCategories = (message, whenDone = () => { }) => {
 
 // Deletes a category from both leaderboard and user data
 deleteCategory = (gameID, type, categoryID) => {
-    leaderboards[gameID][type][categoryID].toArray().forEach((username) => {
+    leaderboards[gameID][type][categoryID].forEach((username) => {
         deleteUserRun(username, gameID, type, categoryID);
     });
     delete leaderboards[gameID][type][categoryID];
@@ -379,18 +390,18 @@ deleteCategory = (gameID, type, categoryID) => {
 // Updates all usernames on the specified leaderboard
 getUsersFromLeaderboard = (message, gameID, categoryID, whenDone = () => { }) => {
     callSrcApi("/api/v1/leaderboards/" + gameID + "/category/" + categoryID + "?embed=players", (dataQueue) => {
-        updatedUsers = new Set();
+        updatedUsers = {};
         expectedNumberOfRemainingUsers = leaderboards[gameID].leaderboards[categoryID].size;
         JSON.parse(dataQueue).data.players.data.forEach((player, place) => {
             // If the player is a guest, skip them
             if (player.rel !== "user")
                 return;
-            let username = [player.weblink.substring(30)];
-            updatedUsers.add(username);
-            if (leaderboards[gameID].leaderboards[categoryID].has(username)) {
+            let username = player.weblink.substring(30);
+            updatedUsers[username] = null;
+            if (leaderboards[gameID].leaderboards[categoryID][username]) {
                 expectedNumberOfRemainingUsers--;
             } else {
-                leaderboards[gameID].leaderboards[categoryID].add(username);
+                leaderboards[gameID].leaderboards[categoryID][username] = null;
                 if (!users.hasOwnProperty(username)) {
                     users[username] = {
                         games: {}
@@ -405,12 +416,12 @@ getUsersFromLeaderboard = (message, gameID, categoryID, whenDone = () => { }) =>
                         ilCategories: {}
                     };
                 users[username].games[gameID].leaderboards[categoryID] =
-                    (place === 1 && !fullGameCategoriesThatAreActuallyILs.includes(categoryID) ? "wr" : "run");
+                    (place === 0 && !fullGameCategoriesThatAreActuallyILs.includes(categoryID) ? "wr" : null);
             }
         });
         if (expectedNumberOfRemainingUsers > 0)
-            leaderboards[gameID].leaderboards[categoryID].toArray().forEach((username) => {
-                if (!updatedUsers.has(username))
+            leaderboards[gameID].leaderboards[categoryID].forEach((username) => {
+                if (!updatedUsers[username])
                     deleteUserFromCategory(gameID, "leaderboards", categoryID, username);
             });
         whenDone();
@@ -418,12 +429,12 @@ getUsersFromLeaderboard = (message, gameID, categoryID, whenDone = () => { }) =>
 }
 
 // Updates all usernames in the specified IL category
-getUsersFromILCategory = (message, endOfUri, whenDone = () => { }) => {
+getUsersFromILCategory = (message, gameID, categoryID, endOfUri, whenDone = () => { }) => {
     callSrcApi("/api/v1/runs?status=verified&max=200&embed=players&category=" + endOfUri, (dataQueue) => {
         apiResponse = JSON.parse(dataQueue);
         nextLink = apiResponse.pagination.links.find(link => link.rel === "next");
         if (!endOfUri.includes("offset=")) {
-            updatedUsers = new Set();
+            updatedUsers = {};
             expectedNumberOfRemainingUsers = leaderboards[gameID].ilCategories[categoryID].size;
         }
         apiResponse.data.forEach((run) => {
@@ -431,12 +442,12 @@ getUsersFromILCategory = (message, endOfUri, whenDone = () => { }) => {
                 // If the player is a guest, skip them
                 if (player.rel !== "user")
                     return;
-                let username = [player.weblink.substring(30)];
-                updatedUsers.add(username);
-                if (leaderboards[run.game].ilCategories[run.category].has(username)) {
+                let username = player.weblink.substring(30);
+                updatedUsers[username] = null;
+                if (leaderboards[gameID].ilCategories[categoryID][username]) {
                     expectedNumberOfRemainingUsers--;
                 } else {
-                    leaderboards[run.game].ilCategories[run.category].add(username);
+                    leaderboards[gameID].ilCategories[categoryID][username] = null;
                     if (!users.hasOwnProperty(username)) {
                         users[username] = {
                             games: {}
@@ -444,24 +455,24 @@ getUsersFromILCategory = (message, endOfUri, whenDone = () => { }) => {
                         if (recursiveUpdating)
                             getDiscordDataFromUserPage(message, username);
                     }
-                    if (!users[username].games.hasOwnProperty(run.game))
-                        users[username].games[run.game] = {
+                    if (!users[username].games.hasOwnProperty(gameID))
+                        users[username].games[gameID] = {
                             leaderboards: {},
                             ilCategories: {}
                         };
-                    users[username].games[run.game].ilCategories[run.category] = "run";
+                    users[username].games[gameID].ilCategories[categoryID] = null;
                 }
             });
         });
         if (nextLink)
-            getUsersFromILCategory(message, nextLink.uri.substring(84), whenDone);
+            getUsersFromILCategory(message, gameID, categoryID, nextLink.uri.substring(84), whenDone);
         else {
             if (expectedNumberOfRemainingUsers > 0)
-                leaderboards[gameID].ilCategories[categoryID].toArray().forEach((username) => {
-                    if (!updatedUsers.has(username))
+                leaderboards[gameID].ilCategories[categoryID].forEach((username) => {
+                    if (!updatedUsers[username])
                         deleteUserFromCategory(gameID, "ilCategories", categoryID, username);
                 });
-            whenDone(returnValue);
+            whenDone();
         }
     }, message);
 }
@@ -488,10 +499,11 @@ getDiscordDataFromUserPage = (message, username, whenDone = () => { }) => {
     callSrcApi("/user/" + username, (dataQueue) => {
         apiCallTimestamp = Date.now() + 10000;
         foundName = false;
-        name = decodeHTML(parenthesesContent).substring(0, newName.search("#"));
-        discriminator = decodeHTML(parenthesesContent).substring(newName.search("#") + 1);
         // To-do: Fix "Oops! The site's under a lot of pressure right now. Please check back later."
         dataQueue.replace(/data-original-title="Discord: ([^#]+#\d{4})"/, (wholeMatch, parenthesesContent) => {
+            parenthesesContent = decodeHTML(parenthesesContent)
+            name = parenthesesContent.substring(0, parenthesesContent.search("#"));
+            discriminator = parenthesesContent.substring(parenthesesContent.search("#") + 1);
             success = updateRoles(message, username, name, discriminator, true);
             foundName = true;
         });
@@ -506,7 +518,7 @@ saveData = () => {
     fs.writeFile('./src_data.json', JSON.stringify({
         leaderboards: leaderboards,
         users: users
-    }));
+    }), () => { });
 }
 
 // The following code is based on https://github.com/intesso/decode-html to avoid additional dependencies ---------
