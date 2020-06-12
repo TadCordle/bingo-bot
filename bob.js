@@ -5,10 +5,16 @@ const fun = require("./fun.js");
 const roles = require("./roles.js");
 const Discord = require("discord.js");
 const SQLite = require("better-sqlite3");
-const https = require('https');
+const https = require("https");
+const fs = require("fs");
 
+const dataDir = "./data/";
+if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir);
+}
+
+const sql = new SQLite(dataDir + 'race.sqlite');
 const client = new Discord.Client();
-const sql = new SQLite('./race.sqlite');
 var gameName = "LittleBigPlanet";
 var categoryName = "Any% No Overlord";
 var prevCategoryName = "Any% No Overlord"; // Used to save full game category when people do IL races
@@ -278,7 +284,7 @@ helpCmd = (message) => {
 \`!roles disconnect <sr.c name>\` - Disconnects an sr.c profile.
 \`!roles reload leaderboard <game name>\` / \`all\` - Reloads the runs on the specified sr.c leaderboards / all leaderboards.
 \`!roles reload categories\` - Reloads all categories.
-\`!roles reload all\` - Reloads everything. Don't use this unless it's necessary. (admin/mod-only)
+\`!roles reload all\` - Reloads everything. Don't use this unless it's necessary.
 `);
 }
 

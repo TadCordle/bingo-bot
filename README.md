@@ -74,7 +74,7 @@ npm start
 * `!roles disconnect <sr.c name>` - Disconnects an sr.c profile.
 * `!roles reload leaderboard <game name>` / `all` - Reloads the runs on the specified sr.c leaderboards / all leaderboards.
 * `!roles reload categories` - Reloads all categories.
-* `!roles reload all` - Reloads everything. Don't use this unless it's necessary. (admin/mod-only)
+* `!roles reload all` - Reloads everything. Don't use this unless it's necessary.
 
 ## Upcoming Features?
 

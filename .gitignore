@@ -2,6 +2,4 @@
 node_modules/
 *.code-workspace
 config.json
-*.sqlite*
-*.html
-src_data.json
+data/

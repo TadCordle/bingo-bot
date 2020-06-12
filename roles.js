@@ -1,6 +1,7 @@
 const categories = require('./categories.js');
 const emotes = require('./emotes.json');
 const https = require('https');
+const SQLite = require('better-sqlite3');
 
 var exports = module.exports = {};
 var apiCallTimestamp = Date.now();
@@ -23,10 +24,8 @@ const fullGameCategoriesThatAreActuallyILs = [
     "9d8pgl6k"
 ];
 
-exports.init = (c, s, l) => {
-    client = c;
-    sql = s;
-    log = l;
+exports.init = () => {
+    let sql = new SQLite(dataDir + 'roles.sqlite');
     guild = client.guilds.cache.get('129652811754504192');
     roles = {
         "369pp31l": guild.roles.cache.get("716015233256390696"),
@@ -39,7 +38,7 @@ exports.init = (c, s, l) => {
         "wr": guild.roles.cache.get("716014433121337504")
     };
     if (Object.values(roles).includes(undefined)) {
-        sendError(message, "Couldn't find all roles.");
+        log("Couldn't find all roles.");
         process.exit(1);
     }
 
@@ -77,7 +76,7 @@ exports.init = (c, s, l) => {
     client.addUser = sql.prepare("INSERT OR REPLACE INTO discord (username, id, auto) VALUES (@username, @id, @auto);");
     client.deleteUser = sql.prepare("DELETE FROM discord WHERE username = ?;");
 
-    autoRefreshTimeout = setTimeout(getUsers, 86400000 * Math.ceil(Date.now() / 86400000) - Date.now() + 1);
+    startAutoRefresh();
 }
 
 exports.roleCmds = (lowerMessage, message) => {
@@ -112,7 +111,7 @@ reloadLeaderboardsCmd = (message) => {
 
     game = message.content.replace(/^!roles reload leaderboards/i, "").trim();
 
-    if (/^all$/i.test(game)) {
+    if (game.toLowerCase() === "all") {
         if (!userIsAdmin(message)) {
             message.channel.send("You are not a mod/admin.");
             return;
@@ -146,7 +145,7 @@ autoConnectCmd = (message) => {
         return;
     }
 
-    if (/^all$/i.test(username)) {
+    if (username.toLowerCase() === "all") {
         if (!userIsAdmin(message)) {
             message.channel.send("You are not a mod/admin.");
             return;
@@ -187,7 +186,11 @@ reloadAllCmd = (message) => {
 // !roles connect
 connectCmd = (message) => {
     username = message.content.replace(/^!roles connect/i, "").trim();
-    if (/[ !#$%&'()*+,:;=?@[\]`"{}]|^(auto)?$/i.test(username)) {
+    if (username.toLowerCase() === "auto") {
+        message.channel.send("Usage: `!roles autoconnect <sr.c name>` / `all`");
+        return;
+    }
+    if (/[ !#$%&'()*+,:;=?@[\]`"{}]|^$/i.test(username)) {
         message.channel.send("Usage: `!roles connect <sr.c name>`");
         return;
     }
@@ -259,11 +262,7 @@ getUsers = (message, whenDone = () => { }) => {
         }
         i++;
     });
-    if (autoRefreshTimeout && !autoRefreshTimeout._destroyed) {
-        clearTimeout(autoRefreshTimeout);
-    }
-    // Timeouts are inaccurate so having a delay of 86400000 would slowly make the 24h cycle shift
-    autoRefreshTimeout = setTimeout(getUsers, 86400000 * Math.ceil(Date.now() / 86400000) - Date.now() + 1);
+    startAutoRefresh();
 }
 
 // Updates all usernames on all leaderboards of the specified game
@@ -411,11 +410,11 @@ getCategories = (message, recursiveUpdating, whenDone = () => { }) => {
 
 // Updates all usernames on the specified leaderboard
 getUsersFromLeaderboard = (message, gameID, categoryID, whenDone = () => { }) => {
-    client.deletePlaceholder.run(categoryID);
     callSrcApi(message, "/api/v1/leaderboards/" + gameID + "/category/" + categoryID + "?embed=players", (dataQueue) => {
         updatedUsers = new Set();
         category = client.getCategoryRuns.all(categoryID);
         let expectedNumberOfRemainingUsers = category.length;
+        client.deletePlaceholder.run(categoryID);
         JSON.parse(dataQueue).data.players.data.forEach((player, place) => {
             // If the player is a guest, skip them
             if (player.rel !== "user") {
@@ -455,7 +454,6 @@ getUsersFromLeaderboard = (message, gameID, categoryID, whenDone = () => { }) =>
 
 // Updates all usernames in the specified IL category
 getUsersFromILCategory = (message, gameID, categoryID, endOfUri, whenDone = () => { }) => {
-    client.deletePlaceholder.run(categoryID);
     callSrcApi(message, "/api/v1/runs?status=verified&max=200&embed=players&category=" + endOfUri, (dataQueue) => {
         apiResponse = JSON.parse(dataQueue);
         nextLink = apiResponse.pagination.links.find(link => link.rel === "next");
@@ -463,6 +461,7 @@ getUsersFromILCategory = (message, gameID, categoryID, endOfUri, whenDone = () =
             updatedUsers = new Set();
             category = client.getCategoryRuns.all(categoryID);
             expectedNumberOfRemainingUsers = category.length;
+            client.deletePlaceholder.run(categoryID);
         }
         apiResponse.data.forEach((run) => {
             run.players.data.forEach((player) => {
@@ -505,6 +504,14 @@ getUsersFromILCategory = (message, gameID, categoryID, endOfUri, whenDone = () =
             whenDone();
         }
     });
+}
+
+// Starts daily auto refresh
+startAutoRefresh = () => {
+    clearTimeout(autoRefreshTimeout);
+    // This will run getUsers once Date.now() is divisible by 86400000 (every day)
+    // Timeouts are inaccurate so having a delay of 86400000 would slowly make the 24h cycle shift
+    autoRefreshTimeout = setTimeout(getUsers, 86400000 * Math.ceil(Date.now() / 86400000) - Date.now() + 1);
 }
 
 // Updates a specified person's discord data
