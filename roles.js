@@ -6,6 +6,9 @@ const SQLite = require('better-sqlite3');
 var exports = module.exports = {};
 var apiCallTimestamp = Date.now();
 var autoRefreshTimeout;
+var client;
+var log;
+var guild;
 
 var recursiveUpdating = true;
 
@@ -24,8 +27,10 @@ const fullGameCategoriesThatAreActuallyILs = [
     "9d8pgl6k"
 ];
 
-exports.init = (client, log) => {
+exports.init = (c, l) => {
     let sql = new SQLite("./data/roles.sqlite");
+    client = c;
+    log = l;
     guild = client.guilds.cache.get('129652811754504192');
     roles = {
         "369pp31l": guild.roles.cache.get("716015233256390696"),
@@ -140,10 +145,6 @@ autoConnectCmd = (message) => {
         message.channel.send("Usage: `!roles autoconnect <sr.c name>` / `all`");
         return;
     }
-    if (!client.getUserRunCount.get(username)["count(*)"]) {
-        message.channel.send("`" + username + "` is not on any LBP leaderboards. Use `!roles reload leaderboard <game name>` to reload a leaderboard.");
-        return;
-    }
 
     if (username.toLowerCase() === "all") {
         if (!userIsAdmin(message)) {
@@ -154,6 +155,11 @@ autoConnectCmd = (message) => {
         return;
     }
 
+    if (!client.getUserRunCount.get(username)["count(*)"]) {
+        message.channel.send("`" + username + "` is not on any LBP leaderboards. Use `!roles reload leaderboard <game name>` to reload a leaderboard.");
+        return;
+    }
+    
     getDiscordDataFromUserPage(message, username, (success, tag) => {
         if (success) {
             message.channel.send("Updated `" + username + "`'s discord account to `" + tag + "`.");
@@ -330,15 +336,6 @@ updateRoles = (message, username, newDiscordName, newDiscordDiscriminator, auto)
     return true;
 }
 
-// Sends error to the channel where the command was send or DMs it to the bot dev if the error wasn't caused by a command
-sendError = (message, error) => {
-    if (message) {
-        message.channel.send(error);
-    } else {
-        log("Error while trying to update roles using the sr.c API:\n" + error);
-    }
-}
-
 // Gets data from speedrun.com
 // - delay after API call: 1 sec
 // - delay after downloading any other sr.c page: 10 sec
@@ -357,7 +354,7 @@ callSrcApi = (message, path, onEnd) => {
         }, (result) => {
             var { statusCode } = result;
             if (statusCode !== 200) {
-                sendError(message, "Couldn't follow https://www.speedrun.com" + path + "; got a " + statusCode + " response.");
+                log(message, "Couldn't follow https://www.speedrun.com" + path + "; got a " + statusCode + " response.", true);
                 return;
             }
             var dataQueue = "";

@@ -271,7 +271,9 @@ helpCmd = (message) => {
 
 **Fun command**
 \`!nr\` / \`!newrunner\` - Mixes two halves of the names of random LBP runners (that have a full-game run on sr.c) together.
+`);
 
+    message.channel.send(`
 **Admin/moderator only (mid-race)**
 \`!kick @user\` - Kicks someone from the race (in case they're afk or something).
 \`!clearrace\` - Resets the bot; forces ending the race without recording any results.
@@ -1228,8 +1230,12 @@ placeEmote = (place) => {
 }
 
 // Writes something to stdout
-log = (text) => {
-    console.log("[" + (new Date()).toISOString() + "] " + text);
+log = (text, err=false) => {
+    if (err) {
+        console.error("[" + (new Date()).toISOString() + "] " + text);
+    } else {
+        console.log("[" + (new Date()).toISOString() + "] " + text);
+    }
 }
 
 // The following code is based on https://github.com/intesso/decode-html to avoid additional dependencies ---------
