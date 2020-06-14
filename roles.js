@@ -9,10 +9,9 @@ var autoRefreshTimeout;
 var client;
 var log;
 var guild;
+var roles;
 
-var recursiveUpdating = true;
-
-const gameIDs = {
+const gameIds = {
     "LittleBigPlanet": "369pp31l",
     "LittleBigPlanet PSP": "pd0n821e",
     "Sackboy's Prehistoric Moves": "4d704r17",
@@ -20,6 +19,7 @@ const gameIDs = {
     "LittleBigPlanet PS Vita": "369vz81l",
     "LittleBigPlanet Karting": "pd0n531e",
     "LittleBigPlanet 3": "k6qw8z6g"
+    // TODO: Add Sackboy: A Big Adventure
 };
 
 const fullGameCategoriesThatAreActuallyILs = [
@@ -43,307 +43,145 @@ exports.init = (c, l) => {
         "wr": guild.roles.cache.get("716014433121337504")
     };
     if (Object.values(roles).includes(undefined)) {
-        log("Couldn't find all roles.");
-        process.exit(1);
+        log("Couldn't find all roles; Discord roles may have changed.", true);
     }
 
-    // Setup tables for keeping track of people's runs on sr.c
-    if (!sql.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='runs';").get()['count(*)']) {
-        sql.prepare("CREATE TABLE runs (game_id TEXT, category_id TEXT, username TEXT, il BOOL, wr BOOL, placeholder BOOL);").run();
-        sql.prepare("CREATE UNIQUE INDEX idx_runs_run ON runs (category_id, username);").run();
+    // Setup tables for keeping track of src/discord connections
+    if (!sql.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='src_runners';").get()['count(*)']) {
+        sql.prepare("CREATE TABLE src_runners (discord_name TEXT PRIMARY KEY, src_name TEXT);").run();
         sql.pragma("synchronous = 1");
         sql.pragma("journal_mode = wal");
     }
 
-    // Setup tables for keeping track of discord names
-    if (!sql.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='discord';").get()['count(*)']) {
-        sql.prepare("CREATE TABLE discord (username TEXT PRIMARY KEY, id TEXT, auto BOOL);").run();
-        sql.pragma("synchronous = 1");
-        sql.pragma("journal_mode = wal");
+    // Setup SQL queries for setting/retrieving src/discord connections
+    client.getUser = sql.prepare("SELECT * FROM src_runners;");
+    client.addUser = sql.prepare("INSERT OR REPLACE INTO src_runners (discord_name, src_name) VALUES (@discord_name, @src_name);");
+    client.deleteUser = sql.prepare("DELETE FROM src_runners WHERE discord_name = ?;");
+
+    // This will run getUsers once Date.now() is divisible by 86400000 (every day)
+    // Timeouts are inaccurate so having a delay of 86400000 would slowly make the 24h cycle shift
+    autoRefreshTimeout = setTimeout(refreshAllRoles, 86400000 * Math.ceil(Date.now() / 86400000) - Date.now() + 1);
+}
+
+exports.giveRoleFromRace = (discordId, gameName) => {
+    member = guild.members.cache.get(discordId);
+    if (!member) {
+        return;
     }
-
-    // Setup SQL queries for setting/retrieving runs
-    client.getRunCount = sql.prepare("SELECT count(*) FROM runs;");
-    client.getGameRuns = sql.prepare("SELECT * FROM runs WHERE game_id = ?;");
-    client.getCategoryRuns = sql.prepare("SELECT * FROM runs WHERE category_id = ?;");
-    client.getUserRunCount = sql.prepare("SELECT count(*) FROM runs WHERE username = ?;");
-    client.getGameCategories = sql.prepare("SELECT DISTINCT category_id, il FROM runs WHERE game_id = ?;");
-    client.getCategories = sql.prepare("SELECT DISTINCT category_id, game_id, il FROM runs;");
-    client.getUserGames = sql.prepare("SELECT DISTINCT game_id FROM runs WHERE username = ?;");
-    client.getUserWRCount = sql.prepare("SELECT count(*) FROM runs WHERE wr = 1 AND username = ?;");
-    client.addRun = sql.prepare("INSERT INTO runs (game_id, category_id, username, il, wr, placeholder) VALUES (@game_id, @category_id, @username, @il, @wr, @placeholder);");
-    client.deleteRun = sql.prepare("DELETE FROM runs WHERE category_id = ? AND username = ?;");
-    client.deletePlaceholder = sql.prepare("DELETE FROM runs WHERE category_id = ? AND placeholder = 1;");
-
-    // Setup SQL queries for setting/retrieving user discord data
-    client.getUser = sql.prepare("SELECT * FROM discord WHERE username = ?;");
-    client.getAutoConnectedUsers = sql.prepare("SELECT * FROM discord WHERE auto = 1;");
-    client.addUser = sql.prepare("INSERT OR REPLACE INTO discord (username, id, auto) VALUES (@username, @id, @auto);");
-    client.deleteUser = sql.prepare("DELETE FROM discord WHERE username = ?;");
-
-    startAutoRefresh();
+    member.roles.add(roles[gameIds[gameName]]);
 }
 
 exports.roleCmds = (lowerMessage, message) => {
     // Role commands (available anywhere)
-    if (lowerMessage.startsWith("!roles reload categories"))
-        reloadCategoriesCmd(message);
-    else if (lowerMessage.startsWith("!roles reload leaderboards"))
-        reloadLeaderboardCmd(message);
-    else if (lowerMessage.startsWith("!roles autoconnect"))
-        autoConnectCmd(message);
-    else if (lowerMessage.startsWith("!roles reload all"))
-        reloadAllCmd(message);
-    else if (lowerMessage.startsWith("!roles connect"))
-        connectCmd(message);
-    else if (lowerMessage.startsWith("!roles disconnect"))
-        disconnectCmd(message);
-}
-
-// !roles reload categories
-reloadCategoriesCmd = (message) => {
-    getCategories(message, recursiveUpdating, () => {
-        message.channel.send("Updated category data.");
-    });
-}
-
-// !roles reload leaderboards
-reloadLeaderboardsCmd = (message) => {
-    if (client.getRunCount['count(*)'] === 0) {
-        message.channel.send("No category data found, try running `!roles reload categories` first.");
-        return;
-    }
-
-    game = message.content.replace(/^!roles reload leaderboards/i, "").trim();
-
-    if (game.toLowerCase() === "all") {
-        if (!userIsAdmin(message)) {
-            message.channel.send("You are not a mod/admin.");
-            return;
-        }
-        getUsers(message, () => {
-            message.channel.send("Updated leaderboard data.");
-        });
-    } else {
-        game = categories.normalizeGameName(game);
-        if (game === null) {
-            message.channel.send("Specified game name was not a valid LBP game, try something else.");
-            return;
-        }
-        getUsersFromGame(message, gameIDs[game], () => {
-            message.channel.send("Updated leaderboard data for " + game + ".");
-        });
-    }
-}
-
-// !roles autoconnect
-autoConnectCmd = (message) => {
-    username = message.content.replace(/^!roles autoconnect/i, "").trim();
-
-    // Make sure argument is a valid discord username
-    if (/[ !#$%&'()*+,:;=?@[\]`"{}]|^$/.test(username)) {
-        message.channel.send("Usage: `!roles autoconnect <sr.c name>` / `all`");
-        return;
-    }
-
-    if (username.toLowerCase() === "all") {
-        if (!userIsAdmin(message)) {
-            message.channel.send("You are not a mod/admin.");
-            return;
-        }
-        autoConnectAll(message);
-        return;
-    }
-
-    if (!client.getUserRunCount.get(username)["count(*)"]) {
-        message.channel.send("`" + username + "` is not on any LBP leaderboards. Use `!roles reload leaderboard <game name>` to reload a leaderboard.");
-        return;
-    }
+    if (lowerMessage.startsWith("!roles"))
+        rolesCmd(message);
     
-    getDiscordDataFromUserPage(message, username, (success, tag) => {
-        if (success) {
-            message.channel.send("Updated `" + username + "`'s discord account to `" + tag + "`.");
+    // TODO: Add disconnect command?
+
+    else if (message.member.roles.cache.some(role => role.name === "Admin" || role.name === "Moderator")) {
+        if (lowerMessage.startsWith("!reloadroles"))
+            reloadRolesCmd(message);
+    }
+}
+
+// !roles <src name>
+rolesCmd = (message) => {
+    params = message.content.replace(/^!roles/i, "").trim().split(" ");
+    if (params.length !== 1 && params.length !== 2) {
+        message.channel.send("Usage: `!roles <speedrun.com name>` (e.g. `!roles RbdJellyfish`)");
+        return;
+    }
+    srcName = params[0];
+
+    // Moderators can update peoples' roles for them
+    if (params.length === 2) {
+        if (!message.member.roles.cache.some(role => role.name === "Admin" || role.name === "Moderator")) {
+            message.channel.send("Usage: `!roles <speedrun.com name>` (e.g. `!roles RbdJellyfish`)");
             return;
         }
-        user = client.getUser.get(username);
-        if (user && user.auto === 0) {
-            client.addUser.run({ username: username, id: user.id, auto: 1 });
-            message.channel.send("Activated auto connect mode but failed to connect discord account.");
-        } else {
-            message.channel.send("Failed to connect discord account.");
-        }
-    });
-}
-
-// !roles reload all
-reloadAllCmd = (message) => {
-    if (!userIsAdmin(message)) {
-        message.channel.send("You are not a mod/admin.");
+        discordId = params[1];
+        doRoleUpdates(discordId, srcName);
         return;
     }
 
-    getCategories(message, false, () => {
-        getUsers(message, () => {
-            autoConnectAll(message);
+    // Check if profile matches caller
+    callSrc("/user/" + srcName, (dataQueue) => {
+        socialsMatch = dataQueue.match(/<p class='socialicons'>(.*?)<\/p>/);
+        if (!dataQueue.match(/class=['"]username/) || !socialsMatch) {
+            message.channel.send("Speedrun.com is having a moment, try again later.");
+            return;
+        }
+        socials = socialsMatch[1];
+
+        // Discord
+        discordMatch = socials.match(/data-original-title="Discord: (.*?)"/);
+        discordName = message.author.username + "#" + message.author.discriminator;
+        if (discordMatch && discordMatch[1] === discordName) {
+            message.react(emotes.bingo);
+            doRoleUpdates(message.author.id, srcName);
+            return;
+        }
+
+        // TODO: check if SRC linked accounts match any discord linked accounts.
+        //       Not currently possible with discord.js :(
+        // Twitch
+        // Youtube
+        // Steam
+        // Battle.net
+        // Twitter
+        // Facebook
+    });
+}
+
+doRoleUpdates = (discordId, srcName) => {
+    callSrc("/api/v1/users/" + srcName + "/personal-bests", (dataQueue) => {
+        member = guild.members.cache.get(discordId);
+        if (!member) {
+            return;
+        }
+        
+        // Save discord/src name link
+        srcUser = { discord_name: `${discordId}`, src_name: `${srcName}` };
+        client.addUser.run(srcUser);
+        
+        // Figure out what roles user should have
+        rolesShouldHave = new Set();
+        data = JSON.parse(dataQueue).data;
+        data.forEach((d) => {
+            role = roles[d.run.game];
+            if (role) {
+                rolesShouldHave.add(role);
+                if (d.place === 1 && d.run.level === null && !fullGameCategoriesThatAreActuallyILs.includes(d.run.category)) {
+                    rolesShouldHave.add(roles["wr"]);
+                }
+            }
+        });
+
+        // Update roles
+        Object.values(roles).forEach((role) => {
+            if (rolesShouldHave.has(role)) {
+                member.roles.add(role);
+            } else {
+                member.roles.remove(role);
+            } 
         });
     });
 }
 
-// !roles connect
-connectCmd = (message) => {
-    username = message.content.replace(/^!roles connect/i, "").trim();
-    if (username.toLowerCase() === "auto") {
-        message.channel.send("Usage: `!roles autoconnect <sr.c name>` / `all`");
-        return;
-    }
-    if (/[ !#$%&'()*+,:;=?@[\]`"{}]|^$/i.test(username)) {
-        message.channel.send("Usage: `!roles connect <sr.c name>`");
-        return;
-    }
-    if (!client.getUserRunCount.get(username)["count(*)"]) {
-        message.channel.send("`" + username + "` is not on any LBP leaderboards. Use `!roles reload leaderboard <game name>` to reload a leaderboard.");
-        return;
-    }
-
-    previousUser = guild.members.cache.get(client.getUser.get(username).id);
-    if (updateRoles(message, username, message.author.username, message.author.discriminator, false)) {
-        message.channel.send("Updated `" + username + "`'s discord account to <@" + message.author.id + ">.");
-        if (!message.guild && (!previousUser || message.author.id !== previousUser.id)) {
-            log("Updated " + username + "'s discord account to " + message.author.tag + ".");
-            previousUser.createDM();
-            previousUser.dmChannel.send("Updated `" + username + "`'s discord account to `" + message.author.tag + "`.");
-        }
-    } else {
-        message.channel.send("Failed to connect discord account.");
-    }
+// !reloadroles
+reloadRolesCmd = (message) => {
+    // TODO
 }
 
-// !roles disconnect
-disconnectCmd = (message) => {
-    username = message.content.replace(/^!roles disconnect/i, "").trim();
-    if (/[ !#$%&'()*+,:;=?@[\]`"{}]|^$/i.test(username)) {
-        message.channel.send("Usage: `!roles disconnect <sr.c name>`");
-        return;
-    }
-    previousUser = client.getUser.get(username);
-    if (!previousUser) {
-        message.channel.send("`" + username + "` is not connected to a discord account.");
-        return;
-    }
-
-    client.deleteUser.run(username);
-    message.channel.send("Disconnected `" + username + "` from discord.");
-    previousUser = guild.members.cache.get(previousUser.id);
-    if (!message.guild && (!previousUser || message.author.id !== previousUser.id)) {
-        log(message.author.tag + " disconnected " + username + " from discord.");
-        previousUser.createDM();
-        previousUser.dmChannel.send("`" + message.author.tag + "` disconnected `" + username + "` from discord.");
-    }
-}
-
-// Reloads all auto connected discord accounts entered on sr.c
-autoConnectAll = (message) => {
-    client.getAutoConnectedUsers.all().forEach((user, i, array) => {
-        getDiscordDataFromUserPage(message, user.username, (success) => {
-            if (!success) {
-                log("Failed to connect " + user.username + "'s discord account.");
-            }
-            if (i + 1 === array.length) {
-                message.channel.send("Updated all auto connected accounts.");
-            }
-        });
-    });
-}
-
-// Updates all usernames on all leaderboards
-getUsers = (message, whenDone = () => { }) => {
-    let i = 1;
-    categoriesToUpdate = client.getCategories.all();
-    numberOfCategories = categoriesToUpdate.length;
-    categoriesToUpdate.forEach((run) => {
-        if (run.il) {
-            getUsersFromILCategory(message, run.game_id, run.category_id, run.category_id, (i === numberOfCategories ? whenDone : () => { }));
-        } else {
-            getUsersFromLeaderboard(message, run.game_id, run.category_id, (i === numberOfCategories ? whenDone : () => { }));
-        }
-        i++;
-    });
-    startAutoRefresh();
-}
-
-// Updates all usernames on all leaderboards of the specified game
-getUsersFromGame = (message, gameID, whenDone = () => { }) => {
-    let i = 1;
-    categoriesToUpdate = client.getGameCategories.all(gameID);
-    numberOfCategories = categoriesToUpdate.length;
-    categoriesToUpdate.forEach((run) => {
-        if (run.il) {
-            getUsersFromILCategory(message, gameID, run.category_id, run.category_id, (i === numberOfCategories ? whenDone : () => { }));
-        } else {
-            getUsersFromLeaderboard(message, gameID, run.category_id, (i === numberOfCategories ? whenDone : () => { }));
-        }
-        i++;
-    });
-}
-
-// Execute the specified function if the user is an admin/mod
-userIsAdmin = (message) => {
-    member = guild.members.cache.get(message.author.id);
-    return member && member.roles.cache.some(role => role.name === "Admin" || role.name === "Moderator");
-}
-
-// Updates discord roles of the specified user and optionally changes the user's discord data
-updateRoles = (message, username, newDiscordName, newDiscordDiscriminator, auto) => {
-    discordData = client.getUser.get(username);
-    member = discordData
-        ? guild.members.cache.get(discordData.id)
-        : undefined;
-
-    if (newDiscordName) {
-        newMember = guild.members.cache.find(member => member.user.tag === newDiscordName + "#" + newDiscordDiscriminator);
-        if (newMember) {
-            if (member) {
-                member.roles.cache.forEach((role) => {
-                    if (Object.values(roles).some(r => r.id === role.id)) {
-                        member.roles.remove(role);
-                    }
-                });
-            }
-            discordData = {
-                username: username,
-                id: newMember.id,
-                auto: + auto
-            };
-            client.addUser.run(discordData);
-            member = newMember;
-        }
-    }
-    if (!member) {
-        log("User " + newDiscordName + "#" + newDiscordDiscriminator + " not found.");
-        return false;
-    }
-    gameRoles = client.getUserGames.all(username);
-    Object.values(gameIDs).forEach((gameID) => {
-        hasRole = member.roles.cache.has(roles[gameID]);
-        if (hasRole !== gameRoles.some(run => run.game_id === gameID)) {
-            (hasRole ? member.roles.remove : member.roles.add)(roles[gameID]);
-        }
-    });
-    hasRole = member.roles.cache.has(roles.wr);
-    if (hasRole === (client.getUserWRCount.get(username)["count(*)"] === 0)) {
-        (hasRole ? member.roles.remove : member.roles.add)(roles.wr);
-    }
-    return true;
+refreshAllRoles = () => {
+    // TODO
 }
 
 // Gets data from speedrun.com
 // - delay after API call: 1 sec
 // - delay after downloading any other sr.c page: 10 sec
 // API: https://github.com/speedruncomorg/api/tree/master/version1
-callSrcApi = (message, path, onEnd) => {
-    if (message) {
-        message.react(emotes.bingo);
-    }
+callSrc = (path, onEnd) => {
     afterPause = () => {
         log("API call: " + path);
         https.get({
@@ -353,8 +191,12 @@ callSrcApi = (message, path, onEnd) => {
             headers: { 'User-Agent': 'bingo-bot/1.0' }
         }, (result) => {
             var { statusCode } = result;
-            if (statusCode !== 200) {
-                log(message, "Couldn't follow https://www.speedrun.com" + path + "; got a " + statusCode + " response.", true);
+            if (statusCode === 302) {
+                callSrc(result.headers.location, onEnd);
+                return;
+            }
+            if (statusCode !== 200 && statusCode !== 302) {
+                log("Couldn't follow https://www.speedrun.com" + path + "; got a " + statusCode + " response.", true);
                 return;
             }
             var dataQueue = "";
@@ -375,185 +217,3 @@ callSrcApi = (message, path, onEnd) => {
         apiCallTimestamp += apiPauseLength;
     }
 }
-
-// Updates all category and game IDs
-getCategories = (message, recursiveUpdating, whenDone = () => { }) => {
-    callSrcApi(message, "/api/v1/series/v7emqr49/games?embed=categories", (dataQueue) => {
-        JSON.parse(dataQueue).data.forEach((game) => {
-            updatedCategories = {
-                false: new Set(),
-                true: new Set()
-            };
-            expectedNumberOfRemainingCategories = client.getGameCategories.all(game.id).length;
-            game.categories.data.forEach((category) => {
-                il = category.type === "per-level";
-                updatedCategories[il].add(category.id);
-                if (client.getCategoryRuns.get(category.id)) {
-                    expectedNumberOfRemainingCategories--;
-                } else {
-                    client.addRun.run({ game_id: game.id, category_id: category.id, username: null, il: + il, wr: null, placeholder: 1 });
-                    if (recursiveUpdating) {
-                        getUsersFromLeaderboard(message, game.id, category.id);
-                    }
-                }
-            });
-            if (expectedNumberOfRemainingCategories > 0 && client.getGameRuns.all(game.id).find(run => !updatedCategories[run.il].has(run.category_id))) {
-                client.deleteCategory.run(categoryID);
-            }
-        });
-        whenDone();
-    });
-}
-
-// Updates all usernames on the specified leaderboard
-getUsersFromLeaderboard = (message, gameID, categoryID, whenDone = () => { }) => {
-    callSrcApi(message, "/api/v1/leaderboards/" + gameID + "/category/" + categoryID + "?embed=players", (dataQueue) => {
-        updatedUsers = new Set();
-        category = client.getCategoryRuns.all(categoryID);
-        let expectedNumberOfRemainingUsers = category.length;
-        client.deletePlaceholder.run(categoryID);
-        JSON.parse(dataQueue).data.players.data.forEach((player, place) => {
-            // If the player is a guest, skip them
-            if (player.rel !== "user") {
-                return;
-            }
-            let username = player.weblink.substring(30);
-            updatedUsers.add(username);
-            if (category.find(run => run.category_id === categoryID && run.username === username)) {
-                expectedNumberOfRemainingUsers--;
-            } else {
-                run = {
-                    game_id: gameID, category_id: categoryID, username: username, il: 0,
-                    wr: + (place === 0 && !fullGameCategoriesThatAreActuallyILs.includes(categoryID)), placeholder: 0
-                };
-                category.push(run);
-                client.addRun.run(run);
-                user = client.getUser.get(username);
-                if (recursiveUpdating && client.getUserRunCount.get(username)["count(*)"] === 1 && !user) {
-                    getDiscordDataFromUserPage(message, username);
-                } else if (user) {
-                    updateRoles(message, username);
-                }
-            }
-        });
-        if (expectedNumberOfRemainingUsers > 0) {
-            category.forEach((run) => {
-                if (updatedUsers.has(run.username)) {
-                    return;
-                }
-                client.deleteRun.run(categoryID, run.username);
-                updateRoles(message, run.username);
-            });
-        }
-        whenDone();
-    });
-}
-
-// Updates all usernames in the specified IL category
-getUsersFromILCategory = (message, gameID, categoryID, endOfUri, whenDone = () => { }) => {
-    callSrcApi(message, "/api/v1/runs?status=verified&max=200&embed=players&category=" + endOfUri, (dataQueue) => {
-        apiResponse = JSON.parse(dataQueue);
-        nextLink = apiResponse.pagination.links.find(link => link.rel === "next");
-        if (!endOfUri.includes("offset=")) {
-            updatedUsers = new Set();
-            category = client.getCategoryRuns.all(categoryID);
-            expectedNumberOfRemainingUsers = category.length;
-            client.deletePlaceholder.run(categoryID);
-        }
-        apiResponse.data.forEach((run) => {
-            run.players.data.forEach((player) => {
-                // If the player is a guest, skip them
-                if (player.rel !== "user") {
-                    return;
-                }
-                let username = player.weblink.substring(30);
-                updatedUsers.add(username);
-                if (category.find(run => run.category_id === categoryID && run.username === username)) {
-                    expectedNumberOfRemainingUsers--;
-                } else {
-                    run = { game_id: gameID, category_id: categoryID, username: username, il: 1, wr: null, placeholder: 0 };
-                    category.push(run);
-                    client.addRun.run(run);
-                    user = client.getUser.get(username);
-                    if (recursiveUpdating && client.getUserRunCount.get(username)["count(*)"] === 1 && !user) {
-                        getDiscordDataFromUserPage(message, username);
-                    } else if (user) {
-                        updateRoles(message, username);
-                    }
-                }
-            });
-        });
-        if (nextLink) {
-            // setImmediate is used to avoid stack overflow
-            setImmediate(() => {
-                getUsersFromILCategory(message, gameID, categoryID, nextLink.uri.substring(84), whenDone);
-            });
-        } else {
-            if (expectedNumberOfRemainingUsers > 0) {
-                category.forEach((run) => {
-                    if (updatedUsers.has(run.username)) {
-                        return;
-                    }
-                    client.deleteRun.run(categoryID, run.username);
-                    updateRoles(message, run.username);
-                });
-            }
-            whenDone();
-        }
-    });
-}
-
-// Starts daily auto refresh
-startAutoRefresh = () => {
-    clearTimeout(autoRefreshTimeout);
-    // This will run getUsers once Date.now() is divisible by 86400000 (every day)
-    // Timeouts are inaccurate so having a delay of 86400000 would slowly make the 24h cycle shift
-    autoRefreshTimeout = setTimeout(getUsers, 86400000 * Math.ceil(Date.now() / 86400000) - Date.now() + 1);
-}
-
-// Updates a specified person's discord data
-getDiscordDataFromUserPage = (message, username, whenDone = () => { }) => {
-    callSrcApi(message, "/user/" + username, (dataQueue) => {
-        foundName = false;
-        name = "";
-        discriminator = "";
-        success = false;
-        // To-do: Fix "Oops! The site's under a lot of pressure right now. Please check back later."
-        dataQueue.replace(/data-original-title="Discord: ([^#]+#\d{4})"/, (wholeMatch, parenthesesContent) => {
-            parenthesesContent = decodeHTML(parenthesesContent)
-            name = parenthesesContent.split("#")[0];
-            discriminator = parenthesesContent.split("#")[1];
-            success = updateRoles(message, username, name, discriminator, true);
-            foundName = true;
-        });
-        if (!foundName && dataQueue.match(/class=['"]username/) && client.getUser.get(username)) {
-            client.deleteUser.run(username);
-        }
-        whenDone(success, name + "#" + discriminator);
-    });
-}
-
-// The following code is based on https://github.com/intesso/decode-html to avoid additional dependencies ---------
-// (license: https://github.com/intesso/decode-html/blob/master/LICENSE)
-// Store markers outside of the function scope, not to recreate them on every call
-const entities = {
-    'amp': '&',
-    'apos': '\'',
-    'lt': '<',
-    'gt': '>',
-    'quot': '"',
-    'nbsp': ' '
-};
-const entityPattern = /&([a-z]+);/ig;
-
-decodeHTML = (text) => {
-    // A single replace pass with a static RegExp is faster than a loop
-    return text.replace(entityPattern, (match, entity) => {
-        entity = entity.toLowerCase();
-        if (entities.hasOwnProperty(entity)) {
-            return entities[entity];
-        }
-        // Return original string if there is no matching entity (no replace)
-        return match;
-    });
-};
