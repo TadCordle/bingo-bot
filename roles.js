@@ -176,9 +176,18 @@ doRaceRoleUpdates = (discordId) => {
     rolesShouldHave = new Set();
     client.getUserGamesRan.all(discordId).forEach((race) => {
         rolesShouldHave.add(roles[gameIds[race.game]]);
-        if (race.game === "LittleBigPlanet" && race.category === "An3%") {
-            rolesShouldHave.add(roles[gameIds["LittleBigPlanet 2"]]);
-            rolesShouldHave.add(roles[gameIds["LittleBigPlanet 3"]]);
+        if (race.game === "LittleBigPlanet") {
+            if (race.category === "An3%") {
+                rolesShouldHave.add(roles[gameIds["LittleBigPlanet 2"]]);
+                rolesShouldHave.add(roles[gameIds["LittleBigPlanet 3"]]);
+            } else if (race.category === "An7%") {
+                rolesShouldHave.add(roles[gameIds["LittleBigPlanet PSP"]]);
+                rolesShouldHave.add(roles[gameIds["Sackboy's Prehistoric Moves"]]);
+                rolesShouldHave.add(roles[gameIds["LittleBigPlanet 2"]]);
+                rolesShouldHave.add(roles[gameIds["LittleBigPlanet PS Vita"]]);
+                rolesShouldHave.add(roles[gameIds["LittleBigPlanet Karting"]]);
+                rolesShouldHave.add(roles[gameIds["LittleBigPlanet 3"]]);
+            }
         }
     });
 
