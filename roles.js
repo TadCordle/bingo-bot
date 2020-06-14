@@ -63,6 +63,7 @@ exports.init = (c, l) => {
     autoRefreshTimeout = setTimeout(reloadRolesCmd, 86400000 * Math.ceil(Date.now() / 86400000) - Date.now() + 1);
 }
 
+// Adds the role for gameName to the user with the given discord ID
 exports.giveRoleFromRace = (discordId, gameName) => {
     member = guild.members.cache.get(discordId);
     if (!member) {
@@ -87,11 +88,10 @@ exports.roleCmds = (lowerMessage, message) => {
 // !roles <src name> [<discord id>]
 rolesCmd = (message) => {
     params = message.content.replace(/^!roles/i, "").trim().split(" ");
-    if (params.length > 2 || params[0] === "") {
-        message.channel.send("Usage: `!roles <speedrun.com name>` (e.g. `!roles RbdJellyfish`)");
+    if (params.length > 2) {
+        message.channel.send("Usage: `!roles [<speedrun.com name>]` (e.g. `!roles RbdJellyfish`)");
         return;
     }
-    srcName = params[0];
 
     // Moderators can update peoples' roles for them
     if (params.length === 2) {
@@ -99,41 +99,35 @@ rolesCmd = (message) => {
             message.channel.send("Usage: `!roles <speedrun.com name>` (e.g. `!roles RbdJellyfish`)");
             return;
         }
-        doRoleUpdates(params[1].replace("<@", "").replace(">", "").trim(), srcName);
+        id = params[1].replace("<@", "").replace(">", "").trim();
+        doRaceRoleUpdates(id);
+        doSrcRoleUpdates(id, params[0]);
         message.react(emotes.bingo);
         return;
     }
 
+    doRaceRoleUpdates(message.author.id);
+    message.react(emotes.bingo);
+
     // Check if profile matches caller
-    callSrc("/user/" + srcName, (dataQueue) => {
-        socialsMatch = dataQueue.match(/<p class='socialicons'>(.*?)<\/p>/);
-        if (!dataQueue.match(/class=['"]username/) || !socialsMatch) {
-            message.channel.send("Couldn't find profile for " + srcName + "; check your spelling or try again later.");
-            return;
-        }
+    if (params[0] !== "") {
+        callSrc("/user/" + params[0], (dataQueue) => {
+            if (!dataQueue.match(/class=['"]username/)) {
+                message.channel.send("Speedrun.com is having a moment, try again later.");
+                return;
+            }
 
-        socials = socialsMatch[1];
+            // Discord
+            discordMatch = dataQueue.match(/data-original-title="Discord: (.*?)"/);
+            discordName = message.author.username + "#" + message.author.discriminator;
+            if (discordMatch && discordMatch[1] === discordName) {
+                doSrcRoleUpdates(message.author.id, params[0]);
+                return;
+            }
 
-        // Discord
-        discordMatch = socials.match(/data-original-title="Discord: (.*?)"/);
-        discordName = message.author.username + "#" + message.author.discriminator;
-        if (discordMatch && discordMatch[1] === discordName) {
-            doRoleUpdates(message.author.id, srcName);
-            message.react(emotes.bingo);
-            return;
-        }
-
-        // TODO: check if SRC linked accounts match any discord linked accounts.
-        //       Not currently possible with discord.js, use OAuth2 API: https://discord.com/developers/docs/reference
-        // Twitch
-        // Youtube
-        // Steam
-        // Battle.net
-        // Twitter
-        // Facebook
-
-        message.channel.send("Unable to determine if " + srcName + "'s speedrun.com profile is yours; make sure you've linked your discord account at https://www.speedrun.com/editprofile.");
-    });
+            message.channel.send("Unable to determine if " + params[0] + "'s speedrun.com profile is yours; make sure you've linked your discord account at https://www.speedrun.com/editprofile.");
+        });
+    }
 }
 
 // !removeroles [<discord id>]
@@ -163,18 +157,40 @@ reloadRolesCmd = () => {
     log("==== Updating all registered users =====");
     users = client.getUsers.all();
     users.forEach((user) => {
-        doRoleUpdates(user.discord_id.toString(), user.src_name.toString());
+        doSrcRoleUpdates(user.discord_id.toString(), user.src_name.toString());
     });
 
     clearTimeout(autoRefreshTimeout);
     autoRefreshTimeout = setTimeout(reloadRolesCmd, 86400000 * Math.ceil(Date.now() / 86400000) - Date.now() + 1);
 }
 
-doRoleUpdates = (discordId, srcName) => {
+// Update user roles from race history
+doRaceRoleUpdates = (discordId) => {
+    member = guild.members.cache.get(discordId);
+    if (!member) {
+        log("Race role update: '" + discordId + "' is not a member of the LBP speedrunning server.", true);
+        return;
+    }
+
+    rolesShouldHave = new Set();
+    client.getUserGamesRan.all(discordId).forEach((race) => {
+        rolesShouldHave.add(roles[gameIds[race.game]]);
+        if (race.game === "LittleBigPlanet" && race.category === "An3%") {
+            rolesShouldHave.add(roles[gameIds["LittleBigPlanet 2"]]);
+            rolesShouldHave.add(roles[gameIds["LittleBigPlanet 3"]]);
+        }
+    });
+
+    updateRoles(member, rolesShouldHave);
+    log("Race roles updated");
+}
+
+// Update user roles from speedrun.com profile
+doSrcRoleUpdates = (discordId, srcName) => {
     callSrc("/api/v1/users/" + srcName + "/personal-bests", (dataQueue) => {
         member = guild.members.cache.get(discordId);
         if (!member) {
-            log("'" + discordId + "' is not a member of the LBP speedrunning server.", true);
+            log("SRC role update: '" + discordId + "' is not a member of the LBP speedrunning server.", true);
             return;
         }
 
@@ -182,7 +198,7 @@ doRoleUpdates = (discordId, srcName) => {
         srcUser = { discord_id: `${discordId}`, src_name: `${srcName}` };
         client.addUser.run(srcUser);
 
-        // Figure out what roles user should have
+        // Figure out what roles user should have from src
         rolesShouldHave = new Set();
         data = JSON.parse(dataQueue).data;
         data.forEach((d) => {
@@ -195,14 +211,18 @@ doRoleUpdates = (discordId, srcName) => {
             }
         });
 
-        // Update roles
-        Object.values(roles).forEach((role) => {
-            if (rolesShouldHave.has(role)) {
-                member.roles.add(role);
-            } else {
-                member.roles.remove(role);
-            } 
-        });
+        updateRoles(member, rolesShouldHave);
+    });
+}
+
+updateRoles = (member, rolesShouldHave) => {
+    // Update roles
+    Object.values(roles).forEach((role) => {
+        if (rolesShouldHave.has(role)) {
+            member.roles.add(role);
+        } else {
+            member.roles.remove(role);
+        }
     });
 }
 

@@ -129,6 +129,7 @@ client.on("ready", () => {
     client.getUserStatsForCategory = sql.prepare("SELECT * FROM users WHERE user_id = ? AND game = ? AND category = ?");
     client.addUserStat = sql.prepare("INSERT OR REPLACE INTO users (user_id, game, category, races, gold, silver, bronze, ffs, elo, pb) "
                                    + "VALUES (@user_id, @game, @category, @races, @gold, @silver, @bronze, @ffs, @elo, @pb);");
+    client.getUserGamesRan = sql.prepare("SELECT DISTINCT game, category FROM users WHERE user_id = ?");
 
     // Setup SQL query to show leaderboard
     client.getLeaderboard = sql.prepare("SELECT DISTINCT results.user_id AS user_id, results.user_name AS user_name, users.elo AS elo FROM results INNER JOIN users ON results.user_id = users.user_id "
@@ -271,7 +272,7 @@ helpCmd = (message) => {
 \`!help\` - Shows this message.
 
 **Other commands**
-\`!roles <speedrun.com name>\` - Updates your roles. If you have a run on an LBP leaderboard and linked your discord account on speedrun.com, you will receive the corresponding runner roles. You can also get roles from finishing races.
+\`!roles [<speedrun.com name>]\` - Updates your roles based on races finished + speedrun.com PBs (if you linked your discord account on speedrun.com).
 \`!removeroles\` - Removes your runner roles.
 \`!nr\` / \`!newrunner\` - Mixes two halves of the names of random LBP runners (that have a full-game run on sr.c) together.
 `);
