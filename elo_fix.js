@@ -9,7 +9,7 @@ class FixObj {
 }
 
 // Setup tables for fixing user stats
-const sql = new SQLite('./race.sqlite');
+const sql = new SQLite('./data/race.sqlite');
 const usersFixedTable = sql.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='users_new'").get();
 if (!usersFixedTable['count(*)']) {
     sql.prepare("CREATE TABLE users_new (user_id TEXT, game TEXT, category TEXT, races INTEGER, gold INTEGER, silver INTEGER, bronze INTEGER, ffs INTEGER, elo REAL, pb INTEGER);").run();

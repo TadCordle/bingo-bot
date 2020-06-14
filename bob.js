@@ -5,10 +5,16 @@ const fun = require("./fun.js");
 const roles = require("./roles.js");
 const Discord = require("discord.js");
 const SQLite = require("better-sqlite3");
-const https = require('https');
+const https = require("https");
+const fs = require("fs");
 
+const dataDir = "./data/";
+if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir);
+}
+
+const sql = new SQLite(dataDir + 'race.sqlite');
 const client = new Discord.Client();
-const sql = new SQLite('./race.sqlite');
 var gameName = "LittleBigPlanet";
 var categoryName = "Any% No Overlord";
 var prevCategoryName = "Any% No Overlord"; // Used to save full game category when people do IL races
@@ -138,9 +144,9 @@ client.on("ready", () => {
     }
     raceId++;
 
-    roles.init(client);
+    roles.init(client, sql, log);
 
-    console.log("Ready! Next race ID is " + raceId + ".");
+    log("Ready! Next race ID is " + raceId + ".");
 });
 
 client.on("message", (message) => {
@@ -273,12 +279,14 @@ helpCmd = (message) => {
 
 **speedrun.com role commands**
 *Using the keyword \`all\` requires admin/mod rights.*
+\`!roles autoconnect <sr.c name>\` / \`all\` - Reloads the user's discord data / all auto connected discord accounts entered on sr.c.
+\`!roles connect <sr.c name>\` - Manually connects an sr.c profile to you.
+\`!roles disconnect <sr.c name>\` - Disconnects an sr.c profile.
+\`!roles reload leaderboard <game name>\` / \`all\` - Reloads the runs on the specified sr.c leaderboards / all leaderboards.
 \`!roles reload categories\` - Reloads all categories.
-\`!roles reload leaderboard <game name>\` / \`all\` - Reloads the runs on the specified sr.c leaderboard / all leaderboards.
-\`!roles reload discordaccount <sr.c name>\` - Reloads the user's Discord account data entered on sr.c.
 \`!roles reload all\` - Reloads everything. Don't use this unless it's necessary.
-\`!roles connect <sr.c name>/@user\` / \`<sr.c name>/auto\` - Connects a sr.c profile with a discord account or switches the sr.c profile back to auto connect mode. (admin/mod-only)
-`);}
+`);
+}
 
 // !race/!join
 raceCmd = (message) => {
@@ -1218,6 +1226,11 @@ placeEmote = (place) => {
         default:
             return ":checkered_flag:";
     }
+}
+
+// Writes something to stdout
+log = (text) => {
+    console.log("[" + (new Date()).toISOString() + "] " + text);
 }
 
 // The following code is based on https://github.com/intesso/decode-html to avoid additional dependencies ---------

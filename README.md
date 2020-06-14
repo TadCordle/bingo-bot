@@ -67,12 +67,14 @@ npm start
 * `!clearrace` - Resets the bot; forces ending the race without recording any results.
 
 **speedrun.com role commands**
+
 *Using the keyword `all` requires admin/mod rights.*
+* `!roles autoconnect <sr.c name>` / `all` - Reloads the user's discord data / all auto connected discord accounts entered on sr.c.
+* `!roles connect <sr.c name>` - Manually connects an sr.c profile to you.
+* `!roles disconnect <sr.c name>` - Disconnects an sr.c profile.
+* `!roles reload leaderboard <game name>` / `all` - Reloads the runs on the specified sr.c leaderboards / all leaderboards.
 * `!roles reload categories` - Reloads all categories.
-* `!roles reload leaderboard <game name>` / `all` - Reloads the runs on the specified sr.c leaderboard / all leaderboards.
-* `!roles reload discordaccount <sr.c name>` - Reloads the user's Discord account data entered on sr.c.
 * `!roles reload all` - Reloads everything. Don't use this unless it's necessary.
-* `!roles connect <sr.c name>/@user` / `<sr.c name>/auto` / `all` - Connects a sr.c profile with a discord account or switches the sr.c profile back to auto connect mode, or auto-connects all src accounts. (admin/mod-only)
 
 ## Upcoming Features?
 
