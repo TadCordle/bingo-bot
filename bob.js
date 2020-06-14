@@ -204,7 +204,10 @@ client.on("message", (message) => {
 
         // Admin/Mod only commands
         else if (message.member.roles.cache.some(role => role.name === "Admin" || role.name === "Moderator")) {
-            if (lowerMessage.startsWith("!kick"))
+            if (lowerMessage.startsWith("!modhelp"))
+                modHelpCmd(message);
+
+            else if (lowerMessage.startsWith("!kick"))
                 kickCmd(message);
 
             else if (lowerMessage.startsWith("!clearrace"))
@@ -269,23 +272,19 @@ helpCmd = (message) => {
 \`!elo <game name>/<category name>\` - Shows the ELO leaderboard for the given game/category (e.g. \`!elo lbp/die%\` shows the LBP1 Die% leaderboard).
 \`!help\` - Shows this message.
 
-**Fun command**
+**Other commands**
+\`!roles <speedrun.com name>\` - Updates your roles. If you have a run on an LBP leaderboard and linked your discord account on speedrun.com, you will receive the corresponding runner roles. You can also get roles from finishing races.
 \`!nr\` / \`!newrunner\` - Mixes two halves of the names of random LBP runners (that have a full-game run on sr.c) together.
 `);
+}
 
+modHelpCmd = (message) => {
     message.channel.send(`
 **Admin/moderator only (mid-race)**
 \`!kick @user\` - Kicks someone from the race (in case they're afk or something).
 \`!clearrace\` - Resets the bot; forces ending the race without recording any results.
-
-**speedrun.com role commands**
-*Using the keyword \`all\` requires admin/mod rights.*
-\`!roles autoconnect <sr.c name>\` / \`all\` - Reloads the user's discord data / all auto connected discord accounts entered on sr.c.
-\`!roles connect <sr.c name>\` - Manually connects an sr.c profile to you.
-\`!roles disconnect <sr.c name>\` - Disconnects an sr.c profile.
-\`!roles reload leaderboard <game name>\` / \`all\` - Reloads the runs on the specified sr.c leaderboards / all leaderboards.
-\`!roles reload categories\` - Reloads all categories.
-\`!roles reload all\` - Reloads everything. Don't use this unless it's necessary.
+\`!roles <speedrun.com name> <discord id>\` - Updates someone else's roles.
+\`!reloadroles\` - Refreshes all registered roles.
 `);
 }
 
@@ -1043,6 +1042,7 @@ recordResults = () => {
         entrant = raceState.entrants.get(id);
         result = { race_id: `${raceId}`, user_id: `${id}`, user_name: `${username(entrant.message)}`, game: `${gameName}`, category: `${categoryName}`, time: `${entrant.doneTime}`, ff: 0, dq: 0 };
         client.addResult.run(result);
+        roles.giveRoleFromRace(id, gameName);
     });
     raceState.ffEntrants.forEach((id) => {
         entrant = raceState.entrants.get(id);
