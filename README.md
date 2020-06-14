@@ -59,28 +59,15 @@ npm start
 * `!elo <game name>/<category name>` - Shows the ELO leaderboard for the given game/category (e.g. `!elo lbp/die%`).
 * `!help` - Shows the bot commands.
 
-**Fun command**
+**Other commands**
+* `!roles <speedrun.com name>` - Updates your roles. If you have a run on an LBP leaderboard and linked your discord account on speedrun.com, you will receive the corresponding runner roles. You can also get roles from finishing races.
+* `!removeroles` - Removes your runner roles.
 * `!nr` / `!newrunner` - Mixes two halves of the names of random LBP runners (that have a full-game run on sr.c) together.
 
-**Admin/moderator only**
-* `!kick @user` - Kicks someone from the race (in case they're afk or something).
+**Admin/moderator only (mid-race)**
+* `!modhelp` - Shows mod-only commands.
+* `!kick <discord id>` - Kicks someone from the race (in case they're afk or something).
 * `!clearrace` - Resets the bot; forces ending the race without recording any results.
-
-**speedrun.com role commands**
-
-*Using the keyword `all` requires admin/mod rights.*
-* `!roles autoconnect <sr.c name>` / `all` - Reloads the user's discord data / all auto connected discord accounts entered on sr.c.
-* `!roles connect <sr.c name>` - Manually connects an sr.c profile to you.
-* `!roles disconnect <sr.c name>` - Disconnects an sr.c profile.
-* `!roles reload leaderboard <game name>` / `all` - Reloads the runs on the specified sr.c leaderboards / all leaderboards.
-* `!roles reload categories` - Reloads all categories.
-* `!roles reload all` - Reloads everything. Don't use this unless it's necessary.
-
-## Upcoming Features?
-
-**Stuff I kinda want to do but might be too lazy**
-* `!coop` - Start a co-op race.
-
-**Stuff that probably won't happen but would be cool**
-* Allow multiple simultaneous races (LBP isn't that popular of a speedgame, so this probably isn't necessary).
-* Bingo support (would make the bot name fit a little better, but how would LBP bingo even work?).
+* `!roles <speedrun.com name> <discord id>` - Updates someone else's roles.
+* `!removeroles <discord id>` - Remove someone else's roles.
+* `!reloadroles` - Refreshes all registered roles.

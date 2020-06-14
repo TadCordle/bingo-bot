@@ -48,19 +48,19 @@ exports.init = (c, l) => {
 
     // Setup tables for keeping track of src/discord connections
     if (!sql.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='src_runners';").get()['count(*)']) {
-        sql.prepare("CREATE TABLE src_runners (discord_name TEXT PRIMARY KEY, src_name TEXT);").run();
+        sql.prepare("CREATE TABLE src_runners (discord_id TEXT PRIMARY KEY, src_name TEXT);").run();
         sql.pragma("synchronous = 1");
         sql.pragma("journal_mode = wal");
     }
 
     // Setup SQL queries for setting/retrieving src/discord connections
-    client.getUser = sql.prepare("SELECT * FROM src_runners;");
-    client.addUser = sql.prepare("INSERT OR REPLACE INTO src_runners (discord_name, src_name) VALUES (@discord_name, @src_name);");
-    client.deleteUser = sql.prepare("DELETE FROM src_runners WHERE discord_name = ?;");
+    client.getUsers = sql.prepare("SELECT * FROM src_runners;");
+    client.addUser = sql.prepare("INSERT OR REPLACE INTO src_runners (discord_id, src_name) VALUES (@discord_id, @src_name);");
+    client.deleteUser = sql.prepare("DELETE FROM src_runners WHERE discord_id = ?;");
 
     // This will run getUsers once Date.now() is divisible by 86400000 (every day)
     // Timeouts are inaccurate so having a delay of 86400000 would slowly make the 24h cycle shift
-    autoRefreshTimeout = setTimeout(refreshAllRoles, 86400000 * Math.ceil(Date.now() / 86400000) - Date.now() + 1);
+    autoRefreshTimeout = setTimeout(reloadRolesCmd, 86400000 * Math.ceil(Date.now() / 86400000) - Date.now() + 1);
 }
 
 exports.giveRoleFromRace = (discordId, gameName) => {
@@ -72,22 +72,22 @@ exports.giveRoleFromRace = (discordId, gameName) => {
 }
 
 exports.roleCmds = (lowerMessage, message) => {
-    // Role commands (available anywhere)
     if (lowerMessage.startsWith("!roles"))
         rolesCmd(message);
     
-    // TODO: Add disconnect command?
+    else if (lowerMessage.startsWith("!removeroles"))
+        removeRolesCmd(message);
 
-    else if (message.member.roles.cache.some(role => role.name === "Admin" || role.name === "Moderator")) {
+    else if (isAdmin(message.author.id)) {
         if (lowerMessage.startsWith("!reloadroles"))
-            reloadRolesCmd(message);
+            reloadRolesCmd();
     }
 }
 
-// !roles <src name>
+// !roles <src name> [<discord id>]
 rolesCmd = (message) => {
     params = message.content.replace(/^!roles/i, "").trim().split(" ");
-    if (params.length !== 1 && params.length !== 2) {
+    if (params.length > 2 || params[0] === "") {
         message.channel.send("Usage: `!roles <speedrun.com name>` (e.g. `!roles RbdJellyfish`)");
         return;
     }
@@ -95,12 +95,12 @@ rolesCmd = (message) => {
 
     // Moderators can update peoples' roles for them
     if (params.length === 2) {
-        if (!message.member.roles.cache.some(role => role.name === "Admin" || role.name === "Moderator")) {
+       if (!isAdmin(message.author.id)) {
             message.channel.send("Usage: `!roles <speedrun.com name>` (e.g. `!roles RbdJellyfish`)");
             return;
         }
-        discordId = params[1];
-        doRoleUpdates(discordId, srcName);
+        doRoleUpdates(params[1].replace("<@", "").replace(">", "").trim(), srcName);
+        message.react(emotes.bingo);
         return;
     }
 
@@ -108,42 +108,80 @@ rolesCmd = (message) => {
     callSrc("/user/" + srcName, (dataQueue) => {
         socialsMatch = dataQueue.match(/<p class='socialicons'>(.*?)<\/p>/);
         if (!dataQueue.match(/class=['"]username/) || !socialsMatch) {
-            message.channel.send("Speedrun.com is having a moment, try again later.");
+            message.channel.send("Couldn't find profile for " + srcName + "; check your spelling or try again later.");
             return;
         }
+
         socials = socialsMatch[1];
 
         // Discord
         discordMatch = socials.match(/data-original-title="Discord: (.*?)"/);
         discordName = message.author.username + "#" + message.author.discriminator;
         if (discordMatch && discordMatch[1] === discordName) {
-            message.react(emotes.bingo);
             doRoleUpdates(message.author.id, srcName);
+            message.react(emotes.bingo);
             return;
         }
 
         // TODO: check if SRC linked accounts match any discord linked accounts.
-        //       Not currently possible with discord.js :(
+        //       Not currently possible with discord.js, use OAuth2 API: https://discord.com/developers/docs/reference
         // Twitch
         // Youtube
         // Steam
         // Battle.net
         // Twitter
         // Facebook
+
+        message.channel.send("Unable to determine if " + srcName + "'s speedrun.com profile is yours; make sure you've linked your discord account at https://www.speedrun.com/editprofile.");
     });
+}
+
+// !removeroles [<discord id>]
+removeRolesCmd = (message) => {
+    param = message.content.replace(/^!removeroles/i, "").trim();
+    id = message.author.id;
+    member = guild.members.cache.get(message.author.id);
+    if (param !== "" && isAdmin(id)) {
+        id = param.replace("<@", "").replace(">", "").trim();
+        member = guild.members.cache.get(id);
+    }
+
+    if (!member) {
+        log("'" + id + "' is not a member of the LBP speedrunning server.", true);
+        return;
+    }
+
+    client.deleteUser.run(id);
+    Object.values(roles).forEach((role) => {
+        member.roles.remove(role);
+    });
+    message.react(emotes.bingo);
+}
+
+// !reloadroles
+reloadRolesCmd = () => {
+    log("==== Updating all registered users =====");
+    users = client.getUsers.all();
+    users.forEach((user) => {
+        doRoleUpdates(user.discord_id.toString(), user.src_name.toString());
+    });
+
+    clearTimeout(autoRefreshTimeout);
+    autoRefreshTimeout = setTimeout(reloadRolesCmd, 86400000 * Math.ceil(Date.now() / 86400000) - Date.now() + 1);
 }
 
 doRoleUpdates = (discordId, srcName) => {
     callSrc("/api/v1/users/" + srcName + "/personal-bests", (dataQueue) => {
         member = guild.members.cache.get(discordId);
         if (!member) {
+            log("'" + discordId + "' is not a member of the LBP speedrunning server.", true);
             return;
         }
-        
+
         // Save discord/src name link
-        srcUser = { discord_name: `${discordId}`, src_name: `${srcName}` };
+        srcUser = { discord_id: `${discordId}`, src_name: `${srcName}` };
         client.addUser.run(srcUser);
-        
+
         // Figure out what roles user should have
         rolesShouldHave = new Set();
         data = JSON.parse(dataQueue).data;
@@ -166,15 +204,6 @@ doRoleUpdates = (discordId, srcName) => {
             } 
         });
     });
-}
-
-// !reloadroles
-reloadRolesCmd = (message) => {
-    // TODO
-}
-
-refreshAllRoles = () => {
-    // TODO
 }
 
 // Gets data from speedrun.com
@@ -208,6 +237,7 @@ callSrc = (path, onEnd) => {
             });
         });
     }
+
     let apiPauseLength = (path.startsWith('/api') ? 1000 : 10000);
     if (apiCallTimestamp < Date.now()) {
         apiCallTimestamp = Date.now() + apiPauseLength;
@@ -216,4 +246,9 @@ callSrc = (path, onEnd) => {
         setTimeout(afterPause, apiCallTimestamp - Date.now());
         apiCallTimestamp += apiPauseLength;
     }
+}
+
+isAdmin = (discordId) => {
+    member = guild.members.cache.get(discordId);
+    return member && member.roles.cache.some(role => role.name === "Admin" || role.name === "Moderator");
 }

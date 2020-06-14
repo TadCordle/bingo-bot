@@ -274,6 +274,7 @@ helpCmd = (message) => {
 
 **Other commands**
 \`!roles <speedrun.com name>\` - Updates your roles. If you have a run on an LBP leaderboard and linked your discord account on speedrun.com, you will receive the corresponding runner roles. You can also get roles from finishing races.
+\`!removeroles\` - Removes your runner roles.
 \`!nr\` / \`!newrunner\` - Mixes two halves of the names of random LBP runners (that have a full-game run on sr.c) together.
 `);
 }
@@ -281,9 +282,11 @@ helpCmd = (message) => {
 modHelpCmd = (message) => {
     message.channel.send(`
 **Admin/moderator only (mid-race)**
+\`!modhelp\` - Shows this message.
 \`!kick @user\` - Kicks someone from the race (in case they're afk or something).
 \`!clearrace\` - Resets the bot; forces ending the race without recording any results.
 \`!roles <speedrun.com name> <discord id>\` - Updates someone else's roles.
+\`!removeroles <discord id>\` - Remove someone else's roles.
 \`!reloadroles\` - Refreshes all registered roles.
 `);
 }
@@ -1240,7 +1243,6 @@ log = (text, err=false) => {
 
 // The following code is based on https://github.com/intesso/decode-html to avoid additional dependencies ---------
 // (license: https://github.com/intesso/decode-html/blob/master/LICENSE)
-// Store markers outside of the function scope, not to recreate them on every call
 const entities = {
     'amp': '&',
     'apos': '\'',
@@ -1252,7 +1254,6 @@ const entities = {
 const entityPattern = /&([a-z]+);/ig;
 
 decodeHTML = (text) => {
-    // A single replace pass with a static RegExp is faster than a loop
     return text.replace(entityPattern, (match, entity) => {
         entity = entity.toLowerCase();
         if (entities.hasOwnProperty(entity)) {
