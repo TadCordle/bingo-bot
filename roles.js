@@ -24,8 +24,8 @@ const fullGameCategoriesThatAreActuallyILs = [
     "9d8pgl6k"
 ];
 
-exports.init = () => {
-    let sql = new SQLite(dataDir + 'roles.sqlite');
+exports.init = (client, log) => {
+    let sql = new SQLite("./data/roles.sqlite");
     guild = client.guilds.cache.get('129652811754504192');
     roles = {
         "369pp31l": guild.roles.cache.get("716015233256390696"),

@@ -8,12 +8,11 @@ const SQLite = require("better-sqlite3");
 const https = require("https");
 const fs = require("fs");
 
-const dataDir = "./data/";
-if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir);
+if (!fs.existsSync("./data/")) {
+    fs.mkdirSync("./data/");
 }
 
-const sql = new SQLite(dataDir + 'race.sqlite');
+const sql = new SQLite("./data/race.sqlite");
 const client = new Discord.Client();
 var gameName = "LittleBigPlanet";
 var categoryName = "Any% No Overlord";
@@ -144,7 +143,7 @@ client.on("ready", () => {
     }
     raceId++;
 
-    roles.init(client, sql, log);
+    roles.init(client, log);
 
     log("Ready! Next race ID is " + raceId + ".");
 });
