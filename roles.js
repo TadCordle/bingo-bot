@@ -96,7 +96,7 @@ rolesCmd = (message) => {
     // Moderators can update peoples' roles for them
     if (params.length === 2) {
        if (!isAdmin(message.author.id)) {
-            message.channel.send("Usage: `!roles <speedrun.com name>` (e.g. `!roles RbdJellyfish`)");
+            message.channel.send("Usage: `!roles [<speedrun.com name>]` (e.g. `!roles RbdJellyfish`)");
             return;
         }
         id = params[1].replace("<@", "").replace(">", "").trim();
