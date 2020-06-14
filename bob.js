@@ -104,8 +104,7 @@ var raceState = new RaceState();
 
 client.on("ready", () => {
     // Setup tables for keeping track of race results
-    const resultsTable = sql.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='results'").get();
-    if (!resultsTable['count(*)']) {
+    if (!sql.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='results'").get()['count(*)']) {
         sql.prepare("CREATE TABLE results (race_id INTEGER, user_id TEXT, user_name TEXT, game TEXT, category TEXT, time INTEGER, ff INTEGER, dq INTEGER);").run();
         sql.prepare("CREATE UNIQUE INDEX idx_results_race ON results (race_id, user_id);").run();
         sql.pragma("synchronous = 1");
@@ -113,8 +112,7 @@ client.on("ready", () => {
     }
 
     // Setup tables for keeping track of user stats
-    const usersTable = sql.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='users'").get();
-    if (!usersTable['count(*)']) {
+    if (!sql.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='users'").get()['count(*)']) {
         sql.prepare("CREATE TABLE users (user_id TEXT, game TEXT, category TEXT, races INTEGER, gold INTEGER, silver INTEGER, bronze INTEGER, ffs INTEGER, elo REAL, pb INTEGER);").run();
         sql.prepare("CREATE UNIQUE INDEX idx_users_id ON users (user_id, game, category);").run();
         sql.pragma("synchronous = 1");
