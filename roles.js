@@ -72,6 +72,7 @@ exports.giveRoleFromRace = (discordId, gameName) => {
     member.roles.add(roles[gameIds[gameName]]);
 }
 
+// Commands
 exports.roleCmds = (lowerMessage, message) => {
     if (lowerMessage.startsWith("!roles"))
         rolesCmd(message);
@@ -215,6 +216,7 @@ doSrcRoleUpdates = (discordId, srcName) => {
     });
 }
 
+// Updates member's runner roles to match the ones in rolesShouldHave
 updateRoles = (member, rolesShouldHave) => {
     // Update roles
     Object.values(roles).forEach((role) => {
@@ -268,6 +270,7 @@ callSrc = (path, onEnd) => {
     }
 }
 
+// Returns true if the given discord ID is a mod or admin in the server
 isAdmin = (discordId) => {
     member = guild.members.cache.get(discordId);
     return member && member.roles.cache.some(role => role.name === "Admin" || role.name === "Moderator");

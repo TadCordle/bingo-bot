@@ -60,7 +60,7 @@ npm start
 * `!help` - Shows the bot commands.
 
 **Other commands**
-* `!roles <speedrun.com name>` - Updates your roles. If you have a run on an LBP leaderboard and linked your discord account on speedrun.com, you will receive the corresponding runner roles. You can also get roles from finishing races.
+* `!roles [<speedrun.com name>]` - Updates your roles to match races finished + speedrun.com PBs (if you linked your discord account on speedrun.com).
 * `!removeroles` - Removes your runner roles.
 * `!nr` / `!newrunner` - Mixes two halves of the names of random LBP runners (that have a full-game run on sr.c) together.
 

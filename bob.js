@@ -272,7 +272,7 @@ helpCmd = (message) => {
 \`!help\` - Shows this message.
 
 **Other commands**
-\`!roles [<speedrun.com name>]\` - Updates your roles based on races finished + speedrun.com PBs (if you linked your discord account on speedrun.com).
+\`!roles [<speedrun.com name>]\` - Updates your roles to match races finished + speedrun.com PBs (if you linked your discord account on speedrun.com).
 \`!removeroles\` - Removes your runner roles.
 \`!nr\` / \`!newrunner\` - Mixes two halves of the names of random LBP runners (that have a full-game run on sr.c) together.
 `);
