@@ -9,8 +9,11 @@ var autoRefreshTimeout;
 var client;
 var log;
 var guild;
+
+// Maps from speedrun.com game ID (or the string "wr") to server role
 var roles;
 
+// Maps from game name to speedrun.com game ID
 const gameIds = {
     "LittleBigPlanet": "369pp31l",
     "LittleBigPlanet PSP": "pd0n821e",
@@ -22,6 +25,7 @@ const gameIds = {
     // TODO: Add Sackboy: A Big Adventure
 };
 
+// speedrun.com category IDs
 const fullGameCategoriesThatAreActuallyILs = [
     "824xr8md",
     "9d8pgl6k"
@@ -260,7 +264,7 @@ callSrc = (path, onEnd) => {
                 callSrc(result.headers.location, onEnd);
                 return;
             }
-            if (statusCode !== 200 && statusCode !== 302) {
+            if (statusCode !== 200) {
                 log("Couldn't follow https://www.speedrun.com" + path + "; got a " + statusCode + " response.", true);
                 return;
             }
