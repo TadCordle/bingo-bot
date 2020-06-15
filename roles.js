@@ -101,17 +101,15 @@ rolesCmd = (message) => {
             return;
         }
         id = params[1].replace("<@", "").replace(">", "").trim();
-        doRaceRoleUpdates(id);
         doSrcRoleUpdates(id, params[0]);
         message.react(emotes.bingo);
         return;
     }
 
-    doRaceRoleUpdates(message.author.id);
     message.react(emotes.bingo);
 
-    // Check if profile matches caller
     if (params[0] !== "") {
+        // Check if profile matches caller
         callSrc("/user/" + params[0], (dataQueue) => {
             if (!dataQueue.match(/class=['"]username/)) {
                 message.channel.send("Speedrun.com is having a moment, try again later.");
@@ -128,6 +126,9 @@ rolesCmd = (message) => {
 
             message.channel.send("Unable to determine if " + params[0] + "'s speedrun.com profile is yours; make sure you've linked your discord account at https://www.speedrun.com/editprofile.");
         });
+
+    } else {    
+        doRaceRoleUpdates(message.author.id);
     }
 }
 
@@ -173,6 +174,42 @@ doRaceRoleUpdates = (discordId) => {
         return;
     }
 
+    // Figure out what roles user should have from races
+    updateRoles(member, getRaceRoles(discordId));
+    log("Race roles updated");
+}
+
+// Update user roles from speedrun.com profile
+doSrcRoleUpdates = (discordId, srcName) => {
+    callSrc("/api/v1/users/" + srcName + "/personal-bests", (dataQueue) => {
+        member = guild.members.cache.get(discordId);
+        if (!member) {
+            log("SRC role update: '" + discordId + "' is not a member of the LBP speedrunning server.", true);
+            return;
+        }
+
+        // Save discord/src name link
+        srcUser = { discord_id: `${discordId}`, src_name: `${srcName}` };
+        client.addUser.run(srcUser);
+
+        // Figure out what roles user should have from races + src
+        rolesShouldHave = getRaceRoles(discordId);
+        data = JSON.parse(dataQueue).data;
+        data.forEach((d) => {
+            role = roles[d.run.game];
+            if (role) {
+                rolesShouldHave.add(role);
+                if (d.place === 1 && d.run.level === null && !fullGameCategoriesThatAreActuallyILs.includes(d.run.category)) {
+                    rolesShouldHave.add(roles["wr"]);
+                }
+            }
+        });
+        updateRoles(member, rolesShouldHave);
+    });
+}
+
+// Returns a set of roles from race history
+getRaceRoles = (discordId) => {
     rolesShouldHave = new Set();
     client.getUserGamesRan.all(discordId).forEach((race) => {
         rolesShouldHave.add(roles[gameIds[race.game]]);
@@ -190,39 +227,7 @@ doRaceRoleUpdates = (discordId) => {
             }
         }
     });
-
-    updateRoles(member, rolesShouldHave);
-    log("Race roles updated");
-}
-
-// Update user roles from speedrun.com profile
-doSrcRoleUpdates = (discordId, srcName) => {
-    callSrc("/api/v1/users/" + srcName + "/personal-bests", (dataQueue) => {
-        member = guild.members.cache.get(discordId);
-        if (!member) {
-            log("SRC role update: '" + discordId + "' is not a member of the LBP speedrunning server.", true);
-            return;
-        }
-
-        // Save discord/src name link
-        srcUser = { discord_id: `${discordId}`, src_name: `${srcName}` };
-        client.addUser.run(srcUser);
-
-        // Figure out what roles user should have from src
-        rolesShouldHave = new Set();
-        data = JSON.parse(dataQueue).data;
-        data.forEach((d) => {
-            role = roles[d.run.game];
-            if (role) {
-                rolesShouldHave.add(role);
-                if (d.place === 1 && d.run.level === null && !fullGameCategoriesThatAreActuallyILs.includes(d.run.category)) {
-                    rolesShouldHave.add(roles["wr"]);
-                }
-            }
-        });
-
-        updateRoles(member, rolesShouldHave);
-    });
+    return rolesShouldHave;
 }
 
 // Updates member's runner roles to match the ones in rolesShouldHave
