@@ -44,7 +44,7 @@ exports.init = (c, l) => {
         "369vz81l": guild.roles.cache.get("716015465024979085"),
         "pd0n531e": guild.roles.cache.get("716015510797680741"),
         "k6qw8z6g": guild.roles.cache.get("716015547984117872"),
-        "wr": guild.roles.cache.get("716014433121337504")
+        "wr"      : guild.roles.cache.get("716014433121337504")
     };
     if (Object.values(roles).includes(undefined)) {
         log("Couldn't find all roles; Discord roles may have changed.", true);
@@ -86,7 +86,7 @@ exports.roleCmds = (lowerMessage, message) => {
 
     else if (isAdmin(message.author.id)) {
         if (lowerMessage.startsWith("!reloadroles"))
-            reloadRolesCmd();
+            reloadRolesCmd(message);
     }
 }
 
@@ -105,7 +105,7 @@ rolesCmd = (message) => {
             return;
         }
         id = params[1].replace("<@", "").replace(">", "").trim();
-        doSrcRoleUpdates(id, params[0]);
+        doSrcRoleUpdates(id, params[0], message);
         message.react(emotes.bingo);
         return;
     }
@@ -114,7 +114,7 @@ rolesCmd = (message) => {
 
     if (params[0] !== "") {
         // Check if profile matches caller
-        callSrc("/user/" + params[0], (dataQueue) => {
+        callSrc("/user/" + params[0], message, (dataQueue) => {
             if (!dataQueue.match(/class=['"]username/)) {
                 message.channel.send("Speedrun.com is having a moment, try again later.");
                 return;
@@ -124,7 +124,7 @@ rolesCmd = (message) => {
             discordMatch = dataQueue.match(/data-original-title="Discord: (.*?)"/);
             discordName = message.author.username + "#" + message.author.discriminator;
             if (discordMatch && discordMatch[1] === discordName) {
-                doSrcRoleUpdates(message.author.id, params[0]);
+                doSrcRoleUpdates(message.author.id, params[0], message);
                 return;
             }
 
@@ -184,8 +184,8 @@ doRaceRoleUpdates = (discordId) => {
 }
 
 // Update user roles from speedrun.com profile
-doSrcRoleUpdates = (discordId, srcName) => {
-    callSrc("/api/v1/users/" + srcName + "/personal-bests", (dataQueue) => {
+doSrcRoleUpdates = (discordId, srcName, message = null) => {
+    callSrc("/api/v1/users/" + srcName + "/personal-bests", message, (dataQueue) => {
         member = guild.members.cache.get(discordId);
         if (!member) {
             log("SRC role update: '" + discordId + "' is not a member of the LBP speedrunning server.", true);
@@ -250,7 +250,7 @@ updateRoles = (member, rolesShouldHave) => {
 // - delay after API call: 1 sec
 // - delay after downloading any other sr.c page: 10 sec
 // API: https://github.com/speedruncomorg/api/tree/master/version1
-callSrc = (path, onEnd) => {
+callSrc = (path, message, onEnd) => {
     afterPause = () => {
         log("API call: " + path);
         https.get({
@@ -261,11 +261,15 @@ callSrc = (path, onEnd) => {
         }, (result) => {
             var { statusCode } = result;
             if (statusCode === 302) {
-                callSrc(result.headers.location, onEnd);
+                callSrc(result.headers.location, message, onEnd);
                 return;
             }
             if (statusCode !== 200) {
-                log("Couldn't follow https://www.speedrun.com" + path + "; got a " + statusCode + " response.", true);
+                errorMsg = "Couldn't follow https://www.speedrun.com" + path + "; got a " + statusCode + " response.";
+                if (message != null) {
+                    message.channel.send(errorMsg);
+                }
+                log(errorMsg, true);
                 return;
             }
             var dataQueue = "";
