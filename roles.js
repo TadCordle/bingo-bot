@@ -100,7 +100,7 @@ rolesCmd = (message) => {
 
     // Moderators can update peoples' roles for them
     if (params.length === 2) {
-       if (!isAdmin(message.author.id)) {
+        if (!isAdmin(message.author.id)) {
             message.channel.send("Usage: `!roles [<speedrun.com name>]` (e.g. `!roles RbdJellyfish`)");
             return;
         }
@@ -140,12 +140,11 @@ rolesCmd = (message) => {
 removeRolesCmd = (message) => {
     param = message.content.replace(/^!removeroles/i, "").trim();
     id = message.author.id;
-    member = guild.members.cache.get(message.author.id);
     if (param !== "" && isAdmin(id)) {
         id = param.replace("<@", "").replace(">", "").trim();
-        member = guild.members.cache.get(id);
     }
 
+    member = guild.members.cache.get(id);
     if (!member) {
         log("'" + id + "' is not a member of the LBP speedrunning server.", true);
         return;
