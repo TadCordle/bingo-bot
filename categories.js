@@ -254,7 +254,7 @@ exports.normalizeLevel = (normalizedGame, level) => {
         } else if (level === "giftofgrab") {
             return "Gift of the Grab";
         } else if (level === "didgeridodidgeridont" || level === "didgeridoodidgeridont") {
-            return "Didgerido Didgeridon’t";
+            return "Didgerido Didgeridon't";
         } else if (level === "dreamtime") {
             return "Dreamtime";
         }
@@ -270,7 +270,7 @@ exports.normalizeLevel = (normalizedGame, level) => {
         else if (level === "cheekymonkey") {
             return "Cheeky Monkey";
         } else if (level === "thievesden") {
-            return "Thieves' Den"; // This level uses ' instead of ’ for some reason
+            return "Thieves' Den";
         } else if (level === "rugsandkisses" || level === "highonrugs" || level === "rugsnkisses") {
             return "Rugs and Kisses";
         }
@@ -284,7 +284,7 @@ exports.normalizeLevel = (normalizedGame, level) => {
         }
 
         else if (level === "mountinexcitement") {
-            return "Mountin’ Excitement";
+            return "Mountin' Excitement";
         } else if (level === "peakperformance") {
             return "Peak Performance";
         } else if (level === "doggeddetermination") {
