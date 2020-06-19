@@ -58,11 +58,11 @@ exports.init = (c, l) => {
     }
 
     // Setup SQL queries for setting/retrieving src/discord connections
-    client.getUsers = sql.prepare("SELECT * FROM src_runners;");
-    client.addUser = sql.prepare("INSERT OR REPLACE INTO src_runners (discord_id, src_name) VALUES (@discord_id, @src_name);");
-    client.deleteUser = sql.prepare("DELETE FROM src_runners WHERE discord_id = ?;");
+    client.getSrcUsers = sql.prepare("SELECT * FROM src_runners;");
+    client.addSrcUser = sql.prepare("INSERT OR REPLACE INTO src_runners (discord_id, src_name) VALUES (@discord_id, @src_name);");
+    client.deleteSrcUser = sql.prepare("DELETE FROM src_runners WHERE discord_id = ?;");
 
-    // This will run getUsers once Date.now() is divisible by 86400000 (every day)
+    // This will run reloadRolesCmd once Date.now() is divisible by 86400000 (every day)
     // Timeouts are inaccurate so having a delay of 86400000 would slowly make the 24h cycle shift
     autoRefreshTimeout = setTimeout(reloadRolesCmd, 86400000 * Math.ceil(Date.now() / 86400000) - Date.now() + 1);
 }
@@ -87,6 +87,9 @@ exports.roleCmds = (lowerMessage, message) => {
     else if (isAdmin(message.author.id)) {
         if (lowerMessage.startsWith("!reloadroles"))
             reloadRolesCmd(message);
+
+        //else if (lowerMessage.startsWith("!updateraceroles"))
+        //    updateRaceRolesCmd(message);
     }
 }
 
@@ -150,7 +153,7 @@ removeRolesCmd = (message) => {
         return;
     }
 
-    client.deleteUser.run(id);
+    client.deleteSrcUser.run(id);
     Object.values(roles).forEach((role) => {
         member.roles.remove(role);
     });
@@ -159,15 +162,47 @@ removeRolesCmd = (message) => {
 
 // !reloadroles
 reloadRolesCmd = () => {
-    log("==== Updating all registered users =====");
-    users = client.getUsers.all();
-    users.forEach((user) => {
+    log("==== Updating all registered users ====");
+    client.getSrcUsers.all().forEach((user) => {
         doSrcRoleUpdates(user.discord_id.toString(), user.src_name.toString());
     });
 
     clearTimeout(autoRefreshTimeout);
     autoRefreshTimeout = setTimeout(reloadRolesCmd, 86400000 * Math.ceil(Date.now() / 86400000) - Date.now() + 1);
 }
+
+/*
+updateRaceRolesCmd = (message) => {
+    log("==== Updating all race participants ====");
+    client.getAllRacers.all().forEach((user) => {
+        member = guild.members.cache.get(user.user_id);
+        if (!member) {
+            log("Race role update: '" + user.user_id + "' is not a member of the LBP speedrunning server.", true);
+        } else {
+            log("============")
+            client.getUserGamesRan.all(user.user_id.toString()).forEach((race) => {
+                log(gameIds[race.game] + "  " + race.category);
+                member.roles.add(roles[gameIds[race.game]]);
+                if (race.game === "LittleBigPlanet") {
+                    if (race.category === "An3%") {
+                        member.roles.add(roles[gameIds["LittleBigPlanet 2"]]);
+                        member.roles.add(roles[gameIds["LittleBigPlanet 3"]]);
+                    } else if (race.category === "An7%") {
+                        member.roles.add(roles[gameIds["LittleBigPlanet PSP"]]);
+                        member.roles.add(roles[gameIds["Sackboy's Prehistoric Moves"]]);
+                        member.roles.add(roles[gameIds["LittleBigPlanet 2"]]);
+                        member.roles.add(roles[gameIds["LittleBigPlanet PS Vita"]]);
+                        member.roles.add(roles[gameIds["LittleBigPlanet Karting"]]);
+                        member.roles.add(roles[gameIds["LittleBigPlanet 3"]]);
+                    }
+                }
+            });
+            log("/==========")
+        }
+    });
+    message.react(emotes.bingo);
+}
+*/
 
 // Update user roles from race history
 doRaceRoleUpdates = (discordId) => {
@@ -193,12 +228,11 @@ doSrcRoleUpdates = (discordId, srcName, message = null) => {
 
         // Save discord/src name link
         srcUser = { discord_id: `${discordId}`, src_name: `${srcName}` };
-        client.addUser.run(srcUser);
+        client.addSrcUser.run(srcUser);
 
         // Figure out what roles user should have from races + src
         rolesShouldHave = getRaceRoles(discordId);
-        data = JSON.parse(dataQueue).data;
-        data.forEach((d) => {
+        JSON.parse(dataQueue).data.forEach((d) => {
             role = roles[d.run.game];
             if (role) {
                 rolesShouldHave.add(role);

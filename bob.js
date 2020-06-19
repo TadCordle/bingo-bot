@@ -129,6 +129,7 @@ client.on("ready", () => {
     client.getUserStatsForCategory = sql.prepare("SELECT * FROM users WHERE user_id = ? AND game = ? AND category = ?");
     client.addUserStat = sql.prepare("INSERT OR REPLACE INTO users (user_id, game, category, races, gold, silver, bronze, ffs, elo, pb) "
                                    + "VALUES (@user_id, @game, @category, @races, @gold, @silver, @bronze, @ffs, @elo, @pb);");
+    client.getAllRacers = sql.prepare("SELECT DISTINCT user_id FROM users");
     client.getUserGamesRan = sql.prepare("SELECT DISTINCT game, category FROM users WHERE user_id = ?");
 
     // Setup SQL query to show leaderboard
