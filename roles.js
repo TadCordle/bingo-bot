@@ -87,16 +87,13 @@ exports.roleCmds = (lowerMessage, message) => {
     else if (isAdmin(message.author.id)) {
         if (lowerMessage.startsWith("!reloadroles"))
             reloadRolesCmd(message);
-
-        //else if (lowerMessage.startsWith("!updateraceroles"))
-        //    updateRaceRolesCmd(message);
     }
 }
 
 // !roles <src name> [<discord id>]
 rolesCmd = (message) => {
     params = message.content.replace(/^!roles/i, "").trim().split(" ");
-    if (params.length > 2) {
+    if (params.length > 2 || params[0] === "") {
         message.channel.send("Usage: `!roles [<speedrun.com name>]` (e.g. `!roles RbdJellyfish`)");
         return;
     }
@@ -115,28 +112,23 @@ rolesCmd = (message) => {
 
     message.react(emotes.bingo);
 
-    if (params[0] !== "") {
-        // Check if profile matches caller
-        callSrc("/user/" + params[0], message, (dataQueue) => {
-            if (!dataQueue.match(/class=['"]username/)) {
-                message.channel.send("Speedrun.com is having a moment, try again later.");
-                return;
-            }
+    // Check if profile matches caller
+    callSrc("/user/" + params[0], message, (dataQueue) => {
+        if (!dataQueue.match(/class=['"]username/)) {
+            message.channel.send("Speedrun.com is having a moment, try again later.");
+            return;
+        }
 
-            // Discord
-            discordMatch = dataQueue.match(/data-original-title="Discord: (.*?)"/);
-            discordName = message.author.username + "#" + message.author.discriminator;
-            if (discordMatch && discordMatch[1] === discordName) {
-                doSrcRoleUpdates(message.author.id, params[0], message);
-                return;
-            }
+        // Discord
+        discordMatch = dataQueue.match(/data-original-title="Discord: (.*?)"/);
+        discordName = message.author.username + "#" + message.author.discriminator;
+        if (discordMatch && discordMatch[1] === discordName) {
+            doSrcRoleUpdates(message.author.id, params[0], message);
+            return;
+        }
 
-            message.channel.send("Unable to determine if " + params[0] + "'s speedrun.com profile is yours; make sure you've linked your discord account at https://www.speedrun.com/editprofile.");
-        });
-
-    } else {    
-        doRaceRoleUpdates(message.author.id);
-    }
+        message.channel.send("Unable to determine if " + params[0] + "'s speedrun.com profile is yours; make sure you've linked your discord account at https://www.speedrun.com/editprofile.");
+    });
 }
 
 // !removeroles [<discord id>]
@@ -169,52 +161,6 @@ reloadRolesCmd = () => {
 
     clearTimeout(autoRefreshTimeout);
     autoRefreshTimeout = setTimeout(reloadRolesCmd, 86400000 * Math.ceil(Date.now() / 86400000) - Date.now() + 1);
-}
-
-/*
-updateRaceRolesCmd = (message) => {
-    log("==== Updating all race participants ====");
-    client.getAllRacers.all().forEach((user) => {
-        member = guild.members.cache.get(user.user_id);
-        if (!member) {
-            log("Race role update: '" + user.user_id + "' is not a member of the LBP speedrunning server.", true);
-        } else {
-            log("============")
-            client.getUserGamesRan.all(user.user_id.toString()).forEach((race) => {
-                log(gameIds[race.game] + "  " + race.category);
-                member.roles.add(roles[gameIds[race.game]]);
-                if (race.game === "LittleBigPlanet") {
-                    if (race.category === "An3%") {
-                        member.roles.add(roles[gameIds["LittleBigPlanet 2"]]);
-                        member.roles.add(roles[gameIds["LittleBigPlanet 3"]]);
-                    } else if (race.category === "An7%") {
-                        member.roles.add(roles[gameIds["LittleBigPlanet PSP"]]);
-                        member.roles.add(roles[gameIds["Sackboy's Prehistoric Moves"]]);
-                        member.roles.add(roles[gameIds["LittleBigPlanet 2"]]);
-                        member.roles.add(roles[gameIds["LittleBigPlanet PS Vita"]]);
-                        member.roles.add(roles[gameIds["LittleBigPlanet Karting"]]);
-                        member.roles.add(roles[gameIds["LittleBigPlanet 3"]]);
-                    }
-                }
-            });
-            log("/==========")
-        }
-    });
-    message.react(emotes.bingo);
-}
-*/
-
-// Update user roles from race history
-doRaceRoleUpdates = (discordId) => {
-    member = guild.members.cache.get(discordId);
-    if (!member) {
-        log("Race role update: '" + discordId + "' is not a member of the LBP speedrunning server.", true);
-        return;
-    }
-
-    // Figure out what roles user should have from races
-    updateRoles(member, getRaceRoles(discordId));
-    log("Race roles updated");
 }
 
 // Update user roles from speedrun.com profile
