@@ -27,8 +27,9 @@ const gameIds = {
 
 // speedrun.com category IDs
 const fullGameCategoriesThatAreActuallyILs = [
-    "824xr8md",
-    "9d8pgl6k"
+    "824xr8md", // LBP1 Die%
+    "9d8pgl6k", // LBP1 Styrofoam%
+    "7dg8qml2"  // LBP3 Corruption%
 ];
 
 exports.init = (c, l) => {
