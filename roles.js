@@ -15,20 +15,20 @@ var roles;
 
 // Maps from game name to speedrun.com game ID
 const gameIds = {
-    "LittleBigPlanet": "369pp31l",
-    "LittleBigPlanet PSP": "pd0n821e",
+    "LittleBigPlanet"            : "369pp31l",
+    "LittleBigPlanet PSP"        : "pd0n821e",
     "Sackboy's Prehistoric Moves": "4d704r17",
-    "LittleBigPlanet 2": "pdvzzk6w",
-    "LittleBigPlanet PS Vita": "369vz81l",
-    "LittleBigPlanet Karting": "pd0n531e",
-    "LittleBigPlanet 3": "k6qw8z6g"
+    "LittleBigPlanet 2"          : "pdvzzk6w",
+    "LittleBigPlanet PS Vita"    : "369vz81l",
+    "LittleBigPlanet Karting"    : "pd0n531e",
+    "LittleBigPlanet 3"          : "k6qw8z6g"
     // TODO: Add Sackboy: A Big Adventure
 };
 
 // speedrun.com category IDs
 const fullGameCategoriesThatAreActuallyILs = [
-    "824xr8md", // LBP1 Die%
-    "9d8pgl6k", // LBP1 Styrofoam%
+    "824xr8md", // LBP1 Styrofoam%
+    "9d8pgl6k", // LBP1 Die%
     "7dg8qml2"  // LBP3 Corruption%
 ];
 
