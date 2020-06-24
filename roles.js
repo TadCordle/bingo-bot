@@ -12,6 +12,7 @@ var guild;
 
 // Maps from speedrun.com game ID (or the string "wr") to server role
 var roles;
+var wrRoles;
 
 // Maps from game name to speedrun.com game ID
 const gameIds = {
@@ -45,8 +46,19 @@ exports.init = (c, l) => {
         "369vz81l": guild.roles.cache.get("716015465024979085"),
         "pd0n531e": guild.roles.cache.get("716015510797680741"),
         "k6qw8z6g": guild.roles.cache.get("716015547984117872"),
-        "wr"      : guild.roles.cache.get("716014433121337504")
     };
+    wrRoles = [
+        guild.roles.cache.get("716014433121337504"), // 1
+        guild.roles.cache.get("725437638974373978"), // 2
+        guild.roles.cache.get("725437745262231602"), // 3
+        guild.roles.cache.get("725437781073199265"), // 4
+        guild.roles.cache.get("725437800874377317"), // 5
+        guild.roles.cache.get("725437819224588300"), // 6
+        guild.roles.cache.get("725437839403384962"), // 7
+        guild.roles.cache.get("725437863381958696"), // 8
+        guild.roles.cache.get("725437884420587703"), // 9
+        guild.roles.cache.get("725437901680279637"), // 10+
+    ];
     if (Object.values(roles).includes(undefined)) {
         log("Couldn't find all roles; Discord roles may have changed.", true);
     }
@@ -179,15 +191,22 @@ doSrcRoleUpdates = (discordId, srcName, message = null) => {
 
         // Figure out what roles user should have from races + src
         rolesShouldHave = getRaceRoles(discordId);
+        numWrs = 0;
         JSON.parse(dataQueue).data.forEach((d) => {
             role = roles[d.run.game];
             if (role) {
                 rolesShouldHave.add(role);
                 if (d.place === 1 && d.run.level === null && !fullGameCategoriesThatAreActuallyILs.includes(d.run.category)) {
-                    rolesShouldHave.add(roles["wr"]);
+                    numWrs++;
                 }
             }
         });
+        if (numWrs > 0) {
+            if (numWrs > wrRoles.length) {
+                numWrs = wrRoles.length;
+            }
+            rolesShouldHave.add(wrRoles[numWrs - 1]);
+        }
         updateRoles(member, rolesShouldHave);
     });
 }
@@ -217,7 +236,7 @@ getRaceRoles = (discordId) => {
 // Updates member's runner roles to match the ones in rolesShouldHave
 updateRoles = (member, rolesShouldHave) => {
     // Update roles
-    Object.values(roles).forEach((role) => {
+    Object.values(roles).concat(Object.values(wrRoles)).forEach((role) => {
         if (rolesShouldHave.has(role)) {
             member.roles.add(role);
         } else {
