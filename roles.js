@@ -17,6 +17,7 @@ var wrRoles;
 // Maps from game name to speedrun.com game ID
 const gameIds = {
     "LittleBigPlanet"            : "369pp31l",
+    "LittleBigPlanet Series DLC" : "j1llxz71",
     "LittleBigPlanet PSP"        : "pd0n821e",
     "Sackboy's Prehistoric Moves": "4d704r17",
     "LittleBigPlanet 2"          : "pdvzzk6w",
@@ -40,6 +41,7 @@ exports.init = (c, l) => {
     guild = client.guilds.cache.get('129652811754504192');
     roles = {
         "369pp31l": guild.roles.cache.get("716015233256390696"),
+        "j1llxz71": guild.roles.cache.get("729768987365474355"),
         "pd0n821e": guild.roles.cache.get("716015332040507503"),
         "4d704r17": guild.roles.cache.get("716015421878435891"),
         "pdvzzk6w": guild.roles.cache.get("716015284183367701"),
@@ -196,7 +198,7 @@ doSrcRoleUpdates = (discordId, srcName, message = null) => {
             role = roles[d.run.game];
             if (role) {
                 rolesShouldHave.add(role);
-                if (d.place === 1 && d.run.level === null && !fullGameCategoriesThatAreActuallyILs.includes(d.run.category)) {
+                if (d.run.game !== gameIds["LittleBigPlanet Series DLC"] && d.place === 1 && d.run.level === null && !fullGameCategoriesThatAreActuallyILs.includes(d.run.category)) {
                     numWrs++;
                 }
             }
