@@ -4,6 +4,9 @@ exports.funCmds = (lowerMessage, message) => {
     // Fun commands (available anywhere)
     if (lowerMessage.startsWith("!nr") || lowerMessage.startsWith("!newrunner"))
         newRunnerCmd(message);
+
+    else if (lowerMessage.startsWith("!lenny"))
+        lennyCmd(message);
 }
 
 // !nr/!newrunner
@@ -12,4 +15,8 @@ const runnerSuffixes = ["Wa",   "-j",  "Jellyfish", "12221", "cadee", "ds",   "T
 
 newRunnerCmd = (message) => {
     message.channel.send(runnerPrefixes[Math.floor(Math.random() * runnerPrefixes.length)] + runnerSuffixes[Math.floor(Math.random() * runnerSuffixes.length)]);
+}
+
+lennyCmd = (message) => {
+    message.channel.send("( ͡° ͜ʖ ͡°)");
 }
