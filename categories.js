@@ -62,8 +62,8 @@ exports.normalizeCategory = (normalizedGame, category) => {
         return "4p Co-op NG+";
     } else if (normalizedCategory === "an3") {
         return "An3%";
-    } else if (normalizedCategory === "an7") {
-        return "An7%";
+    } else if (normalizedCategory === "7ny" || normalizedCategory === "an7") {
+        return "7ny%";
     } else if (normalizedCategory === "il" || normalizedCategory === "ils" || normalizedCategory === "individuallevel" || normalizedCategory === "individuallevels") {
         return "Individual Levels";
     }

@@ -432,7 +432,7 @@ categoryCmd = (message) => {
             return;
         }
 
-        if (normalized === "An3%" || normalized === "An7%") {
+        if (normalized === "An3%" || normalized === "7ny%") {
             gameName = "LittleBigPlanet";
         }
 

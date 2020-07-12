@@ -224,7 +224,7 @@ getRaceRoles = (discordId) => {
             if (race.category === "An3%") {
                 rolesShouldHave.add(roles[gameIds["LittleBigPlanet 2"]]);
                 rolesShouldHave.add(roles[gameIds["LittleBigPlanet 3"]]);
-            } else if (race.category === "An7%") {
+            } else if (race.category === "7ny%") {
                 rolesShouldHave.add(roles[gameIds["LittleBigPlanet PSP"]]);
                 rolesShouldHave.add(roles[gameIds["Sackboy's Prehistoric Moves"]]);
                 rolesShouldHave.add(roles[gameIds["LittleBigPlanet 2"]]);
