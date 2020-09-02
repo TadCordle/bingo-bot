@@ -200,7 +200,7 @@ doSrcRoleUpdates = (discordId, srcName, message = null) => {
             role = roles[d.run.game];
             if (role) {
                 rolesShouldHave.add(role);
-                if (d.place === 1 && d.run.level === null && !fullGameCategoriesThatAreActuallyILs.includes(d.run.category)) {
+                if (d.place === 1 && d.run.level === null && !fullGameCategoriesThatAreActuallyILs.includes(d.run.category) && d.run.game !== "LittleBigPlanet Series DLC") {
                     numWrs++;
                 }
             }
