@@ -224,6 +224,7 @@ getRaceRoles = (discordId) => {
             if (race.category === "An3%") {
                 rolesShouldHave.add(roles[gameIds["LittleBigPlanet 2"]]);
                 rolesShouldHave.add(roles[gameIds["LittleBigPlanet 3"]]);
+                rolesShouldHave.add(roles[gameIds["Multiple LittleBigPlanet Games"]]);
             } else if (race.category === "7ny%") {
                 rolesShouldHave.add(roles[gameIds["LittleBigPlanet PSP"]]);
                 rolesShouldHave.add(roles[gameIds["Sackboy's Prehistoric Moves"]]);
@@ -231,6 +232,7 @@ getRaceRoles = (discordId) => {
                 rolesShouldHave.add(roles[gameIds["LittleBigPlanet PS Vita"]]);
                 rolesShouldHave.add(roles[gameIds["LittleBigPlanet Karting"]]);
                 rolesShouldHave.add(roles[gameIds["LittleBigPlanet 3"]]);
+                rolesShouldHave.add(roles[gameIds["Multiple LittleBigPlanet Games"]]);
             }
         }
     });

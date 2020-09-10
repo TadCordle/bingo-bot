@@ -47,6 +47,7 @@ class RaceState {
         this.startTime = 0;
         this.ilScores = new Map();
         this.ilResults = [];
+        this.leavingWhenDone = new Set();
     }
 
     // Adds an entrant. Returns true if successful, returns false if the user has already joined.
@@ -570,6 +571,11 @@ chooseLbpMeLevel = (level, message) => {
 
 // !ff/!forfeit/!leave/!exit/!unrace
 forfeitCmd = (message) => {
+    if (!raceState.entrants.has(message.author.id)){
+        // Can't leave if you're not in the race, dummy
+        return;
+    }
+
     if (raceState.state === State.JOINING) {
         // Leave race completely if the race hasn't started yet
         if (raceState.removeEntrant(message.author.id)) {
@@ -588,8 +594,15 @@ forfeitCmd = (message) => {
         }
 
     } else if (raceState.state === State.ACTIVE || raceState.state === State.COUNTDOWN) {
-        // Only mark as forfeited if the race is in progress
-        if (raceState.entrants.has(message.author.id) && !raceState.ffEntrants.includes(message.author.id) && !raceState.doneEntrants.includes(message.author.id)) {
+        if (raceState.ffEntrants.includes(message.author.id) || raceState.doneEntrants.includes(message.author.id)) {
+            // If this person has already finished the current race, mark them to leave once the race is over
+            if (isILRace()) {
+                raceState.leavingWhenDone.add(message.author.id);
+                message.channel.send(username(message) + " has left the race.");
+            }
+
+        } else {
+            // Otherwise mark them as forfeited
             raceState.ffEntrants.push(message.author.id);
             message.channel.send(username(message) + " has forfeited (use `!unforfeit` to rejoin if this was an accident).");
             if (raceState.ffEntrants.length + raceState.doneEntrants.length === raceState.entrants.size) {
@@ -1014,6 +1027,13 @@ doEndRace = (message) => {
             raceDoneWarningTimeout = setTimeout(() => { message.channel.send("Race complete (id: " + (raceId-1) + ")! Use `!level` to choose another level, or `!leave` to leave the lobby."); }, 1000);
         }
         recordResults();
+
+        // Handle people that left before the IL was done
+        for (let id of raceState.leavingWhenDone) {
+            raceState.removeEntrant(id);
+        }
+        raceState.leavingWhenDone = new Set();
+
     } else {
         raceState.state = State.DONE;
 
