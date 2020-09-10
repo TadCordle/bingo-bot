@@ -312,8 +312,15 @@ raceCmd = (message) => {
         }
 
     } else if (raceState.state === State.COUNTDOWN || raceState.state === State.ACTIVE) {
-        // Can't join race that already started
-        message.author.send("Can't join because there's a race already in progress!");
+        if (raceState.leavingWhenDone.has(message.author.id)) {
+            raceState.leavingWhenDone.delete(message.author.id);
+            message.react(emotes.bingo);
+        } else {
+            // Can't join race that already started
+            if (!raceState.entrants.has(message.author.id)) {
+                message.author.send("Can't join because there's a race already in progress!");
+            }
+        }
     }
 }
 
@@ -630,6 +637,9 @@ forfeitCmd = (message) => {
 // !uff/!unforfeit
 unforfeitCmd = (message) => {
     if (raceState.state === State.ACTIVE || raceState.state === State.COUNTDOWN || raceState.state === State.DONE) {
+        if (raceState.leavingWhenDone.has(message.author.id)) {
+            raceState.leavingWhenDone.delete(message.author.id);
+        }
         if (raceState.entrants.has(message.author.id) && raceState.ffEntrants.includes(message.author.id)) {
             raceState.state = State.ACTIVE;
             raceState.ffEntrants = arrayRemove(raceState.ffEntrants, message.author.id);
