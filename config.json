@@ -5,5 +5,379 @@
         "elo"          : "<:ppjSmug:230442929838227457>",
         "raceStarting" : "<:ppjWink:367254404811980801>",
         "acknowledge"  : "394255134340677634"
-    }
+    },
+    "games": [
+        { "name": "LittleBigPlanet",             "aliases": ["lbp1", "1"] },
+        { "name": "LittleBigPlanet PSP",         "aliases": ["psp", "p"] },
+        { "name": "Sackboy's Prehistoric Moves", "aliases": ["memes", "moves", "spm", "prehistoricmemes", "sackboysprehistoricmemes", "lbpspm", "lbpsackboysprehistoricmoves", "lbpprehistoricmemes", "lbpsackboysprehistoricmemes", "m"] },
+        { "name": "LittleBigPlanet 2",           "aliases": ["2"] },
+        { "name": "LittleBigPlanet PS Vita",     "aliases": ["lbpv", "lbpvita", "v", "vita"] },
+        { "name": "LittleBigPlanet Karting",     "aliases": ["lbpk", "k", "karting"] },
+        { "name": "LittleBigPlanet 3",           "aliases": ["3"] },
+        { "name": "Sackboy: A Big Adventure",    "aliases": ["saba", "sba", "sacboybigadventure", "sackboysbigadventure"] }
+    ],
+    "categories": [
+        {
+            "game": "global",
+            "categories": [
+                { "name": "Any%",              "aliases": [] },
+                { "name": "100%",              "aliases": [] },
+                { "name": "2p Co-op NG+",      "aliases": ["coop", "coopng", "2p", "2pcoop"] },
+                { "name": "3p Co-op NG+",      "aliases": ["3p", "3pcoop"] },
+                { "name": "4p Co-op NG+",      "aliases": ["4p", "4pcoop"] },
+                { "name": "An3%",              "aliases": [] },
+                { "name": "7ny%",              "aliases": ["an7"] },
+                { "name": "Individual Levels", "aliases": ["il", "ils", "individuallevel"] }
+            ]
+        },
+        {
+            "game": "LittleBigPlanet",
+            "categories": [
+                { "name": "Any% No Overlord", "aliases": ["anyno", "no"] },
+                { "name": "100% No Overlord", "aliases": ["100no"] },
+                { "name": "All Levels",       "aliases": ["al"] },
+                { "name": "Styrofoam%",       "aliases": [] },
+                { "name": "Die%",             "aliases": [] }
+            ]
+        },
+        {
+            "game": "LittleBigPlanet 2",
+            "categories": [
+                { "name": "Any% No Overlord", "aliases": ["anyno", "no", "ng", "solong"] }
+            ]
+        },
+        {
+            "game": "LittleBigPlanet 3",
+            "categories": [
+                { "name": "Any% No Create",      "aliases": ["anynooverlord", "anyno", "no", "anync", "nc"] },
+                { "name": "Profile Corruption%", "aliases": ["corruption"] }
+            ]
+        }
+    ],
+    "levels": [
+        {
+            "game": "LittleBigPlanet",
+            "levels": [
+                { "name": "Introduction", "aliases": ["intro"] },
+                { "name": "First Steps", "aliases": [] },
+                { "name": "Get a Grip", "aliases": [] },
+                { "name": "Skate to Victory", "aliases": [] },
+                { "name": "Tie Skipping", "aliases": [] },
+                { "name": "Castle Climb Challenge", "aliases": [] },
+                { "name": "Skateboard Freefall", "aliases": [] },
+                { "name": "Die%", "aliases": [] },
+
+                { "name": "Swinging Safari", "aliases": [] },
+                { "name": "Burning Forest", "aliases": [] },
+                { "name": "The Meerkat Kingdom", "aliases": [] },
+                { "name": "Flaming Seesaws - Easy", "aliases": [] },
+                { "name": "Flaming Seesaws - Medium", "aliases": [] },
+                { "name": "Flaming Seesaws - Hard", "aliases": [] },
+                { "name": "Tunnel Plunge", "aliases": [] },
+                { "name": "Meerkat Bounce", "aliases": [] },
+                { "name": "Styrofoam%", "aliases": [] },
+
+                { "name": "The Wedding Reception", "aliases": [] },
+                { "name": "The Darkness", "aliases": [] },
+                { "name": "Skulldozer", "aliases": [] },
+                { "name": "The Dangerous Descent", "aliases": [] },
+                { "name": "Wobble Poles", "aliases": [] },
+                { "name": "Bubble Labyrinth", "aliases": [] },
+
+                { "name": "Boom Town", "aliases": [] },
+                { "name": "The Mines", "aliases": [] },
+                { "name": "Serpent Shrine", "aliases": [] },
+                { "name": "Wrestler's Drag", "aliases": [] },
+                { "name": "Cowabunga", "aliases": [] },
+                { "name": "Roller Run - Easy", "aliases": [] },
+                { "name": "Roller Run - Medium", "aliases": [] },
+                { "name": "Roller Run - Hard", "aliases": [] },
+                { "name": "Puzzle Wheel", "aliases": [] },
+
+                { "name": "Lowrider", "aliases": [] },
+                { "name": "Subway", "aliases": [] },
+                { "name": "The Construction Site", "aliases": [] },
+                { "name": "The Drag Race", "aliases": [] },
+                { "name": "Elevation", "aliases": [] },
+                { "name": "The Discombobulator", "aliases": [] },
+
+                { "name": "Endurance Dojo", "aliases": [] },
+                { "name": "Sensei's Lost Castle", "aliases": [] },
+                { "name": "The Terrible Oni's Volcano", "aliases": [] },
+                { "name": "Daruma San", "aliases": [] },
+                { "name": "Wheel of Misfortune", "aliases": [] },
+                { "name": "Roller Castle", "aliases": [] },
+
+                { "name": "The Dancers' Court", "aliases": [] },
+                { "name": "Elephant Temple", "aliases": [] },
+                { "name": "Great Magician's Palace", "aliases": [] },
+                { "name": "The Shifting Temple", "aliases": [] },
+                { "name": "Pillar Jumping", "aliases": [] },
+                { "name": "Fire Pits", "aliases": [] },
+
+                { "name": "The Frozen Tundra", "aliases": [] },
+                { "name": "The Bunker", "aliases": [] },
+                { "name": "The Collector's Lair", "aliases": [] },
+                { "name": "The Collector", "aliases": [] },
+                { "name": "Spline Rider", "aliases": [] },
+                { "name": "Rotor Tubes", "aliases": [] },
+                { "name": "Jetpack Tunnel", "aliases": [] }
+            ]
+        },
+        {
+            "game": "LittleBigPlanet PSP",
+            "levels": [
+                { "name": "The Introduction", "aliases": ["intro"] },
+                { "name": "Walkabout", "aliases": [] },
+                { "name": "Gift of the Grab", "aliases": [] },
+                { "name": "Didgerido Didgeridon't", "aliases": ["didgeridoodidgeridont"] },
+                { "name": "Dreamtime", "aliases": [] },
+
+                { "name": "Mortar Do", "aliases": [] },
+                { "name": "Dragon on a Bite", "aliases": [] },
+                { "name": "Eggstraction", "aliases": [] },
+
+                { "name": "Cheeky Monkey", "aliases": [] },
+                { "name": "Thieve's Den", "aliases": [] },
+                { "name": "Rugs and Kisses", "aliases": ["highonrugs", "rugsnkisses"] },
+
+                { "name": "Get the Hump", "aliases": [] },
+                { "name": "Sand Ahoy", "aliases": [] },
+                { "name": "Fun Pharaoh", "aliases": [] },
+
+                { "name": "Mountin' Exzcitement", "aliases": [] },
+                { "name": "Peak Performance", "aliases": [] },
+                { "name": "Dogged Determination", "aliases": [] },
+
+                { "name": "Stitch Gordon", "aliases": [] },
+                { "name": "Frying Saucers", "aliases": [] },
+                { "name": "The Sewn Identity", "aliases": [] },
+                { "name": "Opening Fright", "aliases": [] },
+
+                { "name": "Crashing the Party", "aliases": [] },
+                { "name": "Road to Joy", "aliases": [] },
+                { "name": "The Procession", "aliases": [] }
+            ]
+        },
+        {
+            "game": "Sackboy's Prehistoric Moves",
+            "levels": [
+                { "name": "Learning to Move", "aliases": [] },
+                { "name": "Prehistoric Paradise", "aliases": [] },
+                { "name": "Inside Big Rex", "aliases": [] },
+                { "name": "Cro-Magnon City", "aliases": [] },
+                { "name": "Hot Stepping", "aliases": [] },
+                { "name": "Fossil Fight", "aliases": [] }
+            ]
+        },
+        {
+            "game": "LittleBigPlanet 2",
+            "levels": [
+                { "name": "Introduction", "aliases": ["intro"] },
+                { "name": "Rookie Test", "aliases": [] },
+                { "name": "Grab and Swing", "aliases": [] },
+                { "name": "Gripple Grapple", "aliases": [] },
+                { "name": "Bravery Test", "aliases": [] },
+                { "name": "Final Test", "aliases": [] },
+                { "name": "Hedge Hopping", "aliases": [] },
+                { "name": "Tower of Whoop", "aliases": [] },
+                { "name": "Block Drop", "aliases": [] },
+                { "name": "Super Block Drop", "aliases": [] },
+
+                { "name": "Runaway Train", "aliases": [] },
+                { "name": "Brainy Cakes", "aliases": [] },
+                { "name": "The Cakeinator", "aliases": [] },
+                { "name": "Currant Affairs", "aliases": [] },
+                { "name": "Kling Klong", "aliases": [] },
+                { "name": "Rodent Derby", "aliases": [] },
+                { "name": "Death by Shockolate", "aliases": [] },
+                { "name": "Attack of the Mutant Marshmallows", "aliases": [] },
+
+                { "name": "Maximum Security", "aliases": [] },
+                { "name": "Pipe Dreams", "aliases": [] },
+                { "name": "Bang for Buck", "aliases": [] },
+                { "name": "Waste Disposal", "aliases": [] },
+                { "name": "Fowl Play", "aliases": [] },
+                { "name": "Basketball", "aliases": [] },
+                { "name": "Split Paths", "aliases": [] },
+                { "name": "Sackbot Bounce", "aliases": [] },
+
+                { "name": "Avalon's Advanced Armaments Acadamy", "aliases": ["aaaa"] },
+                { "name": "Got The Hump", "aliases": [] },
+                { "name": "The Sackboy Redemption", "aliases": [] },
+                { "name": "Flying In The Face Of Danger", "aliases": ["fitfod"] },
+                { "name": "Huge Peril For Huge Spaceship", "aliases": ["hpfhs"] },
+                { "name": "On Burrowed Time", "aliases": [] },
+                { "name": "Gobotron", "aliases": [] },
+                { "name": "Click Flick", "aliases": [] },
+
+                { "name": "Up And At 'Em", "aliases": [] },
+                { "name": "Patients Are A Virtue", "aliases": [] },
+                { "name": "Fireflies When You're Having Fun", "aliases": ["fwyhf", "ffwyhf"] },
+                { "name": "Casa Del Higginbotham", "aliases": [] },
+                { "name": "Invasion Of The Body Invaders", "aliases": ["iotbi"] },
+                { "name": "Hungry Caterpillars", "aliases": [] },
+                { "name": "Mind Control", "aliases": [] },
+                { "name": "Root Canal", "aliases": [] },
+
+                { "name": "Set The Controls For The Heart Of The Negativatron", "aliases": ["stcfthotn"] },
+                { "name": "Full Metal Rabbit", "aliases": [] },
+                { "name": "Where In The World Is Avalon Centrifuge?", "aliases": ["witwiac"] },
+                { "name": "Fight of the Bumblebee", "aliases": ["fightofbumblebees"] },
+                { "name": "Into The Heart Of The Negativatron", "aliases": [] },
+                { "name": "Rocket Funland", "aliases": [] },
+                { "name": "Ping Pang Pong", "aliases": [] },
+                { "name": "Space Pool", "aliases": [] }
+            ]
+        },
+        {
+            "game": "LittleBigPlanet PS Vita",
+            "levels": [
+                { "name": "Introduction", "aliases": ["intro"] },
+                { "name": "First Lessons In Loco-Motion", "aliases": [] },
+                { "name": "Swing-Bop Acrobatics", "aliases": [] },
+                { "name": "Flounder's Jump & Jive", "aliases": [] },
+                { "name": "Palace Of The Peculiar", "aliases": [] },
+                { "name": "Piano of Peril", "aliases": [] },
+                { "name": "Bonce Tappin'", "aliases": [] },
+                { "name": "Tower Builder", "aliases": [] },
+                { "name": "Wall Or Nothing", "aliases": [] },
+
+                { "name": "A Wander Into Yonder", "aliases": [] },
+                { "name": "Cogwheel Creek", "aliases": [] },
+                { "name": "The Odd Rocket", "aliases": [] },
+                { "name": "Mine O'Threat", "aliases": [] },
+                { "name": "Driller Thriller", "aliases": [] },
+                { "name": "Flower Pop", "aliases": [] },
+                { "name": "Stream Race", "aliases": [] },
+
+                { "name": "Hooks & Beats", "aliases": [] },
+                { "name": "The Discard Factory", "aliases": [] },
+                { "name": "High Tech Tunneling", "aliases": [] },
+                { "name": "The Mainframe Heist", "aliases": [] },
+                { "name": "A Capacitor For Evil", "aliases": [] },
+                { "name": "Air Hockey", "aliases": [] },
+                { "name": "Super Boxing", "aliases": [] },
+                { "name": "Bounce Bop Hop", "aliases": [] },
+                { "name": "Collision Course", "aliases": [] },
+
+                { "name": "Spare Part Pursuit", "aliases": [] },
+                { "name": "Three Wheel Tracks", "aliases": [] },
+                { "name": "Makeshift Transportation", "aliases": [] },
+                { "name": "An Appetite For Metal", "aliases": [] },
+                { "name": "Flick-A-Bullseye", "aliases": [] },
+                { "name": "Toy Tanks", "aliases": [] },
+                { "name": "Chopper Throw", "aliases": [] },
+
+                { "name": "Sunshine & Shadows", "aliases": [] },
+                { "name": "A Recipe For Unpleasantness", "aliases": [] },
+                { "name": "High Pressure Cellar", "aliases": [] },
+                { "name": "Re-Animation Station", "aliases": [] },
+                { "name": "In The Clutches Of Evil", "aliases": [] },
+                { "name": "Zombie Springtime", "aliases": [] },
+                { "name": "Eye Ball Maze", "aliases": [] },
+                { "name": "Sorting Panic", "aliases": [] }
+            ]
+        },
+        {
+            "game": "LittleBigPlanet Karting",
+            "levels": [
+                { "name": "Karting Lessons", "aliases": ["intro", "introduction"] },
+                { "name": "Garden Grip", "aliases": [] },
+                { "name": "After The Wedding", "aliases": [] },
+                { "name": "Serpent's Shrine", "aliases": [] },
+                { "name": "Mine The Gap", "aliases": [] },
+                { "name": "King's Castle", "aliases": [] },
+                { "name": "Training Wheels", "aliases": [] },
+                { "name": "Target Practice", "aliases": [] },
+                { "name": "Self Defence", "aliases": [] },
+                { "name": "Savannah Rally", "aliases": [] },
+                { "name": "Craftworld GP", "aliases": [] },
+                { "name": "Sackboy RC", "aliases": [] },
+
+                { "name": "Turtle Island", "aliases": [] },
+                { "name": "The Emperor Has No Clues", "aliases": [] },
+                { "name": "Huge Monster Rally", "aliases": [] },
+                { "name": "Night Rider", "aliases": [] },
+                { "name": "Egg Kartin", "aliases": [] },
+                { "name": "Egg Hunt", "aliases": [] },
+                { "name": "Star Fishin'", "aliases": [] },
+
+                { "name": "Sugar Rush", "aliases": [] },
+                { "name": "Current Events", "aliases": [] },
+                { "name": "Cakes on a Train", "aliases": [] },
+                { "name": "Don't Go Baking My Kart", "aliases": [] },
+
+                { "name": "Future Perfect", "aliases": [] },
+                { "name": "Zeppelins Rule!", "aliases": [] },
+                { "name": "The Infallible Breakfast Machine", "aliases": [] },
+                { "name": "World's Fair in Love and War", "aliases": [] },
+                { "name": "Best Before Date", "aliases": [] },
+                { "name": "Monster Trucks", "aliases": [] },
+                { "name": "Tank Combat", "aliases": [] },
+                { "name": "Stuck In Jam", "aliases": [] },
+
+                { "name": "Roots Of All Evil", "aliases": [] },
+                { "name": "Firebug Circuit", "aliases": [] },
+                { "name": "On the Wormpath", "aliases": [] },
+                { "name": "Venus Speedtrap RC", "aliases": [] },
+
+                { "name": "2.0 Bee Or Not 2.0 Bee", "aliases": ["2beeornot2bee"] },
+                { "name": "RoboBun Test Chamber", "aliases": [] },
+                { "name": "Huge Spaceship", "aliases": [] },
+                { "name": "Lost In Bass", "aliases": [] },
+                { "name": "Drum Smash", "aliases": [] },
+                { "name": "The Funkhole (and Beyond?)", "aliases": ["funkhole"] },
+                { "name": "Assault on Batteries", "aliases": [] },
+                { "name": "Ride Scroller", "aliases": [] },
+                { "name": "Full Tilt", "aliases": [] },
+
+                { "name": "The Garage at the End of the Craftverse", "aliases": [] }
+            ]
+        },
+        {
+            "game": "LittleBigPlanet 3",
+            "levels": [
+                { "name": "Introduction", "aliases": ["intro"] },
+                { "name": "Needlepoint Peaks", "aliases": [] },
+                { "name": "Newton's Airship", "aliases": [] },
+                { "name": "Stitchem Manor", "aliases": [] },
+                { "name": "Tinpot Towers", "aliases": [] },
+
+                { "name": "High Stakes Heist", "aliases": [] },
+                { "name": "Deep Space Drive-in", "aliases": [] },
+                { "name": "Shake, Rattle & Roll", "aliases": [] },
+                { "name": "Crumbling Crypts", "aliases": [] },
+                { "name": "Lights, Camera, Traction!", "aliases": [] },
+                { "name": "Guess Who's Coming To Dinner?", "aliases": [] },
+                { "name": "Back In The Saddle", "aliases": [] },
+                { "name": "Two Company", "aliases": [] },
+                { "name": "The Wheel Deal", "aliases": [] },
+                { "name": "Race to the Stars", "aliases": [] },
+
+                { "name": "Go Loco", "aliases": [] },
+                { "name": "Furry Soles, Hot Coals", "aliases": [] },
+                { "name": "Flip-Flopped Folios", "aliases": [] },
+                { "name": "Tutu Tango", "aliases": [] },
+                { "name": "On The Link Of Disaster", "aliases": [] },
+                { "name": "Bear With Us", "aliases": [] },
+                { "name": "No Drain No Gain", "aliases": [] },
+                { "name": "Here, There and Everywhere", "aliases": [] },
+
+                { "name": "Masque Maker's Tower", "aliases": [] },
+                { "name": "Belly Of The Beast", "aliases": [] },
+                { "name": "Cloud Caravan", "aliases": [] },
+                { "name": "The Great Escape", "aliases": [] },
+                { "name": "Even Bosses Wear Hats Sometimes", "aliases": [] },
+                { "name": "Battle Of The Airwaves", "aliases": [] },
+                { "name": "Joust In Time", "aliases": [] }
+            ]
+        },
+        {
+            "game": "Sackboy: A Big Adventure",
+            "levels": [
+                { "name": "TODO", "aliases": [] }
+            ]
+        }
+    ]
 }

@@ -364,7 +364,7 @@ gameCmd = (message) => {
             return;
         }
 
-        game = categories.normalizeGameName(game);
+        game = normalizeGameName(game);
         if (game === null) {
             message.channel.send("Specified game name was not a valid LBP game, try something else.");
             return;
@@ -421,7 +421,7 @@ categoryCmd = (message) => {
             return;
         }
 
-        normalized = categories.normalizeCategory(gameName, category);
+        normalized = normalizeCategory(gameName, category);
         if (normalized === null) {
             if (isILRace()) {
                 message.channel.send("Switching from IL race to full-game race (" + gameName + " / " + category + "). (This doesn't seem to be an official category, though; did you mean something else?)");
@@ -474,7 +474,7 @@ levelCmd = (message) => {
         return;
     }
 
-    normalized = categories.normalizeLevel(gameName, level);
+    normalized = normalizeLevel(gameName, level);
     if (normalized === null) {
         // Choose other non-story level
         levelName = level;
@@ -873,7 +873,7 @@ meCmd = (message) => {
         message.channel.send("Usage: `!me <game name>` (e.g. `!me LBP1`)");
         return;
     }
-    game = categories.normalizeGameName(game);
+    game = normalizeGameName(game);
     if (game === null) {
         message.channel.send("The game you specified isn't an LBP game.");
         return;
@@ -983,12 +983,12 @@ leaderboardCmd = (message) => {
         return;
     }
 
-    game = categories.normalizeGameName(params[0].trim());
+    game = normalizeGameName(params[0].trim());
     if (game === null) {
         message.channel.send("Unrecognized game name: " + game);
         return;
     }
-    category = categories.normalizeCategory(game, params[1].trim());
+    category = normalizeCategory(game, params[1].trim());
     if (category === null) {
         category = params[1].trim();
     }
@@ -1225,6 +1225,58 @@ formatPlace = (place) => {
         return place + "nd";
     }
     return place + "rd";
+}
+
+// Given a string (game), returns the name of the closest matching LBP game in config.json.
+normalizeGameName = (game) => {
+    process = (g) => g.toLowerCase().replace(/\W/g, "").replace("littlebigplanet", "lbp").replace("psv", "v");
+    game = process(game);
+
+    for (var i = 0; i < config.games.length; i++) {
+        configGame = config.games[i];
+        if (configGame.aliases.includes(game) || process(configGame.name) === game) {
+            return configGame.name;
+        }
+    }
+    return null;
+}
+
+// Given a game name (normalizedGame) and a category string, returns the closest matching category name in config.json.
+normalizeCategory = (normalizedGame, category) => {
+    process = (c) => c.toLowerCase().replace(/\W|plus/g, "").replace("newgame", "ng");
+    normalizedCategory = process(category);
+
+    for (var i = 0; i < config.categories.length; i++) {
+        configGame = config.categories[i];
+        if (configGame.game === "global" || configGame.game === normalizedGame) {
+            for (var j = 0; j < configGame.categories.length; j++) {
+                configCat = configGame.categories[j];
+                if (configCat.aliases.includes(normalizedCategory) || process(configCat.name) === normalizedCategory) {
+                    return configCat.name;
+                }
+            }
+        }
+    }
+    return null;
+}
+
+// Given a game name and level string, return the closest matching level name in config.json.
+normalizeLevel = (normalizedGame, level) => {
+    process = (l) => l.toLowerCase().replace(/&/g, "and").replace(/\W|the/g, "");
+    level = process(level);
+
+    for (var i = 0; i < config.levels.length; i++) {
+        configGame = config.levels[i];
+        if (configGame.game === normalizedGame) {
+            for (var j = 0; j < configGame.levels.length; j++) {
+                configLevel = configGame.levels[j];
+                if (configLevel.aliases.includes(level) || process(configLevel.name) === level) {
+                    return configLevel.name;
+                }
+            }
+        }
+    }
+    return null;
 }
 
 // Helper for removing an object (value) from an array (arr)
