@@ -1,5 +1,6 @@
 const categories = require('./categories.js');
-const emotes = require('./emotes.json');
+const config = require("./config.json");
+const emotes = config.emotes;
 const https = require('https');
 const SQLite = require('better-sqlite3');
 
@@ -24,15 +25,18 @@ const gameIds = {
     "LittleBigPlanet 2"              : "pdvzzk6w",
     "LittleBigPlanet PS Vita"        : "369vz81l",
     "LittleBigPlanet Karting"        : "pd0n531e",
-    "LittleBigPlanet 3"              : "k6qw8z6g"
-    // TODO: Add Sackboy: A Big Adventure
+    "LittleBigPlanet 3"              : "k6qw8z6g",
+    "Sackboy: A Big Adventure"       : "j1nevzx1",
 };
 
-// speedrun.com category IDs
-const fullGameCategoriesThatAreActuallyILs = [
+const exemptCatsFromWrRole = [
     "824xr8md", // LBP1 Styrofoam%
     "9d8pgl6k", // LBP1 Die%
-    "7dg8qml2"  // LBP3 Corruption%
+    "7dg8qml2", // LBP3 Corruption%
+];
+
+const exemptGamesFromWrRole = [
+    "j1llxz71", // LittleBigPlanet Series DLC
 ];
 
 exports.init = (c, l) => {
@@ -50,6 +54,7 @@ exports.init = (c, l) => {
         "369vz81l": guild.roles.cache.get("716015465024979085"),
         "pd0n531e": guild.roles.cache.get("716015510797680741"),
         "k6qw8z6g": guild.roles.cache.get("716015547984117872"),
+        "j1nevzx1": guild.roles.cache.get("760606311679000626"),
     };
     wrRoles = [
         guild.roles.cache.get("716014433121337504"), // 1
@@ -123,11 +128,11 @@ rolesCmd = (message) => {
         }
         id = params[1].replace("<@", "").replace(">", "").trim();
         doSrcRoleUpdates(id, params[0], message);
-        message.react(emotes.bingo);
+        message.react(emotes.acknowledge);
         return;
     }
 
-    message.react(emotes.bingo);
+    message.react(emotes.acknowledge);
 
     // Check if profile matches caller
     callSrc("/user/" + params[0], message, (dataQueue) => {
@@ -166,7 +171,7 @@ removeRolesCmd = (message) => {
     Object.values(roles).forEach((role) => {
         member.roles.remove(role);
     });
-    message.react(emotes.bingo);
+    message.react(emotes.acknowledge);
 }
 
 // !reloadroles
@@ -200,7 +205,7 @@ doSrcRoleUpdates = (discordId, srcName, message = null) => {
             role = roles[d.run.game];
             if (role) {
                 rolesShouldHave.add(role);
-                if (d.place === 1 && d.run.level === null && !fullGameCategoriesThatAreActuallyILs.includes(d.run.category) && d.run.game !== "LittleBigPlanet Series DLC") {
+                if (d.place === 1 && d.run.level === null && !exemptCatsFromWrRole.includes(d.run.category) && !exemptGamesFromWrRole.includes(d.run.game)) {
                     numWrs++;
                 }
             }

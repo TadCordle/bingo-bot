@@ -16,7 +16,7 @@ Get dependencies.
 npm i
 ```
 
-Create config.json in same directory as bob.js with your auth token.
+Create discord_auth.json in same directory as bob.js with your auth token.
 
 ```json
 {

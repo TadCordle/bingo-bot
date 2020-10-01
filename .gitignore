@@ -1,5 +1,5 @@
 .vs/
 node_modules/
 *.code-workspace
-config.json
+discord_auth.json
 data/

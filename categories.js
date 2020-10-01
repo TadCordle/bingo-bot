@@ -38,6 +38,9 @@ exports.normalizeGameName = (game) => {
     } else if (game === "lbp3" || game === "3") {
         return "LittleBigPlanet 3"
 
+    } else if (game === "saba" || game === "sba" || game === "sackboyabigadventure" || game === "sackboysbigadventure") {
+        return "Sackboy: A Big Adventure";
+
     } else {
         return null;
     }
@@ -706,6 +709,9 @@ exports.normalizeLevel = (normalizedGame, level) => {
         } else if (level === "joustintime") {
             return "Joust In Time";
         }
+
+    } else if (normalizedGame === "Sackboy: A Big Adventure") {
+        // TODO
     }
 
     return null;

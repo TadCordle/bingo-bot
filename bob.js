@@ -1,5 +1,6 @@
+const discordAuth = require("./discord_auth.json");
 const config = require("./config.json");
-const emotes = require("./emotes.json");
+const emotes = config.emotes;
 const categories = require("./categories.js");
 const fun = require("./fun.js");
 const roles = require("./roles.js");
@@ -308,13 +309,13 @@ raceCmd = (message) => {
     } else if (raceState.state === State.JOINING) {
         // Join existing race
         if (raceState.addEntrant(message)) {
-            message.react(emotes.bingo);
+            message.react(emotes.acknowledge);
         }
 
     } else if (raceState.state === State.COUNTDOWN || raceState.state === State.ACTIVE) {
         if (raceState.leavingWhenDone.has(message.author.id)) {
             raceState.leavingWhenDone.delete(message.author.id);
-            message.react(emotes.bingo);
+            message.react(emotes.acknowledge);
         } else {
             // Can't join race that already started
             if (!raceState.entrants.has(message.author.id)) {
@@ -342,7 +343,7 @@ ilRaceCmd = (message) => {
     } else if (raceState.state === State.JOINING) {
         // Join existing race
         if (raceState.addEntrant(message)) {
-            message.react(emotes.bingo);
+            message.react(emotes.acknowledge);
         }
 
     } else if (raceState.state === State.COUNTDOWN || raceState.state === State.ACTIVE) {
@@ -645,7 +646,7 @@ unforfeitCmd = (message) => {
             raceState.ffEntrants = arrayRemove(raceState.ffEntrants, message.author.id);
             clearTimeout(raceDoneTimeout);
             clearTimeout(raceDoneWarningTimeout);
-            message.react(emotes.bingo);
+            message.react(emotes.acknowledge);
         }
     }
 }
@@ -664,7 +665,7 @@ readyCmd = (message) => {
             // Mark as ready
             raceState.addEntrant(message);
             raceState.entrants.get(message.author.id).ready = true;
-            message.react(emotes.bingo);
+            message.react(emotes.acknowledge);
 
             // Start countdown if everyone is ready
             everyoneReady = true;
@@ -686,7 +687,7 @@ unreadyCmd = (message) => {
     if (raceState.state === State.JOINING || raceState.state === State.COUNTDOWN) {
         if (raceState.entrantIsReady(message.author.id)) {
             raceState.entrants.get(message.author.id).ready = false;
-            message.react(emotes.bingo);
+            message.react(emotes.acknowledge);
 
             // If someone unready'd during countdown, stop the countdown
             if (raceState.state === State.COUNTDOWN) {
@@ -734,7 +735,7 @@ undoneCmd = (message) => {
             raceState.doneEntrants = arrayRemove(raceState.doneEntrants, message.author.id);
             clearTimeout(raceDoneTimeout);
             clearTimeout(raceDoneWarningTimeout);
-            message.react(emotes.bingo);
+            message.react(emotes.acknowledge);
         }
     }
 }
@@ -821,7 +822,7 @@ kickCmd = (message) => {
             // If only one person is left now, make sure they are marked as unready
             raceState.entrants.forEach((entrant) => { entrant.ready = false; });
         }
-        message.react(emotes.bingo);
+        message.react(emotes.acknowledge);
 
     } else if (raceState.state === State.ACTIVE || raceState.state === State.COUNTDOWN) {
         // If race is in progress, auto-forfeit them
@@ -837,7 +838,7 @@ kickCmd = (message) => {
             if (raceState.ffEntrants.length + raceState.doneEntrants.length === raceState.entrants.size) {
                 doEndRace(message);
             }
-            message.react(emotes.bingo);
+            message.react(emotes.acknowledge);
         }
     }
 }
@@ -899,7 +900,7 @@ meCmd = (message) => {
                     + "`   :second_place:\u00A0`" + addSpaces(line.silver.toString(), maxNumberLength.silver)
                     + "`   :third_place:\u00A0`" + addSpaces(line.bronze.toString(), maxNumberLength.bronze)
                     + "`   :x:\u00A0`" + addSpaces(line.ffs.toString(), maxNumberLength.ffs)
-                    + "`   " + emotes.ppjSmug + "\u00A0`" + addSpaces(Math.floor(line.elo).toString(), maxNumberLength.elo)
+                    + "`   " + emotes.elo + "\u00A0`" + addSpaces(Math.floor(line.elo).toString(), maxNumberLength.elo)
                     + "`   :stopwatch:\u00A0`" + formatTime(line.pb)
                     + "`";
             if (line.category === "Individual Levels") {
@@ -997,7 +998,7 @@ leaderboardCmd = (message) => {
         msgs = [];
         messageString = "**ELO Rankings for " + game + " / " + category + ":**\n";
         rows.forEach((row, num) => {
-            toAdd = "\t" + (num + 1) + ". (" + emotes.ppjSmug + " " + Math.floor(row.elo) + ") " + row.user_name + "\n";
+            toAdd = "\t" + (num + 1) + ". (" + emotes.elo + " " + Math.floor(row.elo) + ") " + row.user_name + "\n";
             if (messageString.length + toAdd.length > 2000) {
                 msgs.push(messageString);
                 messageString = "**ELO Rankings for " + game + " / " + category + " (cont):**\n";
@@ -1017,12 +1018,12 @@ leaderboardCmd = (message) => {
 // Sets up a bunch of callbacks that send messages for the countdown
 doCountDown = (message) => {
     raceState.state = State.COUNTDOWN;
-    message.channel.send("Everyone is ready, gl;hf! " + emotes.ppjWink + " Starting race in 10 seconds...");
-    countDownTimeout3 = setTimeout(() => { message.channel.send(emotes.ppjE + " 3..."); }, 7000);
-    countDownTimeout2 = setTimeout(() => { message.channel.send(emotes.ppjE + " 2..."); }, 8000);
-    countDownTimeout1 = setTimeout(() => { message.channel.send(emotes.ppjE + " 1..."); }, 9000);
+    message.channel.send("Everyone is ready, gl;hf! " + emotes.raceStarting + " Starting race in 10 seconds...");
+    countDownTimeout3 = setTimeout(() => { message.channel.send(emotes.countdown + " 3..."); }, 7000);
+    countDownTimeout2 = setTimeout(() => { message.channel.send(emotes.countdown + " 2..."); }, 8000);
+    countDownTimeout1 = setTimeout(() => { message.channel.send(emotes.countdown + " 1..."); }, 9000);
     goTimeout = setTimeout(() => {
-        message.channel.send(emotes.ppjSmug + " **Go!!!**");
+        message.channel.send(emotes.go + " **Go!!!**");
         raceState.state = State.ACTIVE;
         raceState.startTime = Date.now() / 1000;
     }, 10000);
@@ -1294,4 +1295,4 @@ decodeHTML = (text) => {
 };
 // ----------------------------------------------------------------------------------------------------------------
 
-client.login(config.token);
+client.login(discordAuth.token);
