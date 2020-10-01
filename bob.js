@@ -13,12 +13,71 @@ if (!fs.existsSync("./data/")) {
     fs.mkdirSync("./data/");
 }
 
+// Given a string (game), returns the name of the closest matching game in config.json.
+normalizeGameName = (game) => {
+    process = (g) => g.toLowerCase().replace(/\W/g, "").replace("littlebigplanet", "lbp").replace("psv", "v");
+    game = process(game);
+
+    for (var i = 0; i < config.games.length; i++) {
+        configGame = config.games[i];
+        if (configGame.aliases.includes(game) || process(configGame.name) === game) {
+            return configGame.name;
+        }
+    }
+    return null;
+}
+
+// Given a game name and a category string, returns the closest matching category name in config.json.
+normalizeCategory = (normalizedGame, category) => {
+    for (var i = 0; i < config.categories.length; i++) {
+        configGame = config.categories[i];
+        if (configGame.game === "global" || configGame.game === normalizedGame) {
+            if (category === null) {
+                return configGame.default;
+            }
+
+            process = (c) => c.toLowerCase().replace(/\W|plus/g, "").replace("newgame", "ng");
+            normalizedCategory = process(category);
+            for (var j = 0; j < configGame.categories.length; j++) {
+                configCat = configGame.categories[j];
+                if (configCat.aliases.includes(normalizedCategory) || process(configCat.name) === normalizedCategory) {
+                    return configCat.name;
+                }
+            }
+        }
+    }
+    return null;
+}
+
+// Given a game name and level string, return the closest matching level name in config.json.
+normalizeLevel = (normalizedGame, level) => {
+    for (var i = 0; i < config.levels.length; i++) {
+        configGame = config.levels[i];
+        if (configGame.game === normalizedGame) {
+            if (level == null) {
+                return configGame.default;
+            }
+
+            process = (l) => l.toLowerCase().replace(/&/g, "and").replace(/\W|the/g, "");
+            level = process(level);
+            for (var j = 0; j < configGame.levels.length; j++) {
+                configLevel = configGame.levels[j];
+                if (configLevel.aliases.includes(level) || process(configLevel.name) === level) {
+                    return configLevel.name;
+                }
+            }
+            return null;
+        }
+    }
+    return null;
+}
+
 const sql = new SQLite("./data/race.sqlite");
 const client = new Discord.Client();
-var gameName = "LittleBigPlanet";
-var categoryName = "Any% No Overlord";
-var prevCategoryName = "Any% No Overlord"; // Used to save full game category when people do IL races
-var levelName = "Introduction";
+var gameName = config.defaultGame;
+var categoryName = normalizeCategory(gameName, null);
+var prevCategoryName = categoryName; // Used to save full game category when people do IL races
+var levelName = normalizeLevel(gameName, null);
 var raceId = 0;
 
 // References to timeouts, to cancel them if someone interrupts them
@@ -366,39 +425,17 @@ gameCmd = (message) => {
 
         game = normalizeGameName(game);
         if (game === null) {
-            message.channel.send("Specified game name was not a valid LBP game, try something else.");
+            message.channel.send("Specified game name was not valid, try something else.");
             return;
         }
 
         if (gameName !== game) {
             gameName = game;
-            lastLetter = gameName.charAt(gameName.length - 1);
             if (isILRace()) {
-                switch (lastLetter) {
-                    case "g":
-                        levelName = "Karting Lessons";
-                        break;
-                    case "P":
-                        levelName = "The Introduction";
-                        break;
-                    case "s":
-                        levelName = "Learning to Move";
-                        break;
-                    default:
-                        levelName = "Introduction";
-                }
+                levelName = normalizeLevel(game, null);
                 name = levelName;
             } else {
-                categoryName = "Any%";
-                switch (lastLetter) {
-                    case "t": case "2":
-                        categoryName += " No Overlord";
-                        break;
-                    case "3":
-                        categoryName += " No Create";
-                    default:
-                        break;
-                }
+                categoryName = normalizeCategory(game, null);
                 name = categoryName;
             }
             message.channel.send("Game / " + word + " updated to " + gameName + " / " + name + ".");
@@ -853,10 +890,10 @@ clearRaceCmd = (message) => {
     clearTimeout(raceDoneTimeout);
     clearTimeout(raceDoneWarningTimeout);
     raceState = new RaceState();
-    gameName = "LittleBigPlanet";
-    categoryName = "Any% No Overlord";
-    prevCategoryName = "Any% No Overlord";
-    levelName = "Introduction";
+    gameName = config.defaultGame;
+    categoryName = normalizeCategory(gameName, null);
+    prevCategoryName = categoryName;
+    levelName = normalizeLevel(gameName, null);
     raceId = client.getLastRaceID.get().id;
     if (!raceId) {
         raceId = 0;
@@ -875,7 +912,7 @@ meCmd = (message) => {
     }
     game = normalizeGameName(game);
     if (game === null) {
-        message.channel.send("The game you specified isn't an LBP game.");
+        message.channel.send("The game you specified isn't valid.");
         return;
     }
 
@@ -1225,58 +1262,6 @@ formatPlace = (place) => {
         return place + "nd";
     }
     return place + "rd";
-}
-
-// Given a string (game), returns the name of the closest matching LBP game in config.json.
-normalizeGameName = (game) => {
-    process = (g) => g.toLowerCase().replace(/\W/g, "").replace("littlebigplanet", "lbp").replace("psv", "v");
-    game = process(game);
-
-    for (var i = 0; i < config.games.length; i++) {
-        configGame = config.games[i];
-        if (configGame.aliases.includes(game) || process(configGame.name) === game) {
-            return configGame.name;
-        }
-    }
-    return null;
-}
-
-// Given a game name (normalizedGame) and a category string, returns the closest matching category name in config.json.
-normalizeCategory = (normalizedGame, category) => {
-    process = (c) => c.toLowerCase().replace(/\W|plus/g, "").replace("newgame", "ng");
-    normalizedCategory = process(category);
-
-    for (var i = 0; i < config.categories.length; i++) {
-        configGame = config.categories[i];
-        if (configGame.game === "global" || configGame.game === normalizedGame) {
-            for (var j = 0; j < configGame.categories.length; j++) {
-                configCat = configGame.categories[j];
-                if (configCat.aliases.includes(normalizedCategory) || process(configCat.name) === normalizedCategory) {
-                    return configCat.name;
-                }
-            }
-        }
-    }
-    return null;
-}
-
-// Given a game name and level string, return the closest matching level name in config.json.
-normalizeLevel = (normalizedGame, level) => {
-    process = (l) => l.toLowerCase().replace(/&/g, "and").replace(/\W|the/g, "");
-    level = process(level);
-
-    for (var i = 0; i < config.levels.length; i++) {
-        configGame = config.levels[i];
-        if (configGame.game === normalizedGame) {
-            for (var j = 0; j < configGame.levels.length; j++) {
-                configLevel = configGame.levels[j];
-                if (configLevel.aliases.includes(level) || process(configLevel.name) === level) {
-                    return configLevel.name;
-                }
-            }
-        }
-    }
-    return null;
 }
 
 // Helper for removing an object (value) from an array (arr)

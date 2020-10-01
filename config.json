@@ -6,6 +6,7 @@
         "raceStarting" : "<:ppjWink:367254404811980801>",
         "acknowledge"  : "394255134340677634"
     },
+    "defaultGame": "LittleBigPlanet",
     "games": [
         { "name": "LittleBigPlanet",             "aliases": ["lbp1", "1"] },
         { "name": "LittleBigPlanet PSP",         "aliases": ["psp", "p"] },
@@ -18,20 +19,8 @@
     ],
     "categories": [
         {
-            "game": "global",
-            "categories": [
-                { "name": "Any%",              "aliases": [] },
-                { "name": "100%",              "aliases": [] },
-                { "name": "2p Co-op NG+",      "aliases": ["coop", "coopng", "2p", "2pcoop"] },
-                { "name": "3p Co-op NG+",      "aliases": ["3p", "3pcoop"] },
-                { "name": "4p Co-op NG+",      "aliases": ["4p", "4pcoop"] },
-                { "name": "An3%",              "aliases": [] },
-                { "name": "7ny%",              "aliases": ["an7"] },
-                { "name": "Individual Levels", "aliases": ["il", "ils", "individuallevel"] }
-            ]
-        },
-        {
             "game": "LittleBigPlanet",
+            "default": "Any% No Overlord",
             "categories": [
                 { "name": "Any% No Overlord", "aliases": ["anyno", "no"] },
                 { "name": "100% No Overlord", "aliases": ["100no"] },
@@ -42,21 +31,38 @@
         },
         {
             "game": "LittleBigPlanet 2",
+            "default": "Any% No Overlord",
             "categories": [
                 { "name": "Any% No Overlord", "aliases": ["anyno", "no", "ng", "solong"] }
             ]
         },
         {
             "game": "LittleBigPlanet 3",
+            "default": "Any% No Create",
             "categories": [
                 { "name": "Any% No Create",      "aliases": ["anynooverlord", "anyno", "no", "anync", "nc"] },
                 { "name": "Profile Corruption%", "aliases": ["corruption"] }
+            ]
+        },
+        {
+            "game": "global",
+            "default": "Any%",
+            "categories": [
+                { "name": "Any%",              "aliases": [] },
+                { "name": "100%",              "aliases": [] },
+                { "name": "2p Co-op NG+",      "aliases": ["coop", "coopng", "2p", "2pcoop"] },
+                { "name": "3p Co-op NG+",      "aliases": ["3p", "3pcoop"] },
+                { "name": "4p Co-op NG+",      "aliases": ["4p", "4pcoop"] },
+                { "name": "An3%",              "aliases": [] },
+                { "name": "7ny%",              "aliases": ["an7"] },
+                { "name": "Individual Levels", "aliases": ["il", "ils", "individuallevel"] }
             ]
         }
     ],
     "levels": [
         {
             "game": "LittleBigPlanet",
+            "default": "Introduction",
             "levels": [
                 { "name": "Introduction", "aliases": ["intro"] },
                 { "name": "First Steps", "aliases": [] },
@@ -126,6 +132,7 @@
         },
         {
             "game": "LittleBigPlanet PSP",
+            "default": "The Introduction",
             "levels": [
                 { "name": "The Introduction", "aliases": ["intro"] },
                 { "name": "Walkabout", "aliases": [] },
@@ -161,8 +168,9 @@
         },
         {
             "game": "Sackboy's Prehistoric Moves",
+            "default": "Learning to Move",
             "levels": [
-                { "name": "Learning to Move", "aliases": [] },
+                { "name": "Learning to Move", "aliases": ["intro"] },
                 { "name": "Prehistoric Paradise", "aliases": [] },
                 { "name": "Inside Big Rex", "aliases": [] },
                 { "name": "Cro-Magnon City", "aliases": [] },
@@ -172,6 +180,7 @@
         },
         {
             "game": "LittleBigPlanet 2",
+            "default": "Introduction",
             "levels": [
                 { "name": "Introduction", "aliases": ["intro"] },
                 { "name": "Rookie Test", "aliases": [] },
@@ -232,6 +241,7 @@
         },
         {
             "game": "LittleBigPlanet PS Vita",
+            "default": "Introduction",
             "levels": [
                 { "name": "Introduction", "aliases": ["intro"] },
                 { "name": "First Lessons In Loco-Motion", "aliases": [] },
@@ -281,6 +291,7 @@
         },
         {
             "game": "LittleBigPlanet Karting",
+            "default": "Karting Lessons",
             "levels": [
                 { "name": "Karting Lessons", "aliases": ["intro", "introduction"] },
                 { "name": "Garden Grip", "aliases": [] },
@@ -337,6 +348,7 @@
         },
         {
             "game": "LittleBigPlanet 3",
+            "default": "Introduction",
             "levels": [
                 { "name": "Introduction", "aliases": ["intro"] },
                 { "name": "Needlepoint Peaks", "aliases": [] },
@@ -375,6 +387,7 @@
         },
         {
             "game": "Sackboy: A Big Adventure",
+            "default": "TODO",
             "levels": [
                 { "name": "TODO", "aliases": [] }
             ]
