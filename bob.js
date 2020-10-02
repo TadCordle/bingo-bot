@@ -392,6 +392,7 @@ ilRaceCmd = (message) => {
     if (raceState.state === State.NO_RACE) {
         // Start race
         raceState.addEntrant(message);
+        levelName = normalizeLevel(gameName, null);
         message.channel.send(mention(message.author) + " has started a new IL race! Use `!race` to join; use `!game` and `!level` to setup the race further (currently " + gameName + " / " + levelName + ").");
         raceState.state = State.JOINING;
 
@@ -429,9 +430,11 @@ gameCmd = (message) => {
             gameName = game;
             if (isILRace()) {
                 levelName = normalizeLevel(game, null);
+                prevCategoryName = normalizeCategory(game, null);
                 name = levelName;
             } else {
                 categoryName = normalizeCategory(game, null);
+                prevCategoryName = categoryName;
                 name = categoryName;
             }
             message.channel.send("Game / " + word + " updated to " + gameName + " / " + name + ".");

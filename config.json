@@ -7,14 +7,15 @@
         "acknowledge"  : "394255134340677634"
     },
     "games": [
-        { "name": "LittleBigPlanet",             "aliases": ["lbp1", "1"] },
-        { "name": "LittleBigPlanet PSP",         "aliases": ["psp", "p"] },
-        { "name": "Sackboy's Prehistoric Moves", "aliases": ["memes", "moves", "spm", "prehistoricmemes", "sackboysprehistoricmemes", "lbpspm", "lbpsackboysprehistoricmoves", "lbpprehistoricmemes", "lbpsackboysprehistoricmemes", "m"] },
-        { "name": "LittleBigPlanet 2",           "aliases": ["2"] },
-        { "name": "LittleBigPlanet PS Vita",     "aliases": ["lbpv", "lbpvita", "v", "vita"] },
-        { "name": "LittleBigPlanet Karting",     "aliases": ["lbpk", "k", "karting"] },
-        { "name": "LittleBigPlanet 3",           "aliases": ["3"] },
-        { "name": "Sackboy: A Big Adventure",    "aliases": ["saba", "sba", "sacboybigadventure", "sackboysbigadventure"] }
+        { "name": "LittleBigPlanet",                "aliases": ["lbp1", "1"] },
+        { "name": "LittleBigPlanet Series DLC",     "aliases": ["dlc", "seriesdlc"]},
+        { "name": "LittleBigPlanet PSP",            "aliases": ["psp", "p"] },
+        { "name": "Sackboy's Prehistoric Moves",    "aliases": ["memes", "moves", "spm", "prehistoricmemes", "sackboysprehistoricmemes", "lbpspm", "lbpsackboysprehistoricmoves", "lbpprehistoricmemes", "lbpsackboysprehistoricmemes", "m"] },
+        { "name": "LittleBigPlanet 2",              "aliases": ["2"] },
+        { "name": "LittleBigPlanet PS Vita",        "aliases": ["lbpv", "lbpvita", "v", "vita"] },
+        { "name": "LittleBigPlanet Karting",        "aliases": ["lbpk", "k", "karting"] },
+        { "name": "LittleBigPlanet 3",              "aliases": ["3"] },
+        { "name": "Sackboy: A Big Adventure",       "aliases": ["saba", "sba", "sacboybigadventure", "sackboysbigadventure"] }
     ],
     "categories": {
         "LittleBigPlanet": [
@@ -24,8 +25,21 @@
             { "name": "Styrofoam%",       "aliases": [] },
             { "name": "Die%",             "aliases": [] }
         ],
+        "LittleBigPlanet Series DLC": [
+            { "name": "Metal Gear Solid Level Pack", "aliases": ["mgs", "metalgearsolid", "mgslevelpack"] },
+            { "name": "Pirates of the Caribbean Level Kit", "aliases": ["potc", "piratesofthecaribbean", "potclevelkit"] },
+            { "name": "Marvel Level Pack", "aliases": ["marvel"] },
+            { "name": "Toy Story Level Kit", "aliases": ["toystory"] },
+            { "name": "Move Pack: The Rise of the Cakeling", "aliases": ["move", "movepack", "theriseofthecakeling", "riseofthecakeling", "rotc"] },
+            { "name": "The Muppets Level Kit", "aliases": ["muppets", "themuppets", "muppetslevelkit"] },
+            { "name": "Cross-Controller Pack", "aliases": ["ccp", "xcp", "crosscontroller"] },
+            { "name": "DC Comics Level Pack", "aliases": ["dc", "dccomics", "dclevelpack"] },
+            { "name": "DC Comics Level Pack (Vita)", "aliases": ["dcv", "dccomicsv", "dcvita", "dccomicsvita", "dclevelpackvita", "dclevelpackv"] },
+            { "name": "LittleBigPlanet 3: The Journey Home", "aliases": ["lbp3thejourneyhome", "lbp3journeyhome", "journeyhome", "thejourneyhome"] }
+        ],
         "LittleBigPlanet 2": [
-            { "name": "Any% No Overlord", "aliases": ["anyno", "no", "ng", "solong"] }
+            { "name": "Any% No Overlord", "aliases": ["anyno", "no", "ng", "solong"] },
+            { "name": "All Levels",       "aliases": ["al"] }
         ],
         "LittleBigPlanet 3": [
             { "name": "Any% No Create",      "aliases": ["anynooverlord", "anyno", "no", "anync", "nc"] },
@@ -108,6 +122,43 @@
             { "name": "Spline Rider", "aliases": [] },
             { "name": "Rotor Tubes", "aliases": [] },
             { "name": "Jetpack Tunnel", "aliases": [] }
+        ],
+        "LittleBigPlanet Series DLC": [
+            { "name": "Monsters Kit", "aliases": ["monsters"] },
+            { "name": "History Kit", "aliases": ["history"] },
+            { "name": "The Incredibles Level Kit", "aliases": ["incredibles"] },
+            { "name": "The Nightmare Before Christmas Level Kit", "aliases": ["nbc", "nightmarebeforechristmas"] },
+            { "name": "Tiki Paradise Level Kit", "aliases": ["tikiparadise"] },
+            { "name": "Adventure Time Level Kit", "aliases": ["adventuretime"] },
+            { "name": "Back to the Future Level Kit", "aliases": ["backtofuture"] },
+            { "name": "Seaside Surprise Level Kit", "aliases": ["seasidesurprise"] },
+
+            { "name": "Act 1: Introduction", "aliases": ["act1"] },
+            { "name": "Act 2: VR Training", "aliases": ["act2"] },
+            { "name": "Act 3: The Mission", "aliases": ["act3"] },
+            { "name": "Act 4: The Level Factory", "aliases": ["act4"] },
+            { "name": "Act 5: The Boss", "aliases": ["act5"] },
+            { "name": "VR Survival Challenge", "aliases": ["vrsurvival"] },
+
+            { "name": "Port Royal", "aliases": [] },
+            { "name": "Pirate Town", "aliases": [] },
+            { "name": "A Navy Frigate", "aliases": [] },
+            { "name": "Cursed Bay", "aliases": [] },
+            { "name": "The Kraken!!!!", "aliases": [] },
+            { "name": "Diving For Treasure", "aliases": [] },
+
+            { "name": "Issue 1 - Downtown Doom", "aliases": ["issue1"] },
+            { "name": "Issue 2 - Freeway Frenzy", "aliases": ["issue2"] },
+            { "name": "Issue 3 - Mad Lab", "aliases": ["issue3"] },
+            { "name": "Issue 4 - Rocket Rampage", "aliases": ["issue4"] },
+
+            { "name": "The Watchtower", "aliases": [] },
+            { "name": "No Pause On Paradise Island", "aliases": [] },
+            { "name": "Toxic Terror!", "aliases": [] },
+            { "name": "A Frosty Reception", "aliases": [] },
+            { "name": "Mecha-Lex Madness", "aliases": [] },
+            { "name": "And For Your Next Test...", "aliases": [] },
+            { "name": "Raiding the Kitchen", "aliases": [] }
         ],
         "LittleBigPlanet PSP": [
             { "name": "The Introduction", "aliases": ["intro"] },
