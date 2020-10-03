@@ -16,10 +16,9 @@ if (!fs.existsSync("./data/")) {
 normalizeGameName = (game) => {
     process = (g) => g.toLowerCase().replace(/\W/g, "").replace("littlebigplanet", "lbp").replace("psv", "v");
     game = process(game);
-    for (var i = 0; i < config.games.length; i++) {
-        configGame = config.games[i];
-        if (configGame.aliases.includes(game) || process(configGame.name) === game) {
-            return configGame.name;
+    for (var name in config.games) {
+        if (config.games[name].includes(game) || process(name) === game) {
+            return name;
         }
     }
     return null;
@@ -29,20 +28,19 @@ normalizeGameName = (game) => {
 normalizeCategory = (normalizedGame, category) => {
     if (category === null) {
         return config.categories.hasOwnProperty(normalizedGame)
-                ? config.categories[normalizedGame][0].name
-                : config.categories["common"][0].name;
+                ? Object.keys(config.categories[normalizedGame])[0]
+                : Object.keys(config.categories["common"])[0];
     }
 
     process = (c) => c.toLowerCase().replace(/\W|plus/g, "").replace("newgame", "ng");
     normalizedCategory = process(category);
     find = (key) => {
-        if (!config.categories.hasOwnProperty(key)) {
-            return null;
-        }
-        categories = config.categories[key];
-        for (var i = 0; i < categories.length; i++) {
-            if (categories[i].aliases.includes(normalizedCategory) || process(categories[i].name) === normalizedCategory) {
-                return categories[i].name;
+        if (config.categories.hasOwnProperty(key)) {
+            categories = config.categories[key];
+            for (var cat in categories) {
+                if (categories[cat].includes(normalizedCategory) || process(cat) === normalizedCategory) {
+                    return cat;
+                }
             }
         }
         return null;
@@ -54,15 +52,15 @@ normalizeCategory = (normalizedGame, category) => {
 // Given a game name and level string, return the closest matching level name in config.json.
 normalizeLevel = (normalizedGame, level) => {
     if (level == null) {
-        return config.levels[normalizedGame][0].name;
+        return Object.keys(config.levels[normalizedGame])[0];
     }
 
     process = (l) => l.toLowerCase().replace(/&/g, "and").replace(/\W|the/g, "");
     level = process(level);
     levels = config.levels[normalizedGame];
-    for (var i = 0; i < levels.length; i++) {
-        if (levels[i].aliases.includes(level) || process(levels[i].name) === level) {
-            return levels[i].name;
+    for (var name in levels) {
+        if (levels[name].includes(level) || process(name) === level) {
+            return name;
         }
     }
     return null;
@@ -70,7 +68,7 @@ normalizeLevel = (normalizedGame, level) => {
 
 const sql = new SQLite("./data/race.sqlite");
 const client = new Discord.Client();
-var gameName = config.games[0].name;
+var gameName = Object.keys(config.games)[0];
 var categoryName = normalizeCategory(gameName, null);
 var prevCategoryName = categoryName; // Used to save full game category when people do IL races
 var levelName = normalizeLevel(gameName, null);
@@ -889,7 +887,7 @@ clearRaceCmd = (message) => {
     clearTimeout(raceDoneTimeout);
     clearTimeout(raceDoneWarningTimeout);
     raceState = new RaceState();
-    gameName = config.games[0].name;
+    gameName = Object.keys(config.games)[0];
     categoryName = normalizeCategory(gameName, null);
     prevCategoryName = categoryName;
     levelName = normalizeLevel(gameName, null);
