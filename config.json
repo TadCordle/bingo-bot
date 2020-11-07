@@ -19,9 +19,9 @@
     },
     "categories": {
         "LittleBigPlanet": {
+            "Any% No Overlord": ["anyno", "no"],
             "Any%": [],
             "100%": [],
-            "Any% No Overlord": ["anyno", "no"],
             "100% No Overlord": ["100no"],
             "All Levels": ["al"],
             "Styrofoam%": [],
@@ -54,8 +54,8 @@
             "Individual Levels": ["il", "ils", "individuallevel"]
         },
         "LittleBigPlanet 2": {
-            "Any%": [],
             "Any% No Overlord": ["anyno", "no", "ng", "solong"],
+            "Any%": [],
             "All Levels": ["al"],
             "Individual Levels": ["il", "ils", "individuallevel"]
         },
@@ -70,8 +70,8 @@
             "Individual Levels": ["il", "ils", "individuallevel"]
         },
         "LittleBigPlanet 3": {
-            "Any%": [],
             "Any% No Create": ["anynooverlord", "anyno", "no", "anync", "nc"],
+            "Any%": [],
             "All Main Quests": ["quests", "allquests", "amq", "aq", "q", "al", "alllevels"],
             "2p Co-op": ["coop", "2p"],
             "3p Co-op": ["3p"],
