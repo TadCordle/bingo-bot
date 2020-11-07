@@ -19,11 +19,16 @@
     },
     "categories": {
         "LittleBigPlanet": {
+            "Any%": [],
+            "100%": [],
             "Any% No Overlord": ["anyno", "no"],
             "100% No Overlord": ["100no"],
             "All Levels": ["al"],
             "Styrofoam%": [],
-            "Die%": []
+            "Die%": [],
+            "Individual Levels": ["il", "ils", "individuallevel"],
+            "An3%": [],
+            "7ny%": ["an7"]
         },
         "LittleBigPlanet Series DLC": {
             "Metal Gear Solid Level Pack": ["mgs", "metalgearsolid", "mgslevelpack"],
@@ -35,24 +40,51 @@
             "Cross-Controller Pack": ["ccp", "xcp", "crosscontroller"],
             "DC Comics Level Pack": ["dc", "dccomics", "dclevelpack"],
             "DC Comics Level Pack (Vita)": ["dcv", "dccomicsv", "dcvita", "dccomicsvita", "dclevelpackvita", "dclevelpackv"],
-            "LittleBigPlanet 3: The Journey Home": ["lbp3thejourneyhome", "lbp3journeyhome", "journeyhome", "thejourneyhome"]
+            "LittleBigPlanet 3: The Journey Home": ["lbp3thejourneyhome", "lbp3journeyhome", "journeyhome", "thejourneyhome"],
+            "Individual Levels": ["il", "ils", "individuallevel"]
         },
-        "LittleBigPlanet 2": {
-            "Any% No Overlord": ["anyno", "no", "ng", "solong"],
-            "All Levels": ["al"]
-        },
-        "LittleBigPlanet 3": {
-            "Any% No Create": ["anynooverlord", "anyno", "no", "anync", "nc"],
-            "Profile Corruption%": ["corruption"]
-        },
-        "common": {
+        "LittleBigPlanet PSP": {
             "Any%": [],
             "100%": [],
-            "2p Co-op NG+": ["coop", "coopng", "2p", "2pcoop"],
-            "3p Co-op NG+": ["3p", "3pcoop"],
-            "4p Co-op NG+": ["4p", "4pcoop"],
-            "An3%": [],
-            "7ny%": ["an7"],
+            "Individual Levels": ["il", "ils", "individuallevel"]
+        },
+        "Sackboy's Prehistoric Moves": {
+            "Any%": [],
+            "100%": [],
+            "Individual Levels": ["il", "ils", "individuallevel"]
+        },
+        "LittleBigPlanet 2": {
+            "Any%": [],
+            "Any% No Overlord": ["anyno", "no", "ng", "solong"],
+            "All Levels": ["al"],
+            "Individual Levels": ["il", "ils", "individuallevel"]
+        },
+        "LittleBigPlanet PS Vita": {
+            "Any%": [],
+            "100%": [],
+            "Individual Levels": ["il", "ils", "individuallevel"]
+        },
+        "LittleBigPlanet Karting": {
+            "Any%": [],
+            "100%": [],
+            "Individual Levels": ["il", "ils", "individuallevel"]
+        },
+        "LittleBigPlanet 3": {
+            "Any%": [],
+            "Any% No Create": ["anynooverlord", "anyno", "no", "anync", "nc"],
+            "All Main Quests": ["quests", "allquests", "amq", "aq", "q", "al", "alllevels"],
+            "2p Co-op": ["coop", "2p"],
+            "3p Co-op": ["3p"],
+            "4p Co-op": ["4p"],
+            "Profile Corruption%": ["corruption"],
+            "Individual Levels": ["il", "ils", "individuallevel"]
+        },
+        "Sackboy: A Big Adventure": {
+            "Any%": [],
+            "100%": [],
+            "2p Co-op": ["coop", "2p"],
+            "3p Co-op": ["3p"],
+            "4p Co-op": ["4p"],
             "Individual Levels": ["il", "ils", "individuallevel"]
         }
     },

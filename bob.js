@@ -27,26 +27,19 @@ normalizeGameName = (game) => {
 // Given a game name and a category string, returns the closest matching category name in config.json.
 normalizeCategory = (normalizedGame, category) => {
     if (category === null) {
-        return config.categories.hasOwnProperty(normalizedGame)
-                ? Object.keys(config.categories[normalizedGame])[0]
-                : Object.keys(config.categories["common"])[0];
+        return config.categories.hasOwnProperty(normalizedGame) ? Object.keys(config.categories[normalizedGame])[0] : "Any%";
     }
-
     process = (c) => c.toLowerCase().replace(/\W|plus/g, "").replace("newgame", "ng");
     normalizedCategory = process(category);
-    find = (key) => {
-        if (config.categories.hasOwnProperty(key)) {
-            categories = config.categories[key];
-            for (var cat in categories) {
-                if (categories[cat].includes(normalizedCategory) || process(cat) === normalizedCategory) {
-                    return cat;
-                }
+    if (config.categories.hasOwnProperty(normalizedGame)) {
+        categories = config.categories[normalizedGame];
+        for (var cat in categories) {
+            if (categories[cat].includes(normalizedCategory) || process(cat) === normalizedCategory) {
+                return cat;
             }
         }
-        return null;
     }
-    cat = find("common");
-    return cat != null ? cat : find(normalizedGame);
+    return null;
 }
 
 // Given a game name and level string, return the closest matching level name in config.json.
@@ -84,11 +77,11 @@ var raceDoneWarningTimeout;
 
 // Indicates a race bot state
 var State = {
-    NO_RACE: 0,
-    JOINING: 1,
+    NO_RACE:   0,
+    JOINING:   1,
     COUNTDOWN: 2,
-    ACTIVE: 3,
-    DONE: 4
+    ACTIVE:    3,
+    DONE:      4
 }
 
 // Keeps track of the current stage of racing the bot is occupied with
