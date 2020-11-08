@@ -499,7 +499,7 @@ levelCmd = (message) => {
 
     // Choose community level
     if (level.includes("lbp.me/v/")) {
-        chooseLbpMeLevel(level, message);
+        chooseLbpMeLevel(getLbpMeUrl(level), message);
         return;
     }
 
@@ -546,10 +546,17 @@ luckyDipCmd = (message) => {
             message.channel.send("Random community levels are unsupported for " + gameName);
             return;
     }
+    chooseLuckyDipLevel(luckyDipUrl, message);
+}
 
+chooseLuckyDipLevel = (luckyDipUrl, message) => {
     "use-strict";
     https.get(luckyDipUrl, function (result) {
         var { statusCode } = result;
+        if (statusCode === 302) {
+            chooseLuckyDipLevel(result.headers.location, message);
+            return;
+        }
         if (statusCode !== 200) {
             message.channel.send("Couldn't follow " + luckyDipUrl + "; got a " + statusCode + " response.");
             return;
@@ -565,15 +572,12 @@ luckyDipCmd = (message) => {
             });
             level = ((lastLetter === "a") ? "https://vita.lbp.me/v/" : "https://lbp.me/v/")
                     + matches[Math.floor(Math.random() * 12)];
-            chooseLbpMeLevel(level, message);
+            chooseLbpMeLevel(getLbpMeUrl(level), message);
         });
     });
-    return;
 }
 
-// Sets the current level in an IL race to the level at the given lbp.me link
-chooseLbpMeLevel = (level, message) => {
-    isVita = level.includes("vita.lbp.me");
+getLbpMeUrl = (level) => {
     if (level.startsWith("http:")) {
         level = level.replace("http:", "https:");
     } else if (!level.startsWith("https:")) {
@@ -582,9 +586,19 @@ chooseLbpMeLevel = (level, message) => {
     if (level.split("/").length < 6) {
         level += "/topreviews";
     }
+    return level;
+}
+
+// Sets the current level in an IL race to the level at the given lbp.me link
+chooseLbpMeLevel = (level, message) => {
+    isVita = level.includes("vita.lbp.me");
     "use-strict";
     https.get(level, function (result) {
         var { statusCode } = result;
+        if (statusCode === 302) {
+            chooseLbpMeLevel(result.headers.location, message, onEnd);
+            return;
+        }
         if (statusCode !== 200) {
             message.channel.send("Couldn't follow " + level + "; got a " + statusCode + " response.");
             return;
