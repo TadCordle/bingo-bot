@@ -3,12 +3,12 @@ const config = require("./config.json");
 const emotes = config.emotes;
 const https = require('https');
 const SQLite = require('better-sqlite3');
+const helpers = require("./helpers.js");
 
 var exports = module.exports = {};
 var apiCallTimestamp = Date.now();
 var autoRefreshTimeout;
 var client;
-var log;
 var guild;
 
 // Maps from speedrun.com game ID (or the string "wr") to server role
@@ -39,10 +39,9 @@ const exemptGamesFromWrRole = [
     "j1llxz71", // LittleBigPlanet Series DLC
 ];
 
-exports.init = (c, l) => {
+exports.init = (c) => {
     let sql = new SQLite("./data/roles.sqlite");
     client = c;
-    log = l;
     guild = client.guilds.cache.get('129652811754504192');
     roles = {
         "369pp31l": guild.roles.cache.get("716015233256390696"),
@@ -69,7 +68,7 @@ exports.init = (c, l) => {
         guild.roles.cache.get("725437901680279637"), // 10+
     ];
     if (Object.values(roles).includes(undefined)) {
-        log("Couldn't find all roles; Discord roles may have changed.", true);
+        helpers.log("Couldn't find all roles; Discord roles may have changed.", true);
     }
 
     // Setup tables for keeping track of src/discord connections
@@ -163,7 +162,7 @@ removeRolesCmd = (message) => {
 
     member = guild.members.cache.get(id);
     if (!member) {
-        log("'" + id + "' is not a member of the LBP speedrunning server.", true);
+        helpers.log("'" + id + "' is not a member of the LBP speedrunning server.", true);
         return;
     }
 
@@ -176,7 +175,7 @@ removeRolesCmd = (message) => {
 
 // !reloadroles
 reloadRolesCmd = () => {
-    log("==== Updating all registered users ====");
+    helpers.log("==== Updating all registered users ====");
     client.getSrcUsers.all().forEach((user) => {
         doSrcRoleUpdates(user.discord_id.toString(), user.src_name.toString());
     });
@@ -190,7 +189,7 @@ doSrcRoleUpdates = (discordId, srcName, message = null) => {
     callSrc("/api/v1/users/" + srcName + "/personal-bests", message, (dataQueue) => {
         member = guild.members.cache.get(discordId);
         if (!member) {
-            log("SRC role update: '" + discordId + "' is not a member of the LBP speedrunning server.", true);
+            helpers.log("SRC role update: '" + discordId + "' is not a member of the LBP speedrunning server.", true);
             return;
         }
 
@@ -262,7 +261,7 @@ updateRoles = (member, rolesShouldHave) => {
 // API: https://github.com/speedruncomorg/api/tree/master/version1
 callSrc = (path, message, onEnd) => {
     afterPause = () => {
-        log("API call: " + path);
+        helpers.log("API call: " + path);
         https.get({
             hostname: "www.speedrun.com",
             path: path,
@@ -279,7 +278,7 @@ callSrc = (path, message, onEnd) => {
                 if (message != null) {
                     message.channel.send(errorMsg);
                 }
-                log(errorMsg, true);
+                helpers.log(errorMsg, true);
                 return;
             }
             var dataQueue = "";
