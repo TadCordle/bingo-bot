@@ -157,6 +157,7 @@ client.on("ready", () => {
     // Setup tables for keeping track of race results
     if (!sql.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='results'").get()['count(*)']) {
         sql.prepare("CREATE TABLE results (race_id INTEGER, user_id TEXT, user_name TEXT, game TEXT, category TEXT, time INTEGER, ff INTEGER, dq INTEGER, level TEXT);").run();
+        sql.prepare("DROP INDEX IF EXISTS idx_results_race").run();
         sql.prepare("CREATE UNIQUE INDEX idx_results_race ON results (race_id, user_id);").run();
         sql.pragma("synchronous = 1");
         sql.pragma("journal_mode = wal");
@@ -165,6 +166,7 @@ client.on("ready", () => {
     // Setup tables for keeping track of user stats
     if (!sql.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='users'").get()['count(*)']) {
         sql.prepare("CREATE TABLE users (user_id TEXT, game TEXT, category TEXT, races INTEGER, gold INTEGER, silver INTEGER, bronze INTEGER, ffs INTEGER, elo REAL, pb INTEGER);").run();
+        sql.prepare("DROP INDEX IF EXISTS idx_users_id").run();
         sql.prepare("CREATE UNIQUE INDEX idx_users_id ON users (user_id, game, category);").run();
         sql.pragma("synchronous = 1");
         sql.pragma("journal_mode = wal");
