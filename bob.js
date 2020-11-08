@@ -17,7 +17,7 @@ normalizeGameName = (game) => {
     process = (g) => g.toLowerCase().replace(/\W/g, "").replace("littlebigplanet", "lbp").replace("psv", "v");
     game = process(game);
     for (var name in config.games) {
-        if (config.games[name].includes(game) || process(name) === game) {
+        if (config.games[name].aliases.includes(game) || process(name) === game) {
             return name;
         }
     }
@@ -26,17 +26,18 @@ normalizeGameName = (game) => {
 
 // Given a game name and a category string, returns the closest matching category name in config.json.
 normalizeCategory = (normalizedGame, category) => {
+    g = config.games[normalizedGame];
+    if (g === null || g.categories === null) {
+        return "Any%";
+    }
     if (category === null) {
-        return config.categories.hasOwnProperty(normalizedGame) ? Object.keys(config.categories[normalizedGame])[0] : "Any%";
+        return Object.keys(g.categories)[0];
     }
     process = (c) => c.toLowerCase().replace(/\W|plus/g, "").replace("newgame", "ng");
     normalizedCategory = process(category);
-    if (config.categories.hasOwnProperty(normalizedGame)) {
-        categories = config.categories[normalizedGame];
-        for (var cat in categories) {
-            if (categories[cat].includes(normalizedCategory) || process(cat) === normalizedCategory) {
-                return cat;
-            }
+    for (var name in g.categories) {
+        if (g.categories[name].includes(normalizedCategory) || process(name) === normalizedCategory) {
+            return name;
         }
     }
     return null;
@@ -44,15 +45,17 @@ normalizeCategory = (normalizedGame, category) => {
 
 // Given a game name and level string, return the closest matching level name in config.json.
 normalizeLevel = (normalizedGame, level) => {
-    if (level == null) {
-        return Object.keys(config.levels[normalizedGame])[0];
+    g = config.games[normalizedGame];
+    if (g === null || g.levels === null) {
+        return "<select level>";
     }
-
+    if (level == null) {
+        return Object.keys(g.levels)[0];
+    }
     process = (l) => l.toLowerCase().replace(/&/g, "and").replace(/\W|the/g, "");
-    level = process(level);
-    levels = config.levels[normalizedGame];
-    for (var name in levels) {
-        if (levels[name].includes(level) || process(name) === level) {
+    normalizedLevel = process(level);
+    for (var name in g.levels) {
+        if (g.levels[name].includes(normalizedLevel) || process(name) === normalizedLevel) {
             return name;
         }
     }
@@ -419,13 +422,12 @@ gameCmd = (message) => {
 
         if (gameName !== game) {
             gameName = game;
+            prevCategoryName = normalizeCategory(game, null);
             if (isILRace()) {
                 levelName = normalizeLevel(game, null);
-                prevCategoryName = normalizeCategory(game, null);
                 name = levelName;
             } else {
                 categoryName = normalizeCategory(game, null);
-                prevCategoryName = categoryName;
                 name = categoryName;
             }
             message.channel.send("Game / " + word + " updated to " + gameName + " / " + name + ".");
