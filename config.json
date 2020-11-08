@@ -6,15 +6,15 @@
         "raceStarting": "<:ppjWink:367254404811980801>",
         "acknowledge": "394255134340677634",
 
+        "ready": ":white_check_mark:",
+        "notReady": ":small_orange_diamond:",
+
         "firstPlace": ":first_place:",
         "secondPlace": ":second_place:",
         "thirdPlace": ":third_place:",
         "finished": ":checkered_flag:",
         "racing": ":stopwatch:",
-        "forfeited": ":x:",
-
-        "ready": ":white_check_mark:",
-        "notReady": ":small_orange_diamond:"
+        "forfeited": ":x:"
     },
     "games": {
         "LittleBigPlanet": {
