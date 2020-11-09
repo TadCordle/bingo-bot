@@ -1091,70 +1091,25 @@ recordResults = () => {
     newElos = new Map();
     raceRankings = raceState.doneEntrants.concat(raceState.ffEntrants);
     raceRankings.forEach((id, i) => {
+        // Keep track of results for IL series
+        if (!raceState.ffEntrants.includes(id) && isILRace()) {
+            if (i === 0) {
+                raceState.ilResults.push(new ILResult(raceId, levelName, helpers.username(raceState.entrants.get(id).message)))
+            }
+            raceState.ilScores.set(id, raceState.getILScore(id) + raceState.doneEntrants.length + raceState.ffEntrants.length - i);
+        }
+
+        // Calculate simple stats; need all Elos to calculate new ones though, so we'll do that in a bit
         statObj = client.getUserStatsForCategory.get(id, gameName, categoryName);
         if (!statObj) {
-            statObj = { user_id: `${id}`, game: `${gameName}`, category: `${categoryName}`, races: 0, gold: 0, silver: 0, bronze: 0, ffs: 0, elo: 1500, pb: -1 };
+            statObj = helpers.defaultStatObj(id, gameName, categoryName);
         }
+        helpers.calculatePlayerStats(statObj, raceState.ffEntrants, i, raceState.entrants.get(id).doneTime);
         newElos.set(id, statObj.elo);
-
-        // Update simple stats while we're iterating through these; need all ELOs to calculate new ones though, so we'll do that in a bit
-        statObj.races++;
-        if (raceState.ffEntrants.includes(id)) {
-            statObj.ffs++;
-        } else {
-            if (i === 0) {
-                statObj.gold++;
-                if (isILRace()) {
-                    raceState.ilResults.push(new ILResult(raceId, levelName, helpers.username(raceState.entrants.get(id).message)))
-                }
-            } else if (i === 1) {
-                statObj.silver++;
-            } else if (i === 2) {
-                statObj.bronze++;
-            }
-
-            if (isILRace()) {
-                raceState.ilScores.set(id, raceState.getILScore(id) + raceState.doneEntrants.length + raceState.ffEntrants.length - i);
-            } else {
-                if (statObj.pb === -1 || raceState.entrants.get(id).doneTime < statObj.pb) {
-                    statObj.pb = raceState.entrants.get(id).doneTime;
-                }
-            }
-        }
         playerStats.set(id, statObj);
     });
 
-    // Calculate new ELOs by treating each pair of racers in the race as a 1v1 matchup.
-    // See https://en.wikipedia.org/wiki/Elo_rating_system
-    raceRankings.forEach((id1, p1Place) => {
-        actualScore = 0;
-        expectedScore = 0;
-        raceRankings.forEach((id2, p2Place) => {
-            // Don't compare the player against themselves
-            if (id1 === id2) {
-                return;
-            }
-
-            expectedDiff = 1.0 / (1 + Math.pow(10, (playerStats.get(id2).elo - playerStats.get(id1).elo) / 400));
-            expectedScore += expectedDiff;
-
-            if (raceState.ffEntrants.includes(id1)) {
-                if (raceState.ffEntrants.includes(id2)) {
-                    // If both players forfeited, those two players won't affect each other's scores
-                    actualScore += expectedDiff;
-                } else {
-                    // Loss gives 0 points
-                }
-            } else if (p1Place < p2Place) {
-                // Ahead of opponent, count as win
-                actualScore++;
-            } else {
-                // Loss gives 0 points
-            }
-        });
-
-        newElos.set(id1, playerStats.get(id1).elo + 32 * (actualScore - expectedScore));
-    });
+    helpers.calculateElos(newElos, playerStats, raceRankings, raceState.ffEntrants);
 
     // Update/save stats with new ELOs
     playerStats.forEach((stat, id) => {

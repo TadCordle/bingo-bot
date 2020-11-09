@@ -1,3 +1,5 @@
+const helpers = require("./helpers.js");
+
 const SQLite = require("better-sqlite3");
 
 // Setup tables for fixing user stats
@@ -56,63 +58,14 @@ for (categoryIndex = 0; categoryIndex < categoriesFix.length; categoryIndex++) {
         raceRankings.forEach((id, j) => {
             statObj = getUserStatsForCategory_fix.get(id, game, category);
             if (!statObj) {
-                statObj = { user_id: `${id}`, game: `${game}`, category: `${category}`, races: 0, gold: 0, silver: 0, bronze: 0, ffs: 0, elo: 1500, pb: -1 };
+                statObj = helpers.defaultStatObj(id, game, category);
             }
+            helpers.calculatePlayerStats(statObj, ffs, j, dtimes[j]);
             newElos.set(id, statObj.elo);
-
-            // Update simple stats while we're iterating through these; need all ELOs to calculate new ones though, so we'll do that in a bit
-            statObj.races++;
-            if (ffs.includes(id)) {
-                statObj.ffs++;
-            } else {
-                if (j === 0) {
-                    statObj.gold++;
-                } else if (j === 1) {
-                    statObj.silver++;
-                } else if (j === 2) {
-                    statObj.bronze++;
-                }
-
-                if (category !== "Individual Levels") {
-                    if (statObj.pb === -1 || dtimes[j] < statObj.pb) {
-                        statObj.pb = dtimes[j];
-                    }
-                }
-            }
             playerStats.set(id, statObj);
         });
 
-        // Calculate new ELOs by treating each pair of racers in the race as a 1v1 matchup.
-        // See https://en.wikipedia.org/wiki/Elo_rating_system
-        raceRankings.forEach((id1, p1Place) => {
-            actualScore = 0;
-            expectedScore = 0;
-            raceRankings.forEach((id2, p2Place) => {
-                // Don't compare the player against themselves
-                if (id1 === id2) {
-                    return;
-                }
-                
-                expectedDiff = 1.0 / (1 + Math.pow(10, (playerStats.get(id2).elo - playerStats.get(id1).elo) / 400));
-                expectedScore += expectedDiff;
-                
-                if (ffs.includes(id1)) {
-                    if (ffs.includes(id2)) {
-                        // If both players forfeited, those two players won't affect each other's scores
-                        actualScore += expectedDiff;
-                    } else {
-                        // Loss gives 0 points
-                    }
-                } else if (p1Place < p2Place) {
-                    // Ahead of opponent, count as win
-                    actualScore++;
-                } else {
-                    // Loss gives 0 points
-                }
-            });
-
-            newElos.set(id1, playerStats.get(id1).elo + 32 * (actualScore - expectedScore));
-        });
+        helpers.calculateElos(newElos, playerStats, raceRankings, ffs);
 
         // Update/save stats with new ELOs
         playerStats.forEach((stat, id) => {

@@ -4,7 +4,7 @@ const emotes = config.emotes;
 var exports = module.exports = {};
 
 // Writes something to stdout
-log = (text, err=false) => {
+exports.log = (text, err=false) => {
     if (err) {
         console.error("[" + (new Date()).toISOString() + "] " + text);
     } else {
@@ -139,4 +139,64 @@ exports.placeEmote = (place) => {
         default:
             return emotes.finished;
     }
+}
+
+exports.defaultStatObj = (id, gameName, categoryName) => {
+    return { user_id: `${id}`, game: `${gameName}`, category: `${categoryName}`, races: 0, gold: 0, silver: 0, bronze: 0, ffs: 0, elo: 1500, pb: -1 };
+}
+
+// Update a user's stats in statObj based on their race results
+exports.calculatePlayerStats = (statObj, ffs, racePlace, doneTime) => {
+    statObj.races++;
+    if (ffs.includes(statObj.user_id)) {
+        statObj.ffs++;
+    } else {
+        if (racePlace === 0) {
+            statObj.gold++;
+        } else if (racePlace === 1) {
+            statObj.silver++;
+        } else if (racePlace === 2) {
+            statObj.bronze++;
+        }
+
+        if (statObj.category !== "Individual Levels") {
+            if (statObj.pb === -1 || doneTime < statObj.pb) {
+                statObj.pb = doneTime;
+            }
+        }
+    }
+}
+
+// Calculate new Elos by treating each pair of racers in the race as a 1v1 matchup.
+// See https://en.wikipedia.org/wiki/Elo_rating_system
+exports.calculateElos = (newElos, stats, raceRankings, ffs) => {
+    raceRankings.forEach((id1, p1Place) => {
+        actualScore = 0;
+        expectedScore = 0;
+        raceRankings.forEach((id2, p2Place) => {
+            // Don't compare the player against themselves
+            if (id1 === id2) {
+                return;
+            }
+
+            expectedDiff = 1.0 / (1 + Math.pow(10, (stats.get(id2).elo - stats.get(id1).elo) / 400));
+            expectedScore += expectedDiff;
+
+            if (ffs.includes(id1)) {
+                if (ffs.includes(id2)) {
+                    // If both players forfeited, those two players won't affect each other's scores
+                    actualScore += expectedDiff;
+                } else {
+                    // Loss gives 0 points
+                }
+            } else if (p1Place < p2Place) {
+                // Ahead of opponent, count as win
+                actualScore++;
+            } else {
+                // Loss gives 0 points
+            }
+        });
+
+        newElos.set(id1, stats.get(id1).elo + 32 * (actualScore - expectedScore));
+    });
 }
