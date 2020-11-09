@@ -17,7 +17,6 @@ const sql = new SQLite("./data/race.sqlite");
 const client = new Discord.Client();
 var gameName = Object.keys(config.games)[0];
 var categoryName = helpers.normalizeCategory(gameName, null);
-var prevCategoryName = categoryName; // Used to save full game category when people do IL races
 var levelName = helpers.normalizeLevel(gameName, null);
 var raceId = 0;
 
@@ -375,7 +374,6 @@ gameCmd = (message) => {
 
         if (gameName !== game) {
             gameName = game;
-            prevCategoryName = helpers.normalizeCategory(game, null);
             if (isILRace()) {
                 levelName = helpers.normalizeLevel(game, null);
                 name = levelName;
@@ -411,7 +409,6 @@ categoryCmd = (message) => {
                 message.channel.send("Category updated to " + category + ". (This doesn't seem to be an official category, though; did you mean something else?)");
             }
             categoryName = category;
-            prevCategoryName = category;
             return;
         }
 
@@ -433,7 +430,6 @@ categoryCmd = (message) => {
             message.channel.send("Category updated to " + normalized + ".");
         }
         categoryName = normalized;
-        prevCategoryName = normalized;
     }
 }
 
@@ -504,7 +500,7 @@ luckyDipCmd = (message) => {
 
 chooseLuckyDipLevel = (luckyDipUrl, message) => {
     "use-strict";
-    https.get(luckyDipUrl, function (result) {
+    https.get(luckyDipUrl, (result) => {
         var { statusCode } = result;
         if (statusCode === 302) {
             chooseLuckyDipLevel(result.headers.location, message);
@@ -515,10 +511,10 @@ chooseLuckyDipLevel = (luckyDipUrl, message) => {
             return;
         }
         var dataQueue = "";
-        result.on("data", function (dataBuffer) {
+        result.on("data", (dataBuffer) => {
             dataQueue += dataBuffer;
         });
-        result.on("end", function () {
+        result.on("end", () => {
             matches = [];
             dataQueue.replace(levelRegex, (wholeMatch, parenthesesContent) => {
                 matches.push(parenthesesContent);
@@ -546,7 +542,7 @@ getLbpMeUrl = (level) => {
 chooseLbpMeLevel = (level, message) => {
     isVita = level.includes("vita.lbp.me");
     "use-strict";
-    https.get(level, function (result) {
+    https.get(level, (result) => {
         var { statusCode } = result;
         if (statusCode === 302) {
             chooseLbpMeLevel(result.headers.location, message, onEnd);
@@ -558,10 +554,10 @@ chooseLbpMeLevel = (level, message) => {
         }
 
         var dataQueue = "";
-        result.on("data", function (dataBuffer) {
+        result.on("data", (dataBuffer) => {
             dataQueue += dataBuffer;
         });
-        result.on("end", function () {
+        result.on("end", () => {
             start = dataQueue.search("<title>") + 7;
             end = dataQueue.search(/ - LBP\.me( PS Vita)?<\/title>/);
             titleAuthor = helpers.decodeHTML(dataQueue.substring(start, end).trim());
@@ -587,7 +583,9 @@ forfeitCmd = (message) => {
                 // Close down race if this is the last person leaving
                 message.channel.send(helpers.username(message) + " has left the race. Closing race.");
                 raceState = new RaceState();
-                categoryName = prevCategoryName;
+                if (isILRace()) {
+                    categoryName = helpers.normalizeCategory(gameName, null);
+                }
             } else {
                 message.channel.send(helpers.username(message) + " has left the race.");
                 if (raceState.entrants.size === 1) {
@@ -612,10 +610,7 @@ forfeitCmd = (message) => {
             if (raceState.ffEntrants.length + raceState.doneEntrants.length === raceState.entrants.size) {
                 if (raceState.state === State.COUNTDOWN) {
                     // Everyone forfeited during the countdown
-                    clearTimeout(countDownTimeout1);
-                    clearTimeout(countDownTimeout2);
-                    clearTimeout(countDownTimeout3);
-                    clearTimeout(goTimeout);
+                    stopCountDown();
                     if (isILRace()) {
                         newIL();
                         raceDoneWarningTimeout = setTimeout(() => { message.channel.send("Everyone forfeited. IL not counted."); }, 1000);
@@ -688,10 +683,7 @@ unreadyCmd = (message) => {
             // If someone unready'd during countdown, stop the countdown
             if (raceState.state === State.COUNTDOWN) {
                 raceState.state = State.JOINING;
-                clearTimeout(countDownTimeout1);
-                clearTimeout(countDownTimeout2);
-                clearTimeout(countDownTimeout3);
-                clearTimeout(goTimeout);
+                stopCountDown();
                 message.channel.send(helpers.username(message) + " isn't ready; stopping countdown.");
             }
         }
@@ -842,16 +834,12 @@ kickCmd = (message) => {
 // !clearrace
 clearRaceCmd = (message) => {
     // Force end of race, unless it's already done
-    clearTimeout(countDownTimeout1);
-    clearTimeout(countDownTimeout2);
-    clearTimeout(countDownTimeout3);
-    clearTimeout(goTimeout);
+    stopCountDown();
     clearTimeout(raceDoneTimeout);
     clearTimeout(raceDoneWarningTimeout);
     raceState = new RaceState();
     gameName = Object.keys(config.games)[0];
     categoryName = helpers.normalizeCategory(gameName, null);
-    prevCategoryName = categoryName;
     levelName = helpers.normalizeLevel(gameName, null);
     raceId = client.getLastRaceID.get().id;
     if (!raceId) {
@@ -1138,6 +1126,13 @@ newIL = () => {
 
 isILRace = () => {
     return categoryName === "Individual Levels";
+}
+
+stopCountDown = () => {
+    clearTimeout(countDownTimeout1);
+    clearTimeout(countDownTimeout2);
+    clearTimeout(countDownTimeout3);
+    clearTimeout(goTimeout);
 }
 
 client.login(discordAuth.token);
