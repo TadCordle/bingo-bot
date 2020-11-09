@@ -564,7 +564,7 @@ chooseLbpMeLevel = (level, message) => {
         result.on("end", function () {
             start = dataQueue.search("<title>") + 7;
             end = dataQueue.search(/ - LBP\.me( PS Vita)?<\/title>/);
-            titleAuthor = decodeHTML(dataQueue.substring(start, end).trim());
+            titleAuthor = helpers.decodeHTML(dataQueue.substring(start, end).trim());
             split = titleAuthor.split(" ");
             title = titleAuthor.substring(0, titleAuthor.search(split[split.length - (isVita ? 2 : 1)])).trim(); // On vita.lbp.me there is a "By" between level name and author
             levelName = title + (isVita ? " - https://vita.lbp.me/v/" : " - https://lbp.me/v/") + level.split("/")[4];
@@ -1139,29 +1139,5 @@ newIL = () => {
 isILRace = () => {
     return categoryName === "Individual Levels";
 }
-
-// The following code is based on https://github.com/intesso/decode-html to avoid additional dependencies ---------
-// (license: https://github.com/intesso/decode-html/blob/master/LICENSE)
-const entities = {
-    'amp': '&',
-    'apos': '\'',
-    'lt': '<',
-    'gt': '>',
-    'quot': '"',
-    'nbsp': ' '
-};
-const entityPattern = /&([a-z]+);/ig;
-
-decodeHTML = (text) => {
-    return text.replace(entityPattern, (match, entity) => {
-        entity = entity.toLowerCase();
-        if (entities.hasOwnProperty(entity)) {
-            return entities[entity];
-        }
-        // return original string if there is no matching entity (no replace)
-        return match;
-    });
-};
-// ----------------------------------------------------------------------------------------------------------------
 
 client.login(discordAuth.token);

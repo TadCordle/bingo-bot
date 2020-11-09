@@ -200,3 +200,19 @@ exports.calculateElos = (newElos, stats, raceRankings, ffs) => {
         newElos.set(id1, stats.get(id1).elo + 32 * (actualScore - expectedScore));
     });
 }
+
+// The following code is based on https://github.com/intesso/decode-html to avoid additional dependencies ---------
+// (license: https://github.com/intesso/decode-html/blob/master/LICENSE)
+exports.decodeHTML = (text) => {
+    entityPattern = /&([a-z]+);/ig;
+    entities = { 'amp': '&', 'apos': '\'', 'lt': '<', 'gt': '>', 'quot': '"', 'nbsp': ' ' };
+    return text.replace(entityPattern, (match, entity) => {
+        entity = entity.toLowerCase();
+        if (entities.hasOwnProperty(entity)) {
+            return entities[entity];
+        }
+        // return original string if there is no matching entity (no replace)
+        return match;
+    });
+};
+// ----------------------------------------------------------------------------------------------------------------
