@@ -133,6 +133,7 @@ client.on("ready", () => {
     client.addUserStat = sql.prepare("INSERT OR REPLACE INTO users (user_id, game, category, races, gold, silver, bronze, ffs, elo, pb) "
                                    + "VALUES (@user_id, @game, @category, @races, @gold, @silver, @bronze, @ffs, @elo, @pb);");
     client.getUserGamesRan = sql.prepare("SELECT DISTINCT game, category FROM users WHERE user_id = ?");
+    client.getIdFromName = sql.prepare("SELECT user_id, user_name FROM results WHERE user_name = ? COLLATE NOCASE");
 
     // Setup SQL query to show leaderboard
     client.getLeaderboard = sql.prepare("SELECT DISTINCT results.user_id AS user_id, results.user_name AS user_name, users.elo AS elo FROM results INNER JOIN users ON results.user_id = users.user_id "
@@ -224,6 +225,9 @@ client.on("message", (message) => {
     else if (lowerMessage.startsWith("!me"))
         meCmd(message);
 
+    else if (lowerMessage.startsWith("!runner"))
+        runnerCmd(message);
+
     else if (lowerMessage.startsWith("!results"))
         resultsCmd(message);
 
@@ -271,6 +275,7 @@ helpCmd = (message) => {
 \`!status\` - Shows current race status/entrants.
 \`!results raceNum\` - Shows results of the specified race number (e.g. \`!results 2\`).
 \`!me <game name>\` - Shows your race statistics for the specified game (e.g. \`!me LBP\` shows your LBP1 stats).
+\`!runner <username or id> <game name>\` - Shows someone else's race statistics (e.g. \`!runner RbdJellyfish LBP\` shows RbdJellyfish's LBP1 stats).
 \`!elo <game name>/<category name>\` - Shows the ELO leaderboard for the given game/category (e.g. \`!elo lbp/die%\` shows the LBP1 Die% leaderboard).
 \`!help\` - Shows this message.
 
@@ -863,10 +868,47 @@ meCmd = (message) => {
         return;
     }
 
-    // Show stats
-    stats = client.getUserStatsForGame.all(message.author.id, game);
+    showUserStats(message, message.author.id, helpers.username(message));
+}
+
+// !runner
+runnerCmd = (message) => {
+    usage = "Usage: `!runner <id or username> <game name>` (e.g. `!runner RbdJellyfish lbp1`)";
+
+    // Parse game name
+    params = message.content.replace(/^!runner/i, "").trim();
+    separateName = params.split(" ");
+    if (separateName.length < 2) {
+        message.channel.send(usage);
+        return;
+    }
+    name = separateName[0];
+
+    game = params.replace(name, "").trim();
+    if (game === null || game === "") {
+        message.channel.send(usage);
+        return;
+    }
+    game = helpers.normalizeGameName(game);
+    if (game === null) {
+        message.channel.send("The game you specified isn't valid.");
+        return;
+    }
+
+    id = name.replace("<@", "").replace(">", "");
+    results = client.getIdFromName.all(name);
+    if (results.length > 0) {
+        id = results[0].user_id;
+        name = results[0].user_name;
+    }
+
+    showUserStats(message, id, name);
+}
+
+showUserStats = (message, userId, username) => {
+    stats = client.getUserStatsForGame.all(userId, game);
     if (stats.length > 0) {
-        title = "**" + game + "**";
+        title = "**" + game + "** stats for " + username;
         meString = "";
         ilString = "";
         var maxNumberLength = {races: 1, gold: 1, silver: 1, bronze: 1, ffs: 1, elo: 1};
@@ -894,7 +936,7 @@ meCmd = (message) => {
         });
         message.channel.send(title + ilString + meString);
     } else {
-        message.channel.send("No stats found; you haven't done any races in " + game + " yet.");
+        message.channel.send("No stats found; user hasn't done any " + game + " races yet.");
     }
 }
 

@@ -56,6 +56,7 @@ npm start
 * `!status` - Shows current race status/entrants.
 * `!results <race num>` - Shows results of the specified race number (e.g. `!results 2`).
 * `!me <game name>` - Shows your race statistics for the specified game (e.g. `!me LBP`).
+* `!runner <id or username> <game name>` - Shows someone else's race statistics (e.g. `!runner RbdJellyfish LBP`).
 * `!elo <game name>/<category name>` - Shows the ELO leaderboard for the given game/category (e.g. `!elo lbp/die%`).
 * `!help` - Shows the bot commands.
 
