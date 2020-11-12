@@ -27,9 +27,7 @@
                 "All Levels": ["al"],
                 "Styrofoam%": [],
                 "Die%": [],
-                "Individual Levels": ["il", "ils", "individuallevel"],
-                "An3%": [],
-                "7ny%": ["an7"]
+                "Individual Levels": ["il", "ils", "individuallevel"]
             },
             "levels": {
                 "Introduction": ["intro"],
@@ -149,6 +147,13 @@
                 "Mecha-Lex Madness": [],
                 "And For Your Next Test...": [],
                 "Raiding the Kitchen": []
+            }
+        },
+        "Multiple LittleBigPlanet Games": {
+            "aliases": ["multi", "multigame", "multiplelbpgames", "multilbpgames", "multilbp", "an3%", "7ny%"],
+            "categories": {
+                "An3%": [],
+                "7ny%": ["an7"]
             }
         },
         "LittleBigPlanet PSP": {
@@ -443,11 +448,7 @@
                 "100%": [],
                 "2p Co-op": ["coop", "2p"],
                 "3p Co-op": ["3p"],
-                "4p Co-op": ["4p"],
-                "Individual Levels": ["il", "ils", "individuallevel"]
-            },
-            "levels": {
-                "TODO": []
+                "4p Co-op": ["4p"]
             }
         }
     }

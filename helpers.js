@@ -27,7 +27,7 @@ exports.normalizeGameName = (game) => {
 // Given a game name and a category string, returns the closest matching category name in config.json.
 exports.normalizeCategory = (normalizedGame, category) => {
     g = config.games[normalizedGame];
-    if (g === null || g.categories === null) {
+    if (g === undefined || g.categories === undefined) {
         return "Any%";
     }
     if (category === null) {
@@ -46,10 +46,10 @@ exports.normalizeCategory = (normalizedGame, category) => {
 // Given a game name and level string, return the closest matching level name in config.json.
 exports.normalizeLevel = (normalizedGame, level) => {
     g = config.games[normalizedGame];
-    if (g === null || g.levels === null) {
-        return "<select level>";
-    }
     if (level == null) {
+        if (g === undefined || g.levels === undefined) {
+            return "<select level>";
+        }
         return Object.keys(g.levels)[0];
     }
     process = (l) => l.toLowerCase().replace(/&/g, "and").replace(/\W|the/g, "");

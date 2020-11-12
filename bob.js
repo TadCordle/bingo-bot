@@ -344,7 +344,13 @@ ilRaceCmd = (message) => {
         // Start race
         raceState.addEntrant(message);
         levelName = helpers.normalizeLevel(gameName, null);
-        message.channel.send(helpers.mention(message.author) + " has started a new IL race! Use `!race` to join; use `!game` and `!level` to setup the race further (currently " + gameName + " / " + levelName + ").");
+        msg = helpers.mention(message.author) + " has started a new IL race! Use `!race` to join; use `!game` and `!level` to setup the race further";
+        if (config.games[gameName].levels === undefined) {
+            msg += ".\n**Note:** IL races are not configured for " + gameName + ". Use `!game` to choose a game with ILs, or use `!level` to pick the level if this was not a mistake.";
+        } else {
+            msg += " (currently " + gameName + " / " + levelName + ").";
+        }
+        message.channel.send(msg);
         raceState.state = State.JOINING;
 
     } else if (raceState.state === State.JOINING) {
@@ -379,14 +385,18 @@ gameCmd = (message) => {
 
         if (gameName !== game) {
             gameName = game;
+            warning = "";
             if (isILRace()) {
                 levelName = helpers.normalizeLevel(game, null);
                 name = levelName;
+                if (config.games[game].levels === undefined) {
+                    warning = "\n**Note:** IL races are not configured for " + gameName + ". Use `!game` to choose another game, or use `!level` to pick the level if this was not a mistake.";
+                }
             } else {
                 categoryName = helpers.normalizeCategory(game, null);
                 name = categoryName;
             }
-            message.channel.send("Game / " + word + " updated to " + gameName + " / " + name + ".");
+            message.channel.send("Game / " + word + " updated to " + gameName + " / " + name + "." + warning);
         } else {
             message.channel.send("Game / " + word + " was already set to " + gameName + " / " + name + ".");
         }
@@ -420,13 +430,13 @@ categoryCmd = (message) => {
         if (normalized === "Individual Levels") {
             if (!isILRace()) {
                 categoryName = normalized;
-                message.channel.send("Switched to IL race. Use `!race` to join; use `!game` and `!level` to setup the race further (currently " + gameName + " / " + levelName + ").");
+                endMsg = " (currently " + gameName + " / " + levelName + ").";
+                if (config.games[gameName].levels === undefined) {
+                    endMsg = ".\n**Note:** ILs are not configured for " + gameName + ". Use `!game` to choose a game with ILs, or use `!level` to pick the level if this was not a mistake.";
+                }
+                message.channel.send("Switched to IL race. Use `!race` to join; use `!game` and `!level` to setup the race further" + endMsg);
             }
             return;
-        }
-
-        if (normalized === "An3%" || normalized === "7ny%") {
-            gameName = "LittleBigPlanet";
         }
 
         if (isILRace()) {
@@ -461,7 +471,7 @@ levelCmd = (message) => {
     if (normalized === null) {
         // Choose other non-story level
         levelName = level;
-        message.channel.send("Level updated to " + levelName + ". (This doesn't seem to be a story level in " + gameName + "; try again if this isn't a community level/DLC level.)");
+        message.channel.send("Level updated to " + levelName + ". (Level name not recognized in " + gameName + "; did you make a typo?)");
         return;
     }
 
@@ -1108,7 +1118,7 @@ recordResults = () => {
         entrant = raceState.entrants.get(id);
         result = { race_id: `${raceId}`, user_id: `${id}`, user_name: `${helpers.username(entrant.message)}`, game: `${gameName}`, category: `${categoryName}`, time: `${entrant.doneTime}`, ff: 0, dq: 0, level: `${level}` };
         client.addResult.run(result);
-        roles.giveRoleFromRace(id, gameName);
+        roles.giveRoleFromRace(id, gameName, categoryName);
     });
     raceState.ffEntrants.forEach((id) => {
         entrant = raceState.entrants.get(id);
