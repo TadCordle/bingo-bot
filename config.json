@@ -448,12 +448,13 @@
                 "100%": [],
                 "2p Co-op": ["coop", "2p"],
                 "3p Co-op": ["3p"],
-                "4p Co-op": ["4p"]
+                "4p Co-op": ["4p"],
+                "Individual Levels": ["il", "ils", "individuallevel"]
             },
             "levels": {
                 "A Big Adventure": ["bigadventure"],
                 "Cold Feat": [],
-                "Up For Grabs": [],
+                "Up for Grabs": [],
                 "Keys to Success": [],
 
                 "Seesaws on the Sea Floor": [],
