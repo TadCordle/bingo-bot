@@ -67,7 +67,10 @@ exports.username = (message) => {
     if (message.author.id === "159245797328814081") {
         return "bean";
     }
-    return message.member.displayName;
+    if (message.member !== null) {
+        return message.member.displayName;
+    }
+    return message.author.username;
 }
 
 // Gets a formatted string for @ing a user
@@ -141,8 +144,8 @@ exports.placeEmote = (place) => {
     }
 }
 
-exports.defaultStatObj = (id, gameName, categoryName) => {
-    return { user_id: `${id}`, game: `${gameName}`, category: `${categoryName}`, races: 0, gold: 0, silver: 0, bronze: 0, ffs: 0, elo: 1500, pb: -1 };
+exports.defaultStatObj = (id, g, c) => {
+    return { user_id: `${id}`, game: `${g}`, category: `${c}`, races: 0, gold: 0, silver: 0, bronze: 0, ffs: 0, elo: 1500, pb: -1 };
 }
 
 // Update a user's stats in statObj based on their race results
@@ -159,10 +162,8 @@ exports.calculatePlayerStats = (statObj, ffs, racePlace, doneTime) => {
             statObj.bronze++;
         }
 
-        if (statObj.category !== "Individual Levels") {
-            if (statObj.pb === -1 || doneTime < statObj.pb) {
-                statObj.pb = doneTime;
-            }
+        if (statObj.category !== "Individual Levels" && (statObj.pb === -1 || doneTime < statObj.pb)) {
+            statObj.pb = doneTime;
         }
     }
 }
@@ -171,6 +172,7 @@ exports.calculatePlayerStats = (statObj, ffs, racePlace, doneTime) => {
 // See https://en.wikipedia.org/wiki/Elo_rating_system
 exports.calculateElos = (newElos, stats, raceRankings, ffs) => {
     raceRankings.forEach((id1, p1Place) => {
+        exports.log(id1 + ": Starting Elo is " + stats.get(id1).elo);
         actualScore = 0;
         expectedScore = 0;
         raceRankings.forEach((id2, p2Place) => {
@@ -195,9 +197,12 @@ exports.calculateElos = (newElos, stats, raceRankings, ffs) => {
             } else {
                 // Loss gives 0 points
             }
+            exports.log("    vs. " + id2 + ": Elo is " + stats.get(id2).elo + ". Expected/actual score: " + expectedScore + "/" + actualScore);
         });
 
-        newElos.set(id1, stats.get(id1).elo + 32 * (actualScore - expectedScore));
+        updatedElo = stats.get(id1).elo + 32 * (actualScore - expectedScore)
+        newElos.set(id1, updatedElo);
+        exports.log("  New Elo will be " + updatedElo + "\n");
     });
 }
 

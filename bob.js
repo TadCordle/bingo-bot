@@ -468,16 +468,16 @@ levelCmd = (message) => {
     }
 
     normalized = helpers.normalizeLevel(gameName, level);
-    if (normalized === null) {
-        // Choose other non-story level
-        levelName = level;
-        message.channel.send("Level updated to " + levelName + ". (Level name not recognized in " + gameName + "; did you make a typo?)");
+    if (normalized !== null) {
+        // Choose story level
+        levelName = normalized;
+        message.channel.send("Level updated to " + levelName + ".");
         return;
     }
 
-    // Choose story level
-    levelName = normalized;
-    message.channel.send("Level updated to " + levelName + ".");
+    // Choose other non-story level
+    levelName = level;
+    message.channel.send("Level updated to " + levelName + ". (Level name not recognized in " + gameName + "; did you make a typo?)");    
 }
 
 // !luckydip
