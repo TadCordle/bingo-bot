@@ -449,6 +449,7 @@
                 "2p Co-op": ["coop", "2p"],
                 "3p Co-op": ["3p"],
                 "4p Co-op": ["4p"],
+                "Trial 16": ["trial16", "ripsnorter"],
                 "Individual Levels": ["il", "ils", "individuallevel"]
             },
             "levels": {
@@ -459,8 +460,15 @@
                 "Trial 5: The Flip Side": ["trial5", "flipside"],
                 "Trial 6: Tilty Pleasures": ["trial6", "tiltypleasures"],
                 "Trial 7: Don't Turret Up": ["trial7", "dontturretup"],
-                "Trial 8: Sealife or Death": ["trial8", "sealifeordeath"], 
+                "Trial 8: Sealife or Death": ["trial8", "sealifeordeath"],
+                "Trial 9: You Jelly?": ["trial9", "youjelly"],
                 "Trial 10: On Ya Spike": ["trial10", "onyaspike"],
+                "Trial 11: Trial by Fire": ["trial11", "trialbyfire"],
+                "Trial 12: Spinning Class": ["trial12", "spinningclass"],
+                "Trial 13: Sweet Beams": ["trial13", "sweetbeams", "sweetbeans"],
+                "Trial 14: Stitch in Time": ["trial14", "stitchintime"],
+                "Trial 15: Fish 'N' Slips": ["trial15", "fishnslips"],
+                "Trial 16: The Ripsnorter": ["trial16", "ripsnorter"],
 
                 "A Big Adventure": ["bigadventure"],
                 "Cold Feat": [],
@@ -475,6 +483,7 @@
                 "Ice Cave Dash": [],
                 "Between the Lines": [],
                 "Snowman Left Behind": [],
+                "Highwire Escape": [],
 
                 "Sticking With It": [],
                 "A Cut Above the Rest": [],
@@ -512,8 +521,33 @@
                 "Fight and Flight": [],
                 "Science Friction": [],
                 "Pros and Conveyors": [],
+                "One Track Mind": [],
+                "This Way Up": [],
+                "Escape Velocity": [],
+                "Swipe Right": [],
+                "Nervous System": [],
+                "Spaceport Dash": [],
                 "The Struggle is Rail": [],
-                "Flossed in Space": []
+                "Flossed in Space": [],
+
+                "Off the Rails": [],
+                "Keep It Tidy": [],
+                "Double Down": [],
+                "Stick or Twist": [],
+                "Flash Forward": [],
+                "Just a Phase": [],
+                "Crate Expectations": [],
+                "Multitask Force": [],
+                "Doom & Bloom": [],
+                "Until Vex Time": [],
+                "Doom & Dash": [],
+                "Jumping to Conclusions": [],
+                "Vexpiration Date": [],
+
+                "Keep On Leaping On": [],
+                "Best in Throw": [],
+                "High and Mighty": [],
+                "In Full Swing": []
             }
         }
     }
