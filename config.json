@@ -449,7 +449,7 @@
                 "2p Co-op": ["coop", "2p"],
                 "3p Co-op": ["3p"],
                 "4p Co-op": ["4p"],
-                "Trial 16": ["trial16", "ripsnorter"],
+                "Trial 16": ["allknittedknighttrials", "allknittedknights", "ripsnorter"],
                 "Individual Levels": ["il", "ils", "individuallevel"]
             },
             "levels": {
@@ -487,7 +487,7 @@
 
                 "Sticking With It": [],
                 "A Cut Above the Rest": [],
-                "Slipper Slope": [],
+                "Slippery Slope": [],
                 "Beat the Heat": [],
                 "Monkey Business": [],
                 "Going Bananas": [],
@@ -547,7 +547,8 @@
                 "Keep On Leaping On": [],
                 "Best in Throw": [],
                 "High and Mighty": [],
-                "In Full Swing": []
+                "In Full Swing": [],
+                "Little Big Finale": []
             }
         }
     }
