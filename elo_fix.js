@@ -6,7 +6,6 @@ const SQLite = require("better-sqlite3");
 const sql = new SQLite('./data/race.sqlite');
 const usersFixedTable = sql.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='users_new'").get();
 if (!usersFixedTable['count(*)']) {
-    sql.prepare("DROP INDEX IF EXISTS idx_users_fixed_id").run();
     sql.prepare("CREATE TABLE users_new (user_id TEXT, game TEXT, category TEXT, races INTEGER, gold INTEGER, silver INTEGER, bronze INTEGER, ffs INTEGER, elo REAL, pb INTEGER);").run();
     sql.prepare("CREATE UNIQUE INDEX idx_users_fixed_id ON users_new (user_id, game, category);").run();
     sql.pragma("synchronous = 1");
@@ -53,7 +52,6 @@ for (categoryIndex = 0; categoryIndex < categoriesFix.length; categoryIndex++) {
 
         // Update racers' stats
         playerStats = new Map();
-        newElos = new Map();
         raceRankings = ds.concat(ffs);
         raceRankings.forEach((id, j) => {
             statObj = getUserStatsForCategory_fix.get(id, game, category);
@@ -61,11 +59,10 @@ for (categoryIndex = 0; categoryIndex < categoriesFix.length; categoryIndex++) {
                 statObj = helpers.defaultStatObj(id, game, category);
             }
             helpers.calculatePlayerStats(statObj, ffs, j, dtimes[j]);
-            newElos.set(id, statObj.elo);
             playerStats.set(id, statObj);
         });
 
-        helpers.calculateElos(newElos, playerStats, raceRankings, ffs);
+        newElos = helpers.calculateElos(playerStats, raceRankings, ffs);
 
         // Update/save stats with new ELOs
         playerStats.forEach((stat, id) => {

@@ -170,7 +170,8 @@ exports.calculatePlayerStats = (statObj, ffs, racePlace, doneTime) => {
 
 // Calculate new Elos by treating each pair of racers in the race as a 1v1 matchup.
 // See https://en.wikipedia.org/wiki/Elo_rating_system
-exports.calculateElos = (newElos, stats, raceRankings, ffs) => {
+exports.calculateElos = (stats, raceRankings, ffs) => {
+    result = new Map();
     raceRankings.forEach((id1, p1Place) => {
         exports.log(id1 + ": Starting Elo is " + stats.get(id1).elo);
         actualScore = 0;
@@ -197,13 +198,13 @@ exports.calculateElos = (newElos, stats, raceRankings, ffs) => {
             } else {
                 // Loss gives 0 points
             }
-            exports.log("    vs. " + id2 + ": Elo is " + stats.get(id2).elo + ". Expected/actual score: " + expectedScore + "/" + actualScore);
         });
 
         updatedElo = stats.get(id1).elo + 32 * (actualScore - expectedScore)
-        newElos.set(id1, updatedElo);
+        result.set(id1, updatedElo);
         exports.log("  New Elo will be " + updatedElo + "\n");
     });
+    return result;
 }
 
 // The following code is based on https://github.com/intesso/decode-html to avoid additional dependencies ---------
