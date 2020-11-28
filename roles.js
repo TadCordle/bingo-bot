@@ -1,4 +1,3 @@
-const categories = require('./categories.js');
 const config = require("./config.json");
 const emotes = config.emotes;
 const https = require('https');
@@ -172,21 +171,18 @@ rolesCmd = (message) => {
 // !removeroles [<discord id>]
 removeRolesCmd = (message) => {
     param = message.content.replace(/^!removeroles/i, "").trim();
-    id = message.author.id;
-    if (param !== "" && isAdmin(id)) {
-        id = param.replace("<@", "").replace(">", "").trim();
+    discordId = message.author.id;
+    if (param !== "" && isAdmin(discordId)) {
+        discordId = param.replace("<@", "").replace(">", "").trim();
     }
 
-    member = guild.members.cache.get(id);
-    if (!member) {
-        helpers.log("'" + id + "' is not a member of the LBP speedrunning server.", true);
-        return;
+    client.deleteSrcUser.run(discordId);
+    member = guild.members.cache.get(discordId);
+    if (member) {
+        Object.values(roles).forEach((role) => {
+            member.roles.remove(role);
+        });
     }
-
-    client.deleteSrcUser.run(id);
-    Object.values(roles).forEach((role) => {
-        member.roles.remove(role);
-    });
     message.react(emotes.acknowledge);
 }
 
@@ -206,7 +202,8 @@ doSrcRoleUpdates = (discordId, srcName, message = null) => {
     callSrc("/api/v1/users/" + srcName + "/personal-bests", message, (dataQueue) => {
         member = guild.members.cache.get(discordId);
         if (!member) {
-            helpers.log("SRC role update: '" + discordId + "' is not a member of the LBP speedrunning server.", true);
+            helpers.log("SRC role update: '" + discordId + "' is not a member of the LBP speedrunning server. Removing...", true);
+            client.deleteSrcUser.run(discordId);
             return;
         }
 
