@@ -782,14 +782,36 @@ statusCmd = (message) => {
                         : "done!" + (raceState.ffEntrants.length === raceState.entrants.size ? "" : " Results will be recorded soon."))
                 + "**";
 
+        // Calculate Elos so diff can be shown
+        inProgress = [];
+        raceState.entrants.forEach((entrant) => {
+            if (!raceState.doneEntrants.includes(entrant.message.author.id) && !raceState.ffEntrants.includes(entrant.message.author.id)) {
+                inProgress.push(id);
+            }
+        });
+        sortedRacerList = raceState.doneEntrants.concat(inProgress).concat(raceState.ffEntrants);
+        oldElos = new Map();
+        stats = new Map();
+        sortedRacerList.forEach((id) => {
+            statObj = client.getUserStatsForCategory.get(id, gameName, categoryName);
+            if (!statObj) {
+                statObj = helpers.defaultStatObj(id, gameName, categoryName);
+            }
+            oldElos.set(id, statObj.elo);
+            stats.set(id, statObj);
+        });
+        newElos = helpers.calculateElos(stats, sortedRacerList, raceState.ffEntrants);
+
         // List done entrants
         raceState.doneEntrants.forEach((id, i) => {
             entrant = raceState.entrants.get(id);
             points = raceState.entrants.size - i;
+            eloDiff = newElos.get(id) - oldElos.get(id);
             raceString += "\n\t" + helpers.placeEmote(i)
                     + " **" + helpers.username(entrant.message) + "** "
-                    + (isILRace() ? "(+" + points + " point" + (points > 1 ? "s" : "") + ")" : "")
-                    + " (" + helpers.formatTime(entrant.doneTime) + ")";
+                    + (isILRace() ? "(+" + points + " point" + (points > 1 ? "s" : "") + ") " : "")
+                    + (eloDiff < 0 ? "(" : " (+") + eloDiff + " " + emotes.elo + ") "
+                    + "(" + helpers.formatTime(entrant.doneTime) + ")";
         });
 
         // List racers still going
@@ -802,7 +824,10 @@ statusCmd = (message) => {
         // List forfeited/DQ'd entrants
         raceState.ffEntrants.forEach((id) => {
             entrant = raceState.entrants.get(id);
-            raceString += "\n\t" + emotes.forfeited + " " + helpers.username(entrant.message);
+            eloDiff = newElos.get(id) - oldElos.get(id);
+            raceString += "\n\t" + emotes.forfeited + " "
+                    + helpers.username(entrant.message)
+                    + (eloDiff < 0 ? " (" : " (+") + eloDiff + " " + emotes.elo + ")";
         });
 
         message.channel.send(raceString);
@@ -1147,7 +1172,7 @@ recordResults = () => {
 
     newElos = helpers.calculateElos(playerStats, raceRankings, raceState.ffEntrants);
 
-    // Update/save stats with new ELOs
+    // Update/save stats with new Elos
     playerStats.forEach((stat, id) => {
         stat.elo = newElos.get(id);
         client.addUserStat.run(stat);
