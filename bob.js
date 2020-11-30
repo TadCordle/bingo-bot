@@ -80,6 +80,15 @@ class RaceState {
         }
         return 0;
     }
+
+    // Resets the team name of all entrants using teamName
+    disbandTeam(teamName) {
+        for(var entry in this.entrants) {
+            if (entry[1].team === teamName) {
+                entry[1].team = "";
+            }
+        }
+    }
 }
 
 // Represents a race entrant
@@ -89,6 +98,7 @@ class Entrant {
         this.ready = false;
         this.doneTime = 0;
         this.disqualified = false;
+        this.team = "";
     }
 }
 
@@ -106,7 +116,7 @@ var raceState = new RaceState();
 client.on("ready", () => {
     // Setup tables for keeping track of race results
     if (!sql.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='results'").get()['count(*)']) {
-        sql.prepare("CREATE TABLE results (race_id INTEGER, user_id TEXT, user_name TEXT, game TEXT, category TEXT, time INTEGER, ff INTEGER, dq INTEGER, level TEXT);").run();
+        sql.prepare("CREATE TABLE results (race_id INTEGER, user_id TEXT, user_name TEXT, game TEXT, category TEXT, time INTEGER, ff INTEGER, dq INTEGER, level TEXT, team_name TEXT);").run();
         sql.prepare("CREATE UNIQUE INDEX idx_results_race ON results (race_id, user_id);").run();
         sql.pragma("synchronous = 1");
         sql.pragma("journal_mode = wal");
@@ -123,7 +133,7 @@ client.on("ready", () => {
     // Setup SQL queries for setting/retrieving results
     client.getLastRaceID = sql.prepare("SELECT MAX(race_id) AS id FROM results");
     client.getResults = sql.prepare("SELECT * FROM results WHERE race_id = ? ORDER BY time ASC");
-    client.addResult = sql.prepare("INSERT OR REPLACE INTO results (race_id, user_id, user_name, game, category, time, ff, dq, level) VALUES (@race_id, @user_id, @user_name, @game, @category, @time, @ff, @dq, @level);");
+    client.addResult = sql.prepare("INSERT OR REPLACE INTO results (race_id, user_id, user_name, game, category, time, ff, dq, level, team_name) VALUES (@race_id, @user_id, @user_name, @game, @category, @time, @ff, @dq, @level, @team_name);");
 
     // Setup SQL queries for setting/retrieving user stats
     client.getUserStatsForGame = sql.prepare("SELECT * FROM users WHERE user_id = ? AND game = ? ORDER BY category ASC");
@@ -179,6 +189,9 @@ client.on("message", (message) => {
 
         else if (lowerMessage.startsWith("!luckydip"))
             luckyDipCmd(message);
+
+        else if (lowerMessage.startsWith("!team"))
+            teamCmd(message);
 
         else if (lowerMessage.startsWith("!exit") ||
                 lowerMessage.startsWith("!unrace") ||
@@ -253,7 +266,8 @@ helpCmd = (message) => {
 \`!race\` - Starts a new full-game race, or joins the current open race if someone already started one.
 \`!game <game name>\` - Sets the game (e.g. \`!game LBP2\`). Default is "LittleBigPlanet".
 \`!category <category name>\` - Sets the category. Default is "Any% No Overlord".
-\`!exit\` - Leave the race.
+\`!team <discord id> [<discord id> ... <team name>]\` - Creates a team of you + the specified users for co-op races (with an optional team name).
+\`!leave\` - Leave the race.
 \`!ready\` - Indicate that you're ready to start.
 \`!unready\` - Indicate that you're not actually ready.
 
@@ -580,6 +594,84 @@ chooseLbpMeLevel = (level, message) => {
             message.channel.send("Level updated to " + levelName + ".");
         });
     });
+}
+
+// !team
+teamCmd = (message) => {
+    // Can only run command if you've joined the race and it hasn't started
+    if (raceState.state !== State.JOINING || !raceState.entrants.includes(message.author.id)) {
+        return;
+    }
+
+    params = message.content.replace(/^!team/i, "").trim().split(" ");
+    if (params[0] === "") {
+        message.channel.send("Usage: `!team @teammate1 [@teammate2 @teammate3 ... team name]`");
+        return;
+    }
+
+    // Parse custom team name first; need to validate this before we start constructing the team
+    teamName = "Team " + helpers.username(message);
+    customTeamName = false;
+    for(var i = 0; i < params.length; i++) {
+        if (params[i].startsWith("<@")) {
+            // Skip over team members
+            continue;
+        }
+        if (customTeamName) {
+            teamName += " " + params[i];
+        } else {
+            teamName = params[i];
+            customTeamName = true;
+        }
+    }
+
+    // Validate that team name is unused
+    prevTeamName = raceState.entrants.get(message.author.id).team;
+    if (teamName !== prevTeamName) {
+        for(var entry in raceState.entrants) {
+            if (entry[1].team === teamName) {
+                message.channel.send(helpers.mention(message.author) + ": Cannot create team; the team name \"" + teamName + "\" is already being used.");
+                return;
+            }
+        }
+    }
+
+    // Validate selected team members
+    selectedUsers = [raceState.entrants.get(message.author.id)];
+    for(var i = 0; i < params.length; i++) {
+        if (!params[i].startsWith("<@")) {
+            break;
+        }
+        discordId = params[i].replace("<@", "").replace(">", "").trim();
+        if (!raceState.entrants.includes(discordId)) {
+            message.channel.send(helpers.mention(message.author) + ": Cannot create team; all team members must join the race first.");
+            return;
+        }
+        userTeam = raceState.entrants.get(discordId).team;
+        if (userTeam !== teamName && userTeam !== "" && userTeam !== prevTeamName) {
+            message.channel.send(helpers.mention(message.author) + ": Cannot create team; <@" + discordId + "> is already on another team (" + userTeam + ").");
+            return;
+        }
+        selectedUsers.push(discordId);
+    }
+
+    // Disband old team
+    if (prevTeamName !== "") {
+        raceState.disbandTeam(prevTeamName);
+    }
+
+    // Form new team
+    for (var i = 0; i < selectedUsers.length; i++) {
+        raceState.entrants.get(selectedUsers[i]).team = teamName;
+    }
+
+    // Send confirmation message
+    messageString = helpers.mention(selectedUsers[0]) + " has teamed with ";
+    for (var i = 1; i < selectedUsers.length; i++) {
+        messageString += (i > 1 ? ", " : "") + helpers.mention(selectedUsers[i])
+    }
+    messageString += " under the name **" + teamName + "**";
+    message.channel.send(messageString);
 }
 
 // !ff/!forfeit/!leave/!exit/!unrace
