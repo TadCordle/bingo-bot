@@ -739,7 +739,7 @@ doneCmd = (message) => {
                         + helpers.formatPlace(raceState.doneEntrants.length)
                         + " place "
                         + (isILRace() ? "(+" + ilPoints + " point" + (ilPoints > 1 ? "s" : "") + ") " : "")
-                        + ((eloDiff < 0 ? "(" : "(+") + eloDiff + " " + emotes.elo + ") ")
+                        + ((eloDiff < 0 ? "(" : "(+") + (Math.round(eloDiff * 100) / 100) + " " + emotes.elo + ") ")
                         + "with a time of " + helpers.formatTime(time)) + "! (Use `!undone` if this was a mistake.)";
             if (raceState.ffEntrants.length + raceState.doneEntrants.length === raceState.entrants.size) {
                 doEndRace(message);
