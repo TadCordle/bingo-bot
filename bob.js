@@ -613,13 +613,13 @@ teamCmd = (message) => {
     teamName = "Team " + helpers.username(message);
     customTeamName = false;
     for(var i = 0; i < params.length; i++) {
-        if (params[i].startsWith("<@")) {
-            // Skip over team members
-            continue;
-        }
         if (customTeamName) {
             teamName += " " + params[i];
         } else {
+            if (params[i].startsWith("<@")) {
+                // Skip over team members
+                continue;
+            }
             teamName = params[i];
             customTeamName = true;
         }
@@ -648,19 +648,17 @@ teamCmd = (message) => {
             return;
         }
         userTeam = raceState.entrants.get(discordId).team;
-        if (userTeam !== teamName && userTeam !== "" && userTeam !== prevTeamName) {
+        if (userTeam !== "" && userTeam !== teamName && userTeam !== prevTeamName) {
             message.channel.send(helpers.mention(message.author) + ": Cannot create team; <@" + discordId + "> is already on another team (" + userTeam + ").");
             return;
         }
         selectedUsers.push(discordId);
     }
 
-    // Disband old team
+    // Form new team
     if (prevTeamName !== "") {
         raceState.disbandTeam(prevTeamName);
     }
-
-    // Form new team
     for (var i = 0; i < selectedUsers.length; i++) {
         raceState.entrants.get(selectedUsers[i]).team = teamName;
     }
