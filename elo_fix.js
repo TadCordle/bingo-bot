@@ -51,17 +51,8 @@ for (categoryIndex = 0; categoryIndex < categoriesFix.length; categoryIndex++) {
         console.log(ds.length + ffs.length + " players");
 
         // Update racers' stats
-        playerStats = new Map();
         raceRankings = ds.concat(ffs);
-        raceRankings.forEach((id, j) => {
-            statObj = getUserStatsForCategory_fix.get(id, game, category);
-            if (!statObj) {
-                statObj = helpers.defaultStatObj(id, game, category);
-            }
-            helpers.calculatePlayerStats(statObj, ffs, j, dtimes[j]);
-            playerStats.set(id, statObj);
-        });
-
+        playerStats = helpers.retrievePlayerStats(raceRankings, client.getUserStatsForCategory_fix, game, category, (id, j) => ffs.includes(id), (id, j) => dtimes[j]);
         newElos = helpers.calculateElos(playerStats, raceRankings, ffs);
 
         // Update/save stats with new ELOs

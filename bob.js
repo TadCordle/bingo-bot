@@ -720,18 +720,9 @@ doneCmd = (message) => {
                 }
             });
             sortedRacerList = raceState.doneEntrants.concat(inProgress).concat(raceState.ffEntrants);
-            oldElos = new Map();
-            stats = new Map();
-            sortedRacerList.forEach((id) => {
-                statObj = client.getUserStatsForCategory.get(id, gameName, categoryName);
-                if (!statObj) {
-                    statObj = helpers.defaultStatObj(id, gameName, categoryName);
-                }
-                oldElos.set(id, statObj.elo);
-                stats.set(id, statObj);
-            });
+            stats = helpers.retrievePlayerStats(sortedRacerList, client.getUserStatsForCategory, gameName, categoryName);
             newElos = helpers.calculateElos(stats, sortedRacerList, raceState.ffEntrants);
-            eloDiff = newElos.get(message.author.id) - oldElos.get(message.author.id);
+            eloDiff = newElos.get(message.author.id) - stats.get(message.author.id).elo;
 
             ilPoints = raceState.entrants.size - raceState.doneEntrants.length + 1;
             message.channel.send(helpers.mention(message.author)
@@ -1149,7 +1140,6 @@ recordResults = () => {
     });
 
     // Update racers' stats
-    playerStats = new Map();
     raceRankings = raceState.doneEntrants.concat(raceState.ffEntrants);
     raceRankings.forEach((id, i) => {
         // Keep track of results for IL series
@@ -1159,16 +1149,8 @@ recordResults = () => {
             }
             raceState.ilScores.set(id, raceState.getILScore(id) + raceState.doneEntrants.length + raceState.ffEntrants.length - i);
         }
-
-        // Calculate simple stats; need all Elos to calculate new ones though, so we'll do that in a bit
-        statObj = client.getUserStatsForCategory.get(id, gameName, categoryName);
-        if (!statObj) {
-            statObj = helpers.defaultStatObj(id, gameName, categoryName);
-        }
-        helpers.calculatePlayerStats(statObj, raceState.ffEntrants, i, raceState.entrants.get(id).doneTime);
-        playerStats.set(id, statObj);
     });
-
+    playerStats = helpers.retrievePlayerStats(raceRankings, client.getUserStatsForCategory, gameName, categoryName, (id, i) => raceState.ffEntrants.includes(id), (id, i) => raceState.entrants.get(id).doneTime);
     newElos = helpers.calculateElos(playerStats, raceRankings, raceState.ffEntrants);
 
     // Update/save stats with new Elos

@@ -149,9 +149,9 @@ exports.defaultStatObj = (id, g, c) => {
 }
 
 // Update a user's stats in statObj based on their race results
-exports.calculatePlayerStats = (statObj, ffs, racePlace, doneTime) => {
+exports.calculatePlayerStats = (statObj, ffd, racePlace, doneTime) => {
     statObj.races++;
-    if (ffs.includes(statObj.user_id)) {
+    if (ffd) {
         statObj.ffs++;
     } else {
         if (racePlace === 0) {
@@ -173,7 +173,6 @@ exports.calculatePlayerStats = (statObj, ffs, racePlace, doneTime) => {
 exports.calculateElos = (stats, raceRankings, ffs) => {
     result = new Map();
     raceRankings.forEach((id1, p1Place) => {
-        exports.log(id1 + ": Starting Elo is " + stats.get(id1).elo);
         actualScore = 0;
         expectedScore = 0;
         raceRankings.forEach((id2, p2Place) => {
@@ -202,9 +201,25 @@ exports.calculateElos = (stats, raceRankings, ffs) => {
 
         updatedElo = stats.get(id1).elo + 32 * (actualScore - expectedScore)
         result.set(id1, updatedElo);
-        exports.log("  New Elo will be " + updatedElo + "\n");
     });
     return result;
+}
+
+// Builds and returns a map of discord id -> stat object for a given game/category. If functions for determining
+// a user's forfeit status and finish time are provided, the stat objects will be updated to reflect the results.
+exports.retrievePlayerStats = (raceRankings, retrieveStatsSql, game, category, ffFunc=null, dtimeFunc=null) => {
+    stats = new Map();
+    raceRankings.forEach((id, i) => {
+        statObj = retrieveStatsSql.get(id, game, category);
+        if (!statObj) {
+            statObj = helpers.defaultStatObj(id, game, category);
+        }
+        if (ffFunc !== null && dtimeFunc !== null) {
+            helpers.calculatePlayerStats(statObj, ffFunc(id, i), i, dtimeFunc(id, i));
+        }
+        stats.set(id, statObj);
+    });
+    return stats;
 }
 
 // The following code is based on https://github.com/intesso/decode-html to avoid additional dependencies ---------
