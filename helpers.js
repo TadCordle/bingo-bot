@@ -222,6 +222,20 @@ exports.retrievePlayerStats = (raceRankings, retrieveStatsSql, game, category, f
     return stats;
 }
 
+// Runs a function for everyone on a given entrant's team.
+exports.doForWholeTeam = (raceState, id, proc) => {
+    entrant = raceState.entrants.get(id);
+    if (entrant.team !== "") {
+        raceState.entrants.forEach((e) => {
+            if (e.team === entrant.team) {
+                proc(e);
+            }
+        });
+    } else {
+        proc(entrant);
+    }
+}
+
 // Iterates over a collection of Entrants and calls individualEntrantFunc on all entrants with no team,
 // teamNameFunc for the first player found on a team, and teamEntrantFunc for every player on a team 
 exports.forEachWithTeamHandling = (collection, individualEntrantFunc, teamNameFunc, teamEntrantFunc) => {

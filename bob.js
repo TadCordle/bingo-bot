@@ -712,18 +712,9 @@ forfeitCmd = (message) => {
 
         } else {
             // Otherwise mark them as forfeited
+            helpers.doForWholeTeam(raceState, message.author.id, (e) => raceState.ffEntrants.push(e.message.author.id));
             team = raceState.entrants.get(message.author.id).team;
-            if (team !== "") {
-                raceState.entrants.forEach((entrant) => {
-                    if (entrant.team === team) {
-                        raceState.ffEntrants.push(entrant.message.author.id);
-                    }
-                });
-                message.channel.send("**" + team + "** has forfeited (use `!unforfeit` to rejoin if this was an accident).");
-            } else {
-                raceState.ffEntrants.push(message.author.id);
-                message.channel.send(helpers.username(message) + " has forfeited (use `!unforfeit` to rejoin if this was an accident).");
-            }
+            message.channel.send((team === "" ? helpers.username(message) : "**" + team + "**") + " has forfeited (use `!unforfeit` to rejoin if this was an accident).");
 
             // Check if everyone forfeited
             if (raceState.ffEntrants.length + raceState.doneEntrants.length === raceState.entrants.size) {
@@ -746,23 +737,16 @@ forfeitCmd = (message) => {
 
 // !uff/!unforfeit
 unforfeitCmd = (message) => {
-    if (raceState.state === State.ACTIVE || raceState.state === State.COUNTDOWN || raceState.state === State.DONE) {
-        ufPlayer = [];
-        team = raceState.entrants.get(message.author.id).team;
-        if (team !== "") {
-            raceState.entrants.forEach((entrant) => {
-                if (entrant.team === team) {
-                    ufPlayer.push(entrant.message.author.id);
-                }
-            });
-        } else {
-            if (raceState.entrants.has(id) && raceState.ffEntrants.includes(id)) {
-                ufPlayer.push(message.author.id);
-            }
-        }
+    if (!raceState.entrants.has(message.author.id)){
+        // Can't unforfeit if you're not in the race
+        return;
+    }
 
-        if (ufPlayer.length > 0) {
-            for(var id in ufPlayer) {
+    if (raceState.state === State.ACTIVE || raceState.state === State.COUNTDOWN || raceState.state === State.DONE) {
+        ufPlayers = [];
+        helpers.doForWholeTeam(raceState, message.author.id, (e) => ufPlayers.push(e.message.author.id));
+        if (ufPlayers.length > 0) {
+            for(var id in ufPlayers) {
                 if (raceState.leavingWhenDone.has(id)) {
                     raceState.leavingWhenDone.delete(id);
                 }
