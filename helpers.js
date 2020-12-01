@@ -222,6 +222,30 @@ exports.retrievePlayerStats = (raceRankings, retrieveStatsSql, game, category, f
     return stats;
 }
 
+// Iterates over a collection of Entrants and calls individualEntrantFunc on all entrants with no team,
+// teamNameFunc for the first player found on a team, and teamEntrantFunc for every player on a team 
+exports.forEachWithTeamHandling = (collection, individualEntrantFunc, teamNameFunc, teamEntrantFunc) => {
+    entrantsAlreadyOnTeam = [];
+    collection.forEach((entrant) => {
+        if (entrantsAlreadyOnTeam.includes(entrant)) {
+            return;
+        }
+        if (entrant.team === "") {
+            individualEntrantFunc(entrant);
+        } else {
+            teamNameFunc(entrant);
+            teamEntrantFunc(entrant);
+            entrantsAlreadyOnTeam.push(entrant);
+            collection.forEach((entrantTeamSearch) => {
+                if (entrantTeamSearch.team === entrant.team && !entrantsAlreadyOnTeam.includes(entrantTeamSearch)) {
+                    teamEntrantFunc(entrant);
+                    entrantsAlreadyOnTeam.push(entrantTeamSearch);
+                }
+            });
+        }
+    });
+}
+
 // The following code is based on https://github.com/intesso/decode-html to avoid additional dependencies ---------
 // (license: https://github.com/intesso/decode-html/blob/master/LICENSE)
 exports.decodeHTML = (text) => {

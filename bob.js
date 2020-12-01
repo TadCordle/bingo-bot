@@ -893,58 +893,21 @@ statusCmd = (message) => {
             raceState.entrants.forEach((entrant) => {
                 sortedEntrants.push(entrant);
             });
-            sortedEntrants.sort((entrant1, entrant2) => {
-                score1 = raceState.getILScore(entrant1.message.author.id);
-                score2 = raceState.getILScore(entrant2.message.author.id);
-                if (score1 > score2) return -1;
-                if (score1 < score2) return 1;
-                return 0;
-            });
-
+            sortedEntrants.sort((entrant1, entrant2) => raceState.getILScore(entrant2.message.author.id) - raceState.getILScore(entrant1.message.author.id));
             entrantString = (e) => "\t" + (e.ready ? emotes.ready : emotes.notReady) + " " + helpers.username(e.message) + " - " + raceState.getILScore(e.message.author.id) + "\n";
-            entrantsAlreadyOnTeam = [];
-            sortedEntrants.forEach((entrant) => {
-                if (entrantsAlreadyOnTeam.includes(entrant)) {
-                    return;
-                }
-                if (entrant.team === "") {
-                    raceString += entrantString(entrant);
-                } else {
-                    raceString += "\t**" + entrant.team + "**\n";
-                    raceString += "\t" + entrantString(entrant);
-                    entrantsAlreadyOnTeam.push(entrant);
-                    sortedEntrants.forEach((entrantTeamSearch) => {
-                        if (entrantTeamSearch.team === entrant.team && !entrantsAlreadyOnTeam.includes(entrantTeamSearch)) {
-                            raceString += "\t" + entrantString(entrantTeamSearch);
-                            entrantsAlreadyOnTeam.push(entrantTeamSearch);
-                        }
-                    });
-                }
-            });
+            helpers.forEachWithTeamHandling(sortedEntrants,
+                    (individualEntrant) => raceString += entrantString(individualEntrant),
+                    (firstOnTeam) => raceString += "\t**" + firstOnTeam.team + "**\n",
+                    (entrantWithTeam) => raceString += "\t" + entrantString(entrantWithTeam));
 
         } else {
             // Show full game race status
             entrantString = (e) => "\t" + (entrant.ready ? emotes.ready : emotes.notReady) + " " + helpers.username(entrant.message) + "\n";
-            entrantsAlreadyOnTeam = [];
             entrantsWithNoTeam = [];
-            raceState.entrants.forEach((entrant) => {
-                if (entrantsAlreadyOnTeam.includes(entrant)) {
-                    return;
-                }
-                if (entrant.team === "") {
-                    entrantsWithNoTeam.push(entrant);
-                } else {
-                    raceString += "\t**" + entrant.team + "**\n";
-                    raceString += "\t" + entrantString(entrant);
-                    entrantsAlreadyOnTeam.push(entrant);
-                    sortedEntrants.forEach((entrantTeamSearch) => {
-                        if (entrantTeamSearch.team === entrant.team && !entrantsAlreadyOnTeam.includes(entrantTeamSearch)) {
-                            raceString += "\t" + entrantString(entrantTeamSearch);
-                            entrantsAlreadyOnTeam.push(entrantTeamSearch);
-                        }
-                    });
-                }
-            });
+            helpers.forEachWithTeamHandling(raceState.entrants,
+                    (individualEntrant) => entrantsWithNoTeam.push(individualEntrant),
+                    (firstOnTeam) => raceString += "\t**" + firstOnTeam.team + "**\n",
+                    (entrantWithTeam) => raceString += "\t" + entrantString(entrantWithTeam));
             entrantsWithNoTeam.forEach((entrant) => {
                 raceString += entrantString(entrant);
             });
@@ -958,65 +921,38 @@ statusCmd = (message) => {
                         ? "in progress. Current time: " + helpers.formatTime(Date.now() / 1000 - raceState.startTime)
                         : "done!" + (raceState.ffEntrants.length === raceState.entrants.size ? "" : " Results will be recorded soon."))
                 + "**";
+        entrantsDone = [];
+        entrantsNotDone = [];
+        entrantsFFd = [];
+        raceState.entrants.forEach((entrant) => {
+            if (raceState.doneEntrants.includes(entrant.message.author.id)) {
+                entrantsDone.push(entrant);
+            } else if (raceState.ffEntrants.includes(entrant.message.author.id)) {
+                entrantsFFd.push(entrant);
+            } else {
+                entrantsNotDone.push(entrant);
+            }
+        });
+        entrantsDone.sort((entrant1, entrant2) => entrant1.doneTime - entrant2.doneTime);
 
         // List done entrants
-        prevTeam = "";
         place = 0;
-        raceState.doneEntrants.forEach((id, i) => {
-            entrant = raceState.entrants.get(id);
-            points = raceState.entrants.size - i;
-            if (entrant.team === "") {
-                raceString += "\n\t" + helpers.placeEmote(place++)
-                        + " **" + helpers.username(entrant.message) + "** "
-                        + (isILRace() ? "(+" + points + " point" + (points > 1 ? "s" : "") + ") " : "")
-                        + "(" + helpers.formatTime(entrant.doneTime) + ")";
-                prevTeam = "";
-            } else {
-                if (entrant.team !== prevTeam) {
-                    raceString += "\n\t" + helpers.placeEmote(place++) + " **" + entrant.team + "** (" + helpers.formatTime(entrant.doneTime) + ")";
-                    prevTeam = entrant.team;
-                }
-                raceString += "\n\t\t" + helpers.username(entrant.message) + " " + (isILRace() ? "(+" + points + " point" + (points > 1 ? "s" : "") + ") " : "");
-            }
-        });
+        helpers.forEachWithTeamHandling(entrantsDone,
+            (individualEntrant) => raceString += "\n\t" + helpers.placeEmote(place++) + " **" + helpers.username(individualEntrant.message) + "** " + (isILRace() ? "(+" + points + " point" + (points > 1 ? "s" : "") + ") " : "") + "(" + helpers.formatTime(individualEntrant.doneTime) + ")",
+            (firstOnTeam) => raceString += "\n\t" + helpers.placeEmote(place++) + " **" + firstOnTeam.team + "** (" + helpers.formatTime(firstOnTeam.doneTime) + ")",
+            (entrantWithTeam) => raceString += "\n\t\t" + helpers.username(entrantWithTeam.message) + " " + (isILRace() ? "(+" + points + " point" + (points > 1 ? "s" : "") + ") " : ""));
 
         // List racers still going
-        entrantsAlreadyOnTeam = [];
-        raceState.entrants.forEach((entrant) => {
-            if (!raceState.doneEntrants.includes(entrant.message.author.id) && !raceState.ffEntrants.includes(entrant.message.author.id)) {
-                if (entrantsAlreadyOnTeam.includes(entrant)) {
-                    return;
-                }
-                if (entrant.team === "") {
-                    raceString += "\n\t" + emotes.racing + " " + helpers.username(entrant.message);
-                } else {
-                    raceString += "\n\t" + emotes.racing + " **" + entrant.team + "**";
-                    raceString += "\n\t\t" + helpers.username(entrant.message);
-                    entrantsAlreadyOnTeam.push(entrant);
-                    raceState.entrants.forEach((entrantTeamSearch) => {
-                        if (entrantTeamSearch.team === entrant.team && !entrantsAlreadyOnTeam.includes(entrantTeamSearch)) {
-                            raceString += "\n\t\t" + helpers.username(entrant.message);
-                            entrantsAlreadyOnTeam.push(entrantTeamSearch);
-                        }
-                    });
-                }
-            }
-        });
+        helpers.forEachWithTeamHandling(entrantsNotDone,
+            (individualEntrant) => raceString += "\n\t" + emotes.racing + " " + helpers.username(individualEntrant.message),
+            (firstOnTeam) => raceString += "\n\t" + emotes.racing + " **" + firstOnTeam.team + "**",
+            (entrantWithTeam) => raceString += "\n\t\t" + helpers.username(entrantWithTeam.message));
 
         // List forfeited/DQ'd entrants
-        raceState.ffEntrants.forEach((id) => {
-            entrant = raceState.entrants.get(id);
-            if (entrant.team === "") {
-                raceString += "\n\t" + emotes.forfeited + " " + helpers.username(entrant.message);
-                prevTeam = "";
-            } else {
-                if (entrant.team !== prevTeam) {
-                    raceString += "\n\t" + emotes.forfeited + " **" + entrant.team + "**";
-                    prevTeam = entrant.team;
-                }
-                raceString += "\n\t\t" + helpers.username(entrant.message);
-            }
-        });
+        helpers.forEachWithTeamHandling(entrantsFFd,
+            (individualEntrant) => raceString += "\n\t" + emotes.forfeited + " " + helpers.username(entrant.message),
+            (firstOnTeam) => raceString += "\n\t" + emotes.forfeited + " **" + entrant.team + "**",
+            (entrantWithTeam) => raceString += "\n\t\t" + helpers.username(entrant.message));
 
         message.channel.send(raceString);
     }
