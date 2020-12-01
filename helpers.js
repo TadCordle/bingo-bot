@@ -252,7 +252,7 @@ exports.forEachWithTeamHandling = (collection, individualEntrantFunc, teamNameFu
             entrantsAlreadyOnTeam.push(entrant);
             collection.forEach((entrantTeamSearch) => {
                 if (entrantTeamSearch.team === entrant.team && !entrantsAlreadyOnTeam.includes(entrantTeamSearch)) {
-                    teamEntrantFunc(entrant);
+                    teamEntrantFunc(entrantTeamSearch);
                     entrantsAlreadyOnTeam.push(entrantTeamSearch);
                 }
             });

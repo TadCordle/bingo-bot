@@ -40,7 +40,7 @@ var State = {
 // Keeps track of the current stage of racing the bot is occupied with
 class RaceState {
     constructor() {
-        this.entrants = new Map(); // Maps from user id to their current race state ()
+        this.entrants = new Map(); // Maps from user id to their current race state
         this.doneEntrants = [];
         this.ffEntrants = [];
         this.state = State.NO_RACE;
@@ -62,9 +62,8 @@ class RaceState {
     // Removes an entrant. Returns true if successful, returns false if the user isn't an entrant.
     removeEntrant(id) {
         if (this.entrants.has(id)) {
-            team = this.entrants.get(id).team;
-            if (team !== "") {
-                disbandTeam(team);
+            if (this.entrants.get(id).team !== "") {
+                this.disbandTeam(this.entrants.get(id).team);
             }
             this.entrants.delete(id);
             return true;
@@ -87,11 +86,11 @@ class RaceState {
 
     // Resets the team name of all entrants using teamName
     disbandTeam(teamName) {
-        for(var entry in this.entrants) {
-            if (entry[1].team === teamName) {
-                entry[1].team = "";
+        this.entrants.forEach((entrant) => {
+            if (entrant.team === teamName) {
+                entrant.team = "";
             }
-        }
+        });
     }
 }
 
@@ -267,16 +266,16 @@ helpCmd = (message) => {
 \`!race\` - Starts a new full-game race, or joins the current open race if someone already started one.
 \`!game <game name>\` - Sets the game (e.g. \`!game LBP2\`). Default is "LittleBigPlanet".
 \`!category <category name>\` - Sets the category. Default is "Any% No Overlord".
-\`!team <discord id> [<discord id> ... <team name>]\` - Creates a team of you + the specified users for co-op races (with an optional team name).
+\`!team <discord id> [<discord id> ... <team name>]\` - Sets up a team for co-op racing.
 \`!leave\` - Leave the race.
 \`!ready\` - Indicate that you're ready to start.
 \`!unready\` - Indicate that you're not actually ready.
 
 **Mid-race commands**
-\`!d\` / \`!done\` - Indicate that you finished.
-\`!ud\` / \`!undone\` - Get back in the race if you finished by accident.
-\`!f\` / \`!forfeit\` - Drop out of the race.
-\`!uf\` / \`!unforfeit\` - Rejoin the race if you forfeited by accident.
+\`!d\` - Indicate that you finished.
+\`!ud\` - Get back in the race if you finished by accident.
+\`!f\` - Drop out of the race.
+\`!uf\` - Rejoin the race if you forfeited by accident.
 
 **IL race commands**
 \`!ilrace\` - Starts a new series of IL races.
@@ -599,7 +598,7 @@ chooseLbpMeLevel = (level, message) => {
 // !team
 teamCmd = (message) => {
     // Can only run command if you've joined the race and it hasn't started
-    if (raceState.state !== State.JOINING || !raceState.entrants.includes(message.author.id)) {
+    if (raceState.state !== State.JOINING || !raceState.entrants.has(message.author.id)) {
         return;
     }
 
@@ -616,7 +615,7 @@ teamCmd = (message) => {
         if (customTeamName) {
             teamName += " " + params[i];
         } else {
-            if (params[i].startsWith("<@")) {
+            if (params[i].startsWith("<@!")) {
                 // Skip over team members
                 continue;
             }
@@ -639,20 +638,20 @@ teamCmd = (message) => {
     // Validate selected team members
     selectedUsers = [raceState.entrants.get(message.author.id)];
     for(var i = 0; i < params.length; i++) {
-        if (!params[i].startsWith("<@")) {
+        if (!params[i].startsWith("<@!")) {
             break;
         }
-        discordId = params[i].replace("<@", "").replace(">", "").trim();
-        if (!raceState.entrants.includes(discordId)) {
+        discordId = params[i].replace("<@!", "").replace(">", "").trim();
+        if (!raceState.entrants.has(discordId)) {
             message.channel.send(helpers.mention(message.author) + ": Cannot create team; all team members must join the race first.");
             return;
         }
-        userTeam = raceState.entrants.get(discordId).team;
-        if (userTeam !== "" && userTeam !== teamName && userTeam !== prevTeamName) {
+        entrant = raceState.entrants.get(discordId);
+        if (entrant.team !== "" && entrant.team !== teamName && entrant.team !== prevTeamName) {
             message.channel.send(helpers.mention(message.author) + ": Cannot create team; <@" + discordId + "> is already on another team (" + userTeam + ").");
             return;
         }
-        selectedUsers.push(discordId);
+        selectedUsers.push(entrant);
     }
     if (selectedUsers.length <= 1) {
         message.channel.send(helpers.mention(message.author) + ": Cannot create team; you must choose teammates.");
@@ -664,13 +663,13 @@ teamCmd = (message) => {
         raceState.disbandTeam(prevTeamName);
     }
     for (var i = 0; i < selectedUsers.length; i++) {
-        raceState.entrants.get(selectedUsers[i]).team = teamName;
+        selectedUsers[i].team = teamName;
     }
 
     // Send confirmation message
-    messageString = helpers.mention(selectedUsers[0]) + " has teamed with ";
+    messageString = helpers.mention(selectedUsers[0].message.author) + " has teamed with ";
     for (var i = 1; i < selectedUsers.length; i++) {
-        messageString += (i > 1 ? ", " : "") + helpers.mention(selectedUsers[i])
+        messageString += (i > 1 ? ", " : "") + helpers.mention(selectedUsers[i].message.author)
     }
     messageString += " under the name **" + teamName + "**";
     message.channel.send(messageString);
@@ -886,7 +885,7 @@ statusCmd = (message) => {
 
         } else {
             // Show full game race status
-            entrantString = (e) => "\t" + (entrant.ready ? emotes.ready : emotes.notReady) + " " + helpers.username(entrant.message) + "\n";
+            entrantString = (e) => "\t" + (e.ready ? emotes.ready : emotes.notReady) + " " + helpers.username(e.message) + "\n";
             entrantsWithNoTeam = [];
             helpers.forEachWithTeamHandling(raceState.entrants,
                     (individualEntrant) => entrantsWithNoTeam.push(individualEntrant),
