@@ -68,7 +68,6 @@ npm start
 
 **Admin/moderator only (mid-race)**
 * `!modhelp` - Shows mod-only commands.
-* `!kick <discord id>` - Kicks someone from the race (in case they're afk or something).
 * `!clearrace` - Resets the bot; forces ending the race without recording any results.
 * `!roles <speedrun.com name> <discord id>` - Updates someone else's roles.
 * `!removeroles <discord id>` - Remove someone else's roles.

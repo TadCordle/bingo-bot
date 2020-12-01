@@ -225,9 +225,6 @@ client.on("message", (message) => {
             if (lowerMessage.startsWith("!modhelp"))
                 modHelpCmd(message);
 
-            else if (lowerMessage.startsWith("!kick"))
-                kickCmd(message);
-
             else if (lowerMessage.startsWith("!clearrace"))
                 clearRaceCmd(message);
         }
@@ -306,7 +303,6 @@ modHelpCmd = (message) => {
     message.channel.send(`
 **Admin/moderator only (mid-race)**
 \`!modhelp\` - Shows this message.
-\`!kick @user\` - Kicks someone from the race (in case they're afk or something).
 \`!clearrace\` - Resets the bot; forces ending the race without recording any results.
 \`!roles <speedrun.com name> <discord id>\` - Updates someone else's roles.
 \`!removeroles <discord id>\` - Remove someone else's roles.
@@ -1023,41 +1019,6 @@ statusCmd = (message) => {
         });
 
         message.channel.send(raceString);
-    }
-}
-
-// !kick
-kickCmd = (message) => {
-    id = message.content.replace(/^!kick <@/i, "").replace(">", "").trim();
-
-    if (raceState.state === State.JOINING) {
-        // Just remove user from race
-        raceState.entrants.delete(id);
-        if (raceState.entrants.size === 0) {
-            // Close down race if this was the last person
-            raceState = new RaceState();
-        } else if (raceState.entrants.size === 1) {
-            // If only one person is left now, make sure they are marked as unready
-            raceState.entrants.forEach((entrant) => { entrant.ready = false; });
-        }
-        message.react(emotes.acknowledge);
-
-    } else if (raceState.state === State.ACTIVE || raceState.state === State.COUNTDOWN) {
-        // If race is in progress, auto-forfeit them
-        if (raceState.entrants.has(id)) {
-            if (raceState.doneEntrants.includes(id)) {
-                raceState.entrants.get(id).doneTime = 0;
-                helpers.arrayRemove(raceState.doneEntrants, id);
-            }
-            if (!raceState.ffEntrants.includes(id)) {
-                raceState.ffEntrants.push(id);
-            }
-            raceState.entrants.get(id).disqualified = true;
-            if (raceState.ffEntrants.length + raceState.doneEntrants.length === raceState.entrants.size) {
-                doEndRace(message);
-            }
-            message.react(emotes.acknowledge);
-        }
     }
 }
 
