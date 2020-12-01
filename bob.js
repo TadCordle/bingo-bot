@@ -264,8 +264,8 @@ helpCmd = (message) => {
     message.channel.send(`
 **Pre-race commands**
 \`!race\` - Starts a new full-game race, or joins the current open race if someone already started one.
-\`!game <game name>\` - Sets the game (e.g. \`!game LBP2\`). Default is "LittleBigPlanet".
-\`!category <category name>\` - Sets the category. Default is "Any% No Overlord".
+\`!game <game name>\` - Sets the game (e.g. \`!game LBP2\`).
+\`!category <category name>\` - Sets the category (e.g. \`!category any%\`).
 \`!team <discord id> [<discord id> ... <team name>]\` - Sets up a team for co-op racing.
 \`!leave\` - Leave the race.
 \`!ready\` - Indicate that you're ready to start.
@@ -279,22 +279,21 @@ helpCmd = (message) => {
 
 **IL race commands**
 \`!ilrace\` - Starts a new series of IL races.
-\`!level <level name>\` - Sets the next level to race. Also accepts lbp.me links. Default is "Introduction".
+\`!level <level name>\` - Sets the next level to race. Also accepts lbp.me links.
 \`!luckydip\` - Sets the next level to race to a random lucky dip level.
 \`!ilresults\` - Shows the ILs that have been played so far in a series, and the winner of each one.
 
 **Stat commands**
 \`!status\` - Shows current race status/entrants.
 \`!results raceNum\` - Shows results of the specified race number (e.g. \`!results 2\`).
-\`!me <game name>\` - Shows your race statistics for the specified game (e.g. \`!me LBP\` shows your LBP1 stats).
-\`!runner <username or id> <game name>\` - Shows someone else's race statistics (e.g. \`!runner RbdJellyfish LBP\` shows RbdJellyfish's LBP1 stats).
-\`!elo <game name>/<category name>\` - Shows the ELO leaderboard for the given game/category (e.g. \`!elo lbp/die%\` shows the LBP1 Die% leaderboard).
+\`!me <game name>\` - Shows your race statistics for the specified game (e.g. \`!me lbp\`).
+\`!runner <username or id> <game name>\` - Shows someone else's race statistics (e.g. \`!runner RbdJellyfish lbp\`).
+\`!elo <game name>/<category name>\` - Shows the ELO leaderboard for the given game/category (e.g. \`!elo lbp/any% no overlord\`).
 \`!help\` - Shows this message.
 
 **Other commands**
 \`!roles <speedrun.com name>\` - Updates your roles to match races finished + speedrun.com PBs (if you linked your discord account on speedrun.com).
 \`!removeroles\` - Removes your runner roles.
-\`!nr\` / \`!newrunner\` - Mixes two halves of the names of random LBP runners (that have a full-game run on sr.c) together.
 `);
 }
 
