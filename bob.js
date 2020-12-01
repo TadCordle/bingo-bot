@@ -693,6 +693,19 @@ forfeitCmd = (message) => {
                     categoryName = helpers.normalizeCategory(gameName, null);
                 }
             } else {
+                if (helpers.isOneTeamRegistered(raceState)) {
+                    // If only one team  is left, unready one of its members
+                    allReady = true;
+                    raceState.entrants.forEach((entrant) => {
+                        if (!entrant.ready) {
+                            allReady = false;
+                        }
+                    });
+                    if (allReady) {
+                        raceState.entrants.values().next().value.ready = false;
+                    }
+                }
+
                 message.channel.send(helpers.username(message) + " has left the race.");
                 if (raceState.entrants.size === 1) {
                     // If only one person is left now, make sure they are marked as unready
@@ -762,18 +775,18 @@ unforfeitCmd = (message) => {
 // !ready
 readyCmd = (message) => {
     if (raceState.state === State.JOINING) {
-        // Don't allow readying up if only one person has joined.
+        // Don't allow readying up if only one person has joined
         if (raceState.entrants.size === 1) {
             if (raceState.entrants.has(message.author.id)) {
                 message.channel.send("Need more than one entrant before starting!");
                 return;
             }
         }
+
         if (!raceState.entrantIsReady(message.author.id)) {
             // Mark as ready
             raceState.addEntrant(message);
             raceState.entrants.get(message.author.id).ready = true;
-            message.react(emotes.acknowledge);
 
             // Start countdown if everyone is ready
             everyoneReady = true;
@@ -783,8 +796,15 @@ readyCmd = (message) => {
                 }
             });
             if (everyoneReady) {
+                // Don't start if only one team has joined
+                if (helpers.isOneTeamRegistered(raceState)) {
+                    message.channel.send("Can't ready up/start; everyone is on the same team!");
+                    raceState.entrants.get(message.author.id).ready = false;
+                    return;
+                }
                 doCountDown(message);
             }
+            message.react(emotes.acknowledge);
         }
     }
 }

@@ -260,6 +260,18 @@ exports.forEachWithTeamHandling = (collection, individualEntrantFunc, teamNameFu
     });
 }
 
+// Returns true if there is exactly one team registered (and no individuals)
+exports.isOneTeamRegistered = (raceState) => {
+    foundTeam = "";
+    for (var entry in raceState.entrants) {
+        if (entry[1].team === "" || (foundTeam !== "" && entry[1].team !== foundTeam)) {
+            return false;
+        }
+        foundTeam = entry[1].team;
+    }
+    return true;
+}
+
 // The following code is based on https://github.com/intesso/decode-html to avoid additional dependencies ---------
 // (license: https://github.com/intesso/decode-html/blob/master/LICENSE)
 exports.decodeHTML = (text) => {
