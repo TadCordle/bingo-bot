@@ -935,9 +935,9 @@ statusCmd = (message) => {
 
         // List forfeited/DQ'd entrants
         helpers.forEachWithTeamHandling(entrantsFFd,
-            (individualEntrant) => raceString += "\n\t" + emotes.forfeited + " " + helpers.username(entrant.message),
-            (firstOnTeam) => raceString += "\n\t" + emotes.forfeited + " **" + entrant.team + "**",
-            (entrantWithTeam) => raceString += "\n\t\t" + helpers.username(entrant.message));
+            (individualEntrant) => raceString += "\n\t" + emotes.forfeited + " " + helpers.username(individualEntrant.message),
+            (firstOnTeam) => raceString += "\n\t" + emotes.forfeited + " **" + firstOnTeam.team + "**",
+            (entrantWithTeam) => raceString += "\n\t\t" + helpers.username(entrantWithTeam.message));
 
         message.channel.send(raceString);
     }
