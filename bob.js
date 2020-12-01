@@ -658,6 +658,10 @@ teamCmd = (message) => {
         }
         selectedUsers.push(discordId);
     }
+    if (selectedUsers.length <= 1) {
+        message.channel.send(helpers.mention(message.author) + ": Cannot create team; you must choose teammates.");
+        return;
+    }
 
     // Form new team
     if (prevTeamName !== "") {
@@ -885,7 +889,9 @@ statusCmd = (message) => {
     } else if (raceState.state === State.JOINING) {
         raceString = "**" + gameName + " / " + categoryName + " race is currently open with " + raceState.entrants.size + " entrant"
                 + (raceState.entrants.size === 1 ? "" : "s") + ". Type `!race` to join!**\n";
+
         if (isILRace()) {
+            // Show IL race status
             raceString += "*Starting " + helpers.formatPlace(raceState.ilResults.length + 1) + " IL (" + levelName + " - id: " + raceId + ")*\n";
             sortedEntrants = [];
             raceState.entrants.forEach((entrant) => {
@@ -898,14 +904,53 @@ statusCmd = (message) => {
                 if (score1 < score2) return 1;
                 return 0;
             });
+
+            entrantString = (e) => "\t" + (e.ready ? emotes.ready : emotes.notReady) + " " + helpers.username(e.message) + " - " + raceState.getILScore(e.message.author.id) + "\n";
+            entrantsAlreadyOnTeam = [];
             sortedEntrants.forEach((entrant) => {
-                raceString += "\t" + (entrant.ready ? emotes.ready : emotes.notReady) + " ";
-                raceString += helpers.username(entrant.message) + " - " + raceState.getILScore(entrant.message.author.id) + "\n";
+                if (entrantsAlreadyOnTeam.includes(entrant)) {
+                    return;
+                }
+                if (entrant.team === "") {
+                    raceString += entrantString(entrant);
+                } else {
+                    raceString += "\t**" + entrant.team + "**\n";
+                    raceString += "\t" + entrantString(entrant);
+                    entrantsAlreadyOnTeam.push(entrant);
+                    sortedEntrants.forEach((entrantTeamSearch) => {
+                        if (entrantTeamSearch.team === entrant.team && !entrantsAlreadyOnTeam.includes(entrantTeamSearch)) {
+                            raceString += "\t" + entrantString(entrantTeamSearch);
+                            entrantsAlreadyOnTeam.push(entrantTeamSearch);
+                        }
+                    });
+                }
             });
+
         } else {
+            // Show full game race status
+            entrantString = (e) => "\t" + (entrant.ready ? emotes.ready : emotes.notReady) + " " + helpers.username(entrant.message) + "\n";
+            entrantsAlreadyOnTeam = [];
+            entrantsWithNoTeam = [];
             raceState.entrants.forEach((entrant) => {
-                raceString += "\t" + (entrant.ready ? emotes.ready : emotes.notReady) + " ";
-                raceString += helpers.username(entrant.message) + "\n";
+                if (entrantsAlreadyOnTeam.includes(entrant)) {
+                    return;
+                }
+                if (entrant.team === "") {
+                    entrantsWithNoTeam.push(entrant);
+                } else {
+                    raceString += "\t**" + entrant.team + "**\n";
+                    raceString += "\t" + entrantString(entrant);
+                    entrantsAlreadyOnTeam.push(entrant);
+                    sortedEntrants.forEach((entrantTeamSearch) => {
+                        if (entrantTeamSearch.team === entrant.team && !entrantsAlreadyOnTeam.includes(entrantTeamSearch)) {
+                            raceString += "\t" + entrantString(entrantTeamSearch);
+                            entrantsAlreadyOnTeam.push(entrantTeamSearch);
+                        }
+                    });
+                }
+            });
+            entrantsWithNoTeam.forEach((entrant) => {
+                raceString += entrantString(entrant);
             });
         }
         message.channel.send(raceString);
@@ -919,26 +964,62 @@ statusCmd = (message) => {
                 + "**";
 
         // List done entrants
+        prevTeam = "";
+        place = 0;
         raceState.doneEntrants.forEach((id, i) => {
             entrant = raceState.entrants.get(id);
             points = raceState.entrants.size - i;
-            raceString += "\n\t" + helpers.placeEmote(i)
-                    + " **" + helpers.username(entrant.message) + "** "
-                    + (isILRace() ? "(+" + points + " point" + (points > 1 ? "s" : "") + ") " : "")
-                    + "(" + helpers.formatTime(entrant.doneTime) + ")";
+            if (entrant.team === "") {
+                raceString += "\n\t" + helpers.placeEmote(place++)
+                        + " **" + helpers.username(entrant.message) + "** "
+                        + (isILRace() ? "(+" + points + " point" + (points > 1 ? "s" : "") + ") " : "")
+                        + "(" + helpers.formatTime(entrant.doneTime) + ")";
+                prevTeam = "";
+            } else {
+                if (entrant.team !== prevTeam) {
+                    raceString += "\n\t" + helpers.placeEmote(place++) + " **" + entrant.team + "** (" + helpers.formatTime(entrant.doneTime) + ")";
+                    prevTeam = entrant.team;
+                }
+                raceString += "\n\t\t" + helpers.username(entrant.message) + " " + (isILRace() ? "(+" + points + " point" + (points > 1 ? "s" : "") + ") " : "");
+            }
         });
 
         // List racers still going
+        entrantsAlreadyOnTeam = [];
         raceState.entrants.forEach((entrant) => {
             if (!raceState.doneEntrants.includes(entrant.message.author.id) && !raceState.ffEntrants.includes(entrant.message.author.id)) {
-                raceString += "\n\t" + emotes.racing + " " + helpers.username(entrant.message);
+                if (entrantsAlreadyOnTeam.includes(entrant)) {
+                    return;
+                }
+                if (entrant.team === "") {
+                    raceString += "\n\t" + emotes.racing + " " + helpers.username(entrant.message);
+                } else {
+                    raceString += "\n\t" + emotes.racing + " **" + entrant.team + "**";
+                    raceString += "\n\t\t" + helpers.username(entrant.message);
+                    entrantsAlreadyOnTeam.push(entrant);
+                    raceState.entrants.forEach((entrantTeamSearch) => {
+                        if (entrantTeamSearch.team === entrant.team && !entrantsAlreadyOnTeam.includes(entrantTeamSearch)) {
+                            raceString += "\n\t\t" + helpers.username(entrant.message);
+                            entrantsAlreadyOnTeam.push(entrantTeamSearch);
+                        }
+                    });
+                }
             }
         });
 
         // List forfeited/DQ'd entrants
         raceState.ffEntrants.forEach((id) => {
             entrant = raceState.entrants.get(id);
-            raceString += "\n\t" + emotes.forfeited + " " + helpers.username(entrant.message);
+            if (entrant.team === "") {
+                raceString += "\n\t" + emotes.forfeited + " " + helpers.username(entrant.message);
+                prevTeam = "";
+            } else {
+                if (entrant.team !== prevTeam) {
+                    raceString += "\n\t" + emotes.forfeited + " **" + entrant.team + "**";
+                    prevTeam = entrant.team;
+                }
+                raceString += "\n\t\t" + helpers.username(entrant.message);
+            }
         });
 
         message.channel.send(raceString);
