@@ -62,6 +62,10 @@ class RaceState {
     // Removes an entrant. Returns true if successful, returns false if the user isn't an entrant.
     removeEntrant(id) {
         if (this.entrants.has(id)) {
+            team = this.entrants.get(id).team;
+            if (team !== "") {
+                disbandTeam(team);
+            }
             this.entrants.delete(id);
             return true;
         }
@@ -708,11 +712,22 @@ forfeitCmd = (message) => {
 
         } else {
             // Otherwise mark them as forfeited
-            raceState.ffEntrants.push(message.author.id);
-            message.channel.send(helpers.username(message) + " has forfeited (use `!unforfeit` to rejoin if this was an accident).");
+            team = raceState.entrants.get(message.author.id).team;
+            if (team !== "") {
+                raceState.entrants.forEach((entrant) => {
+                    if (entrant.team === team) {
+                        raceState.ffEntrants.push(entrant.message.author.id);
+                    }
+                });
+                message.channel.send("**" + team + "** has forfeited (use `!unforfeit` to rejoin if this was an accident).");
+            } else {
+                raceState.ffEntrants.push(message.author.id);
+                message.channel.send(helpers.username(message) + " has forfeited (use `!unforfeit` to rejoin if this was an accident).");
+            }
+
+            // Check if everyone forfeited
             if (raceState.ffEntrants.length + raceState.doneEntrants.length === raceState.entrants.size) {
                 if (raceState.state === State.COUNTDOWN) {
-                    // Everyone forfeited during the countdown
                     stopCountDown();
                     if (isILRace()) {
                         newIL();
@@ -732,12 +747,28 @@ forfeitCmd = (message) => {
 // !uff/!unforfeit
 unforfeitCmd = (message) => {
     if (raceState.state === State.ACTIVE || raceState.state === State.COUNTDOWN || raceState.state === State.DONE) {
-        if (raceState.leavingWhenDone.has(message.author.id)) {
-            raceState.leavingWhenDone.delete(message.author.id);
+        ufPlayer = [];
+        team = raceState.entrants.get(message.author.id).team;
+        if (team !== "") {
+            raceState.entrants.forEach((entrant) => {
+                if (entrant.team === team) {
+                    ufPlayer.push(entrant.message.author.id);
+                }
+            });
+        } else {
+            if (raceState.entrants.has(id) && raceState.ffEntrants.includes(id)) {
+                ufPlayer.push(message.author.id);
+            }
         }
-        if (raceState.entrants.has(message.author.id) && raceState.ffEntrants.includes(message.author.id)) {
+
+        if (ufPlayer.length > 0) {
+            for(var id in ufPlayer) {
+                if (raceState.leavingWhenDone.has(id)) {
+                    raceState.leavingWhenDone.delete(id);
+                }
+                raceState.ffEntrants = helpers.arrayRemove(raceState.ffEntrants, id);
+            }
             raceState.state = State.ACTIVE;
-            raceState.ffEntrants = helpers.arrayRemove(raceState.ffEntrants, message.author.id);
             clearTimeout(raceDoneTimeout);
             clearTimeout(raceDoneWarningTimeout);
             message.react(emotes.acknowledge);
