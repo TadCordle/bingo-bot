@@ -88,7 +88,6 @@ class Entrant {
         this.message = message;
         this.ready = false;
         this.doneTime = 0;
-        this.disqualified = false;
     }
 }
 
@@ -106,7 +105,7 @@ var raceState = new RaceState();
 client.on("ready", () => {
     // Setup tables for keeping track of race results
     if (!sql.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='results'").get()['count(*)']) {
-        sql.prepare("CREATE TABLE results (race_id INTEGER, user_id TEXT, user_name TEXT, game TEXT, category TEXT, time INTEGER, ff INTEGER, dq INTEGER, level TEXT);").run();
+        sql.prepare("CREATE TABLE results (race_id INTEGER, user_id TEXT, user_name TEXT, game TEXT, category TEXT, level TEXT, time INTEGER, ff INTEGER);").run();
         sql.prepare("CREATE UNIQUE INDEX idx_results_race ON results (race_id, user_id);").run();
         sql.pragma("synchronous = 1");
         sql.pragma("journal_mode = wal");
@@ -123,7 +122,7 @@ client.on("ready", () => {
     // Setup SQL queries for setting/retrieving results
     client.getLastRaceID = sql.prepare("SELECT MAX(race_id) AS id FROM results");
     client.getResults = sql.prepare("SELECT * FROM results WHERE race_id = ? ORDER BY time ASC");
-    client.addResult = sql.prepare("INSERT OR REPLACE INTO results (race_id, user_id, user_name, game, category, time, ff, dq, level) VALUES (@race_id, @user_id, @user_name, @game, @category, @time, @ff, @dq, @level);");
+    client.addResult = sql.prepare("INSERT OR REPLACE INTO results (race_id, user_id, user_name, game, category, level, time, ff) VALUES (@race_id, @user_id, @user_name, @game, @category, @level, @time, @ff);");
 
     // Setup SQL queries for setting/retrieving user stats
     client.getUserStatsForGame = sql.prepare("SELECT * FROM users WHERE user_id = ? AND game = ? ORDER BY category ASC");
@@ -151,11 +150,6 @@ client.on("ready", () => {
 
 client.on("message", (message) => {
     if (!message.content.startsWith("!") || message.author.bot) {
-        return;
-    }
-
-    // Don't let kicked people use any commands until there's a new race
-    if (raceState.entrants.has(message.author.id) && raceState.entrants.get(message.author.id).disqualified) {
         return;
     }
 
@@ -810,7 +804,7 @@ statusCmd = (message) => {
             }
         });
 
-        // List forfeited/DQ'd entrants
+        // List forfeited entrants
         raceState.ffEntrants.forEach((id) => {
             entrant = raceState.entrants.get(id);
             raceString += "\n\t" + emotes.forfeited + " " + helpers.username(entrant.message);
@@ -1090,13 +1084,13 @@ recordResults = () => {
     }
     raceState.doneEntrants.forEach((id) => {
         entrant = raceState.entrants.get(id);
-        result = { race_id: `${raceId}`, user_id: `${id}`, user_name: `${helpers.username(entrant.message)}`, game: `${gameName}`, category: `${categoryName}`, time: `${entrant.doneTime}`, ff: 0, dq: 0, level: `${level}` };
+        result = { race_id: `${raceId}`, user_id: `${id}`, user_name: `${helpers.username(entrant.message)}`, game: `${gameName}`, category: `${categoryName}`, level: `${level}`, time: `${entrant.doneTime}`, ff: 0 };
         client.addResult.run(result);
         roles.giveRoleFromRace(id, gameName, categoryName);
     });
     raceState.ffEntrants.forEach((id) => {
         entrant = raceState.entrants.get(id);
-        result = { race_id: `${raceId}`, user_id: `${id}`, user_name: `${helpers.username(entrant.message)}`, game: `${gameName}`, category: `${categoryName}`, time: -1, ff: 1, dq: `${entrant.disqualified ? 1 : 0}`, level: `${level}` };
+        result = { race_id: `${raceId}`, user_id: `${id}`, user_name: `${helpers.username(entrant.message)}`, game: `${gameName}`, category: `${categoryName}`, level: `${level}`, time: -1, ff: 1 };
         client.addResult.run(result);
     });
 
@@ -1133,7 +1127,6 @@ newIL = () => {
     raceState.ffEntrants = [];
     raceState.entrants.forEach((entrant) => {
         entrant.ready = false;
-        entrant.disqualified = false;
         entrant.doneTime = 0;
     });
     raceState.state = State.JOINING;
