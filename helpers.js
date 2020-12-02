@@ -237,3 +237,13 @@ exports.decodeHTML = (text) => {
     });
 };
 // ----------------------------------------------------------------------------------------------------------------
+
+exports.sendErrorMessage = (e, path, message) => {
+    errMsg = "Error reaching " + path + ": ";
+    if (e.message.startsWith("connect ETIMEDOUT")) {
+        errMsg += "Connection timed out.";
+    } else {
+        errMsg += e.message;
+    }
+    message.channel.send(errMsg);
+}

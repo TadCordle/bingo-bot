@@ -304,6 +304,9 @@ callSrc = (path, message, onEnd) => {
             result.on("end", () => {
                 onEnd(dataQueue);
             });
+        }).on('error', (e) => {
+            helpers.log(e, true);
+            helpers.sendErrorMessage(e, path, message);
         });
     }
 

@@ -526,6 +526,9 @@ chooseLuckyDipLevel = (luckyDipUrl, message) => {
                     + matches[Math.floor(Math.random() * 12)];
             chooseLbpMeLevel(getLbpMeUrl(level), message);
         });
+    }).on('error', (e) => {
+        helpers.log(e, true);
+        helpers.sendErrorMessage(e, luckyDipUrl, message);
     });
 }
 
@@ -569,6 +572,9 @@ chooseLbpMeLevel = (level, message) => {
             levelName = title + (isVita ? " - https://vita.lbp.me/v/" : " - https://lbp.me/v/") + level.split("/")[4];
             message.channel.send("Level updated to " + levelName + ".");
         });
+    }).on('error', (e) => {
+        helpers.log(e, true);
+        helpers.sendErrorMessage(e, level, message);
     });
 }
 
