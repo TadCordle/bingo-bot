@@ -135,11 +135,7 @@ client.on("ready", () => {
     // Setup SQL queries for setting/retrieving results
     client.getLastRaceID = sql.prepare("SELECT MAX(race_id) AS id FROM results");
     client.getResults = sql.prepare("SELECT * FROM results WHERE race_id = ? ORDER BY time ASC");
-<<<<<<< HEAD
-    client.addResult = sql.prepare("INSERT OR REPLACE INTO results (race_id, user_id, user_name, game, category, time, ff, dq, level, team_name) VALUES (@race_id, @user_id, @user_name, @game, @category, @time, @ff, @dq, @level, @team_name);");
-=======
     client.addResult = sql.prepare("INSERT OR REPLACE INTO results (race_id, user_id, user_name, game, category, level, time, ff, team_name) VALUES (@race_id, @user_id, @user_name, @game, @category, @level, @time, @ff, @team_name);");
->>>>>>> a5ae441b8d6a0b363943c46be72b62b77e883b9c
 
     // Setup SQL queries for setting/retrieving user stats
     client.getUserStatsForGame = sql.prepare("SELECT * FROM users WHERE user_id = ? AND game = ? ORDER BY category ASC");
