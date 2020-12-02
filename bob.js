@@ -285,7 +285,7 @@ helpCmd = (message) => {
 
 **Stat commands**
 \`!status\` - Shows current race status/entrants.
-\`!results raceNum\` - Shows results of the specified race number (e.g. \`!results 2\`).
+\`!results <race #>\` - Shows results of the specified race number (e.g. \`!results 2\`).
 \`!me <game name>\` - Shows your race statistics for the specified game (e.g. \`!me lbp\`).
 \`!runner <username or id> <game name>\` - Shows someone else's race statistics (e.g. \`!runner RbdJellyfish lbp\`).
 \`!elo <game name>/<category name>\` - Shows the ELO leaderboard for the given game/category (e.g. \`!elo lbp/any% no overlord\`).
@@ -828,54 +828,62 @@ unreadyCmd = (message) => {
 
 // !d/!done
 doneCmd = (message) => {
-    if (raceState.state === State.ACTIVE) {
-        if (raceState.entrants.has(message.author.id) && !raceState.doneEntrants.includes(message.author.id) && !raceState.ffEntrants.includes(message.author.id)) {
-            time = message.createdTimestamp / 1000 - raceState.startTime;
-            raceState.entrants.get(message.author.id).doneTime = time;
-            raceState.doneEntrants.push(message.author.id);
+    if (raceState.state !== State.ACTIVE || !raceState.entrants.has(message.author.id) || raceState.doneEntrants.includes(message.author.id) || raceState.ffEntrants.includes(message.author.id)) {
+        return;
+    }
 
-            // Calculate Elo diff
-            inProgress = [];
-            raceState.entrants.forEach((entrant) => {
-                id = entrant.message.author.id;
-                if (!raceState.doneEntrants.includes(id) && !raceState.ffEntrants.includes(id)) {
-                    inProgress.push(id);
-                }
-            });
-            sortedRacerList = raceState.doneEntrants.concat(inProgress).concat(raceState.ffEntrants);
-            stats = helpers.retrievePlayerStats(sortedRacerList, client.getUserStatsForCategory, gameName, categoryName);
-            newElos = helpers.calculateElos(stats, sortedRacerList, raceState.ffEntrants);
-            eloDiff = newElos.get(message.author.id) - stats.get(message.author.id).elo;
+    time = message.createdTimestamp / 1000 - raceState.startTime;
+    helpers.doForWholeTeam(raceState, message.author.id, (e) => {
+        e.doneTime = time;
+        raceState.doneEntrants.push(emessage.author.id);
+    });
 
-            ilPoints = raceState.entrants.size - raceState.doneEntrants.length + 1;
-            message.channel.send(helpers.mention(message.author)
-                        + " has finished in "
-                        + helpers.formatPlace(raceState.doneEntrants.length)
-                        + " place "
-                        + (isILRace() ? "(+" + ilPoints + " " + emotes.ilPoints + ") " : "")
-                        + ((eloDiff < 0 ? "(" : "(+") + (Math.round(eloDiff * 100) / 100) + " " + emotes.elo + ") ")
-                        + "with a time of " + helpers.formatTime(time)) + "! (Use `!undone` if this was a mistake.)";
-            if (raceState.ffEntrants.length + raceState.doneEntrants.length === raceState.entrants.size) {
-                doEndRace(message);
-            }
+    // Calculate Elo diff (TODO: Fix for teams)
+    inProgress = [];
+    raceState.entrants.forEach((entrant) => {
+        id = entrant.message.author.id;
+        if (!raceState.doneEntrants.includes(id) && !raceState.ffEntrants.includes(id)) {
+            inProgress.push(id);
         }
-    } else if (isILRace() && raceState.State === State.JOINING) {
-        // Leave the IL race lobby
-        forfeitCmd(message);
+    });
+    sortedRacerList = raceState.doneEntrants.concat(inProgress).concat(raceState.ffEntrants);
+    stats = helpers.retrievePlayerStats(sortedRacerList, client.getUserStatsForCategory, gameName, categoryName);
+    newElos = helpers.calculateElos(stats, sortedRacerList, raceState.ffEntrants);
+    eloDiff = newElos.get(message.author.id) - stats.get(message.author.id).elo;
+
+    ilPoints = raceState.entrants.size - raceState.doneEntrants.length + 1;
+
+    // Calculate finish position
+    team = raceState.entrants.get(message.author.id).team;
+    place = 0;
+    entrantsDone = [];
+    raceState.doneEntrants.forEach((id) => entrantsDone.push(raceState.entrants.get(id)));
+    helpers.forEachWithTeamHandling(entrantsDone, (individualEntrante) => place++, (firstOnTeam) => place++, (entrantWithTeame) => {});
+
+    message.channel.send((team === "" ? helpers.mention(message.author) : team)
+            + " has finished in " + helpers.formatPlace(place) + " place "
+            + (isILRace() ? "(+" + ilPoints + " " + emotes.ilPoints + ") " : "")
+            + ((eloDiff < 0 ? "(" : "(+") + (Math.round(eloDiff * 100) / 100) + " " + emotes.elo + ") ")
+            + "with a time of " + helpers.formatTime(time)) + "! (Use `!undone` if this was a mistake.)";
+    if (raceState.ffEntrants.length + raceState.doneEntrants.length === raceState.entrants.size) {
+        doEndRace(message);
     }
 }
 
 // !ud/!undone
 undoneCmd = (message) => {
-    if (raceState.state === State.ACTIVE || raceState.state === State.DONE) {
-        if (raceState.entrants.has(message.author.id) && raceState.doneEntrants.includes(message.author.id)) {
-            raceState.state = State.ACTIVE;
-            raceState.entrants.get(message.author.id).doneTime = 0;
-            raceState.doneEntrants = helpers.arrayRemove(raceState.doneEntrants, message.author.id);
-            clearTimeout(raceDoneTimeout);
-            clearTimeout(raceDoneWarningTimeout);
-            message.react(emotes.acknowledge);
-        }
+    if (raceState.state !== State.ACTIVE && raceState.state !== State.DONE) {
+        return;
+    }
+    if (raceState.entrants.has(message.author.id) && raceState.doneEntrants.includes(message.author.id)) {
+        helpers.doForWholeTeam(raceState, message.author.id, (e) => {
+            e.doneTime = 0;
+            raceState.doneEntrants = helpers.arrayRemove(raceState.doneEntrants, e.message.author.id);
+        });
+        raceState.state = State.ACTIVE;
+        clearTimeout(raceDoneTimeout);
+        clearTimeout(raceDoneWarningTimeout);
+        message.react(emotes.acknowledge);
     }
 }
 
