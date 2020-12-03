@@ -55,8 +55,7 @@ for (categoryIndex = 0; categoryIndex < categoriesFix.length; categoryIndex++) {
         // Update racers' stats
         raceRankings = ds.concat(ffs);
         playerStats = helpers.retrievePlayerStats(raceRankings, client.getUserStatsForCategory_fix, game, category, teamMap, (id, j) => ffs.includes(id), (id, j) => dtimes[j]);
-        oldElos = helpers.getOldElosFromStats(playerStats, teamMap);
-        eloDiffs = helpers.calculateEloDiffs(oldElos, raceRankings, ffs);
+        eloDiffs = helpers.calculateEloDiffs(playerStats, teamMap, raceRankings, ffs);
 
         // Update/save stats with new ELOs
         playerStats.forEach((stat, id) => {

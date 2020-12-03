@@ -168,10 +168,39 @@ exports.calculatePlayerStats = (statObj, ffd, racePlace, doneTime) => {
     }
 }
 
-// Calculate new Elos by treating each pair of racers in the race as a 1v1 matchup.
+// Calculate Elo diffs by treating each pair of racers in the race as a 1v1 matchup.
 // See https://en.wikipedia.org/wiki/Elo_rating_system
-exports.calculateEloDiffs = (oldElos, raceRankings, ffs) => {
-    result = new Map();
+exports.calculateEloDiffs = (stats, teamMap, raceRankings, ffs) => {
+    oldElos = new Map();
+    prevTeam = teamMap.get(stats[0].user_id);
+    maxElo = Number.MIN_VALUE;
+    eloAccum = 0;
+    teamCount = 0;
+    stats.forEach((stat) => {
+        curTeam = teamMap.get(stats[0].user_id);
+        if (prevTeam !== "" && prevTeam !== curTeam) {
+            // Done counting prevTeam; Calculate and store weighted average of team's elo            
+            elo = (maxElo * (teamCount - 1) + eloAccum) / (2 * teamCount - 1);
+            oldElos.set("!team " + prevTeam, elo);
+            maxElo = Number.MIN_VALUE;
+            eloAccum = 0;
+            teamCount = 0;
+        }
+        if (curTeam === "") {
+            // Individual; store Elo
+            oldElos.set(stat.user_id, stat.elo);
+        } else if (curTeam === prevTeam) {
+            // Team member; accumulate Elo to average with whole team
+            teamCount++;
+            eloAccum += stat.elo;
+            if (stat.elo > maxElo) {
+                maxElo = stat.elo;
+            }
+        }
+        prevTeam = curTeam;
+    });
+
+    eloDiffs = new Map();
     raceRankings.forEach((id1, p1Place) => {
         actualScore = 0;
         expectedScore = 0;
@@ -199,9 +228,9 @@ exports.calculateEloDiffs = (oldElos, raceRankings, ffs) => {
             }
         });
 
-        result.set(id1, 32 * (actualScore - expectedScore));
+        eloDiffs.set(id1, 32 * (actualScore - expectedScore));
     });
-    return result;
+    return eloDiffs;
 }
 
 // Builds and returns a map of discord id -> stat object for a given game/category. If functions for determining
@@ -226,40 +255,6 @@ exports.retrievePlayerStats = (raceRankings, retrieveStatsSql, game, category, t
         prevTeam = curTeam;
     });
     return stats;
-}
-
-// Returns a map from discord id -> elo (for individuals) or "!team <team name>" -> weighted elo for teams, given
-// a list of stats and a map from userId -> their team
-exports.getOldElosFromStats = (stats, teamMap) => {
-    oldElos = new Map();
-    prevTeam = teamMap.get(stats[0].user_id);
-    maxElo = Number.MIN_VALUE;
-    eloAccum = 0;
-    teamCount = 0;
-    stats.forEach((stat) => {
-        curTeam = teamMap.get(stats[0].user_id);
-        if (prevTeam !== "" && prevTeam !== curTeam) {
-            // Calculate and store weighted average of prevTeam elo
-            elo = (maxElo * (teamCount - 1) + eloAccum) / (2 * teamCount - 1);
-            oldElos.set("!team " + prevTeam, elo);
-            maxElo = Number.MIN_VALUE;
-            eloAccum = 0;
-            teamCount = 0;
-        }
-        if (curTeam === "") {
-            // Add individual's elo
-            oldElos.set(stat.user_id, stat.elo);
-        } else if (curTeam === prevTeam) {
-            // Accumulate team elo
-            teamCount++;
-            eloAccum += stat.elo;
-            if (stat.elo > maxElo) {
-                maxElo = stat.elo;
-            }
-        }
-        prevTeam = curTeam;
-    });
-    return oldElos;
 }
 
 // Runs a function for everyone on a given entrant's team.
