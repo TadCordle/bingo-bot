@@ -213,14 +213,18 @@ exports.retrievePlayerStats = (raceRankings, retrieveStatsSql, game, category, t
     raceRankings.forEach((id, i) => {
         statObj = retrieveStatsSql.get(id, game, category);
         if (!statObj) {
-            statObj = helpers.defaultStatObj(id, game, category);
+            statObj = exports.defaultStatObj(id, game, category);
         }
         curTeam = teamMap.get(id);
         if (curTeam === "" || curTeam !== prevTeam) {
             place++;
         }
         if (ffFunc !== null && dtimeFunc !== null) {
+<<<<<<< HEAD
             helpers.calculatePlayerStats(statObj, ffFunc(id, i), place, dtimeFunc(id, i));
+=======
+            exports.calculatePlayerStats(statObj, ffFunc(id, i), place, dtimeFunc(id, i));
+>>>>>>> da421b65c692f8f6ffb4bc961a2944abc1de6f06
         }
         stats.set(id, statObj);
         prevTeam = curTeam;
