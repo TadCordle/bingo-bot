@@ -170,7 +170,7 @@ exports.calculatePlayerStats = (statObj, ffd, racePlace, doneTime) => {
 
 // Calculate new Elos by treating each pair of racers in the race as a 1v1 matchup.
 // See https://en.wikipedia.org/wiki/Elo_rating_system
-exports.calculateElos = (stats, raceRankings, ffs) => {
+exports.calculateEloDiffs = (stats, raceRankings, ffs) => {
     result = new Map();
     raceRankings.forEach((id1, p1Place) => {
         actualScore = 0;
@@ -199,8 +199,7 @@ exports.calculateElos = (stats, raceRankings, ffs) => {
             }
         });
 
-        updatedElo = stats.get(id1).elo + 32 * (actualScore - expectedScore)
-        result.set(id1, updatedElo);
+        result.set(id1, 32 * (actualScore - expectedScore));
     });
     return result;
 }

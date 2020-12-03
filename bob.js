@@ -848,8 +848,7 @@ doneCmd = (message) => {
     });
     sortedRacerList = raceState.doneEntrants.concat(inProgress).concat(raceState.ffEntrants);
     stats = helpers.retrievePlayerStats(sortedRacerList, client.getUserStatsForCategory, gameName, categoryName);
-    newElos = helpers.calculateElos(stats, sortedRacerList, raceState.ffEntrants);
-    eloDiff = newElos.get(message.author.id) - stats.get(message.author.id).elo;
+    eloDiff = helpers.calculateEloDiffs(stats, sortedRacerList, raceState.ffEntrants).get(message.author.id);
 
     ilPoints = raceState.entrants.size - raceState.doneEntrants.length + 1;
 
@@ -1261,11 +1260,11 @@ recordResults = () => {
         }
     });
     playerStats = helpers.retrievePlayerStats(raceRankings, client.getUserStatsForCategory, gameName, categoryName, (id, i) => raceState.ffEntrants.includes(id), (id, i) => raceState.entrants.get(id).doneTime);
-    newElos = helpers.calculateElos(playerStats, raceRankings, raceState.ffEntrants);
+    eloDiffs = helpers.calculateEloDiffs(playerStats, raceRankings, raceState.ffEntrants);
 
     // Update/save stats with new Elos
     playerStats.forEach((stat, id) => {
-        stat.elo = newElos.get(id);
+        stat.elo += eloDiffs.get(id);
         client.addUserStat.run(stat);
     });
 

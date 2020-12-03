@@ -53,11 +53,11 @@ for (categoryIndex = 0; categoryIndex < categoriesFix.length; categoryIndex++) {
         // Update racers' stats
         raceRankings = ds.concat(ffs);
         playerStats = helpers.retrievePlayerStats(raceRankings, client.getUserStatsForCategory_fix, game, category, (id, j) => ffs.includes(id), (id, j) => dtimes[j]);
-        newElos = helpers.calculateElos(playerStats, raceRankings, ffs);
+        eloDiffs = helpers.calculateEloDiffs(playerStats, raceRankings, ffs);
 
         // Update/save stats with new ELOs
         playerStats.forEach((stat, id) => {
-            stat.elo = newElos.get(id);
+            stat.elo += eloDiffs.get(id);
             addUserStat_fix.run(stat);
         });
     }
