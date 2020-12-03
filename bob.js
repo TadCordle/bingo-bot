@@ -849,7 +849,7 @@ doneCmd = (message) => {
         }
     });
     sortedRacerList = raceState.doneEntrants.concat(inProgress).concat(raceState.ffEntrants);
-    stats = helpers.retrievePlayerStats(sortedRacerList, client.getUserStatsForCategory, gameName, categoryName);
+    stats = helpers.retrievePlayerStats(sortedRacerList, client.getUserStatsForCategory, gameName, categoryName, teamMap);
     oldElos = helpers.getOldElosFromStats(stats, teamMap);
     eloDiff = helpers.calculateEloDiffs(oldElos, sortedRacerList, raceState.ffEntrants).get(message.author.id);
 
@@ -1264,7 +1264,7 @@ recordResults = () => {
         }
         teamMap.set(id, raceState.entrants.get(id).team);
     });
-    playerStats = helpers.retrievePlayerStats(raceRankings, client.getUserStatsForCategory, gameName, categoryName, (id, i) => raceState.ffEntrants.includes(id), (id, i) => raceState.entrants.get(id).doneTime);
+    playerStats = helpers.retrievePlayerStats(raceRankings, client.getUserStatsForCategory, gameName, categoryName, teamMap, (id, i) => raceState.ffEntrants.includes(id), (id, i) => raceState.entrants.get(id).doneTime);
     oldElos = helpers.getOldElosFromStats(playerStats, raceState);
     eloDiffs = helpers.calculateEloDiffs(oldElos, raceRankings, raceState.ffEntrants);
 

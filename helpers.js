@@ -206,17 +206,24 @@ exports.calculateEloDiffs = (oldElos, raceRankings, ffs) => {
 
 // Builds and returns a map of discord id -> stat object for a given game/category. If functions for determining
 // a user's forfeit status and finish time are provided, the stat objects will be updated to reflect the results.
-exports.retrievePlayerStats = (raceRankings, retrieveStatsSql, game, category, ffFunc=null, dtimeFunc=null) => {
+exports.retrievePlayerStats = (raceRankings, retrieveStatsSql, game, category, teamMap, ffFunc=null, dtimeFunc=null) => {
     stats = new Map();
+    place = -1;
+    prevTeam = "";
     raceRankings.forEach((id, i) => {
         statObj = retrieveStatsSql.get(id, game, category);
         if (!statObj) {
             statObj = helpers.defaultStatObj(id, game, category);
         }
+        curTeam = teamMap.get(id);
+        if (curTeam === "" || curTeam !== prevTeam) {
+            place++;
+        }
         if (ffFunc !== null && dtimeFunc !== null) {
-            helpers.calculatePlayerStats(statObj, ffFunc(id, i), i, dtimeFunc(id, i));
+            helpers.calculatePlayerStats(statObj, ffFunc(id, i), place, dtimeFunc(id, i));
         }
         stats.set(id, statObj);
+        prevTeam = curTeam;
     });
     return stats;
 }
