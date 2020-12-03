@@ -170,7 +170,7 @@ exports.calculatePlayerStats = (statObj, ffd, racePlace, doneTime) => {
 
 // Calculate new Elos by treating each pair of racers in the race as a 1v1 matchup.
 // See https://en.wikipedia.org/wiki/Elo_rating_system
-exports.calculateEloDiffs = (stats, raceRankings, ffs) => {
+exports.calculateEloDiffs = (oldElos, raceRankings, ffs) => {
     result = new Map();
     raceRankings.forEach((id1, p1Place) => {
         actualScore = 0;
@@ -181,7 +181,7 @@ exports.calculateEloDiffs = (stats, raceRankings, ffs) => {
                 return;
             }
 
-            expectedDiff = 1.0 / (1 + Math.pow(10, (stats.get(id2).elo - stats.get(id1).elo) / 400));
+            expectedDiff = 1.0 / (1 + Math.pow(10, (oldElos.get(id2) - oldElos.get(id1)) / 400));
             expectedScore += expectedDiff;
 
             if (ffs.includes(id1)) {
@@ -219,6 +219,40 @@ exports.retrievePlayerStats = (raceRankings, retrieveStatsSql, game, category, f
         stats.set(id, statObj);
     });
     return stats;
+}
+
+// Returns a map from discord id -> elo (for individuals) or "!team <team name>" -> weighted elo for teams, given
+// a list of stats and a map from userId -> their team
+exports.getOldElosFromStats = (stats, teamMap) => {
+    oldElos = new Map();
+    prevTeam = teamMap.get(stats[0].user_id);
+    maxElo = Number.MIN_VALUE;
+    eloAccum = 0;
+    teamCount = 0;
+    stats.forEach((stat) => {
+        curTeam = teamMap.get(stats[0].user_id);
+        if (prevTeam !== "" && prevTeam !== curTeam) {
+            // Calculate and store weighted average of prevTeam elo
+            elo = (maxElo * (teamCount - 1) + eloAccum) / (2 * teamCount - 1);
+            oldElos.set("!team " + prevTeam, elo);
+            maxElo = Number.MIN_VALUE;
+            eloAccum = 0;
+            teamCount = 0;
+        }
+        if (curTeam === "") {
+            // Add individual's elo
+            oldElos.set(stat.user_id, stat.elo);
+        } else if (curTeam === prevTeam) {
+            // Accumulate team elo
+            teamCount++;
+            eloAccum += stat.elo;
+            if (stat.elo > maxElo) {
+                maxElo = stat.elo;
+            }
+        }
+        prevTeam = curTeam;
+    });
+    return oldElos;
 }
 
 // Runs a function for everyone on a given entrant's team.
