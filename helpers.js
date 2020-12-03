@@ -212,10 +212,10 @@ exports.retrievePlayerStats = (raceRankings, retrieveStatsSql, game, category, f
     raceRankings.forEach((id, i) => {
         statObj = retrieveStatsSql.get(id, game, category);
         if (!statObj) {
-            statObj = helpers.defaultStatObj(id, game, category);
+            statObj = exports.defaultStatObj(id, game, category);
         }
         if (ffFunc !== null && dtimeFunc !== null) {
-            helpers.calculatePlayerStats(statObj, ffFunc(id, i), i, dtimeFunc(id, i));
+            exports.calculatePlayerStats(statObj, ffFunc(id, i), i, dtimeFunc(id, i));
         }
         stats.set(id, statObj);
     });
