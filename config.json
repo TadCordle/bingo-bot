@@ -21,7 +21,7 @@
         "LittleBigPlanet": {
             "aliases": ["lbp1", "1"],
             "categories": {
-                "Any% No Overlord": ["anyno", "no"],
+                "Any% No Overlord": ["anyno", "no", "nooverlord"],
                 "Any%": [],
                 "100%": [],
                 "100% No Overlord": ["100no"],
@@ -216,7 +216,7 @@
         "LittleBigPlanet 2": {
             "aliases": ["2"],
             "categories": {
-                "Any% No Overlord": ["anyno", "no", "ng", "solong"],
+                "Any% No Overlord": ["anyno", "no", "ng", "solong", "nooverlord"],
                 "Any%": [],
                 "All Levels": ["al"],
                 "Individual Levels": ["il", "ils", "individuallevel"]
@@ -397,7 +397,7 @@
         "LittleBigPlanet 3": {
             "aliases": ["3"],
             "categories": {
-                "Any% No Create": ["anynooverlord", "anyno", "no", "anync", "nc"],
+                "Any% No Create": ["anynooverlord", "anyno", "no", "anync", "nc", "nooverlord", "nocreate"],
                 "Any%": [],
                 "All Main Quests": ["quests", "allquests", "amq", "aq", "q", "al", "alllevels"],
                 "2p Co-op": ["coop", "2p"],
