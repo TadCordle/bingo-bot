@@ -328,6 +328,7 @@ exports.decodeHTML = (text) => {
 };
 // ----------------------------------------------------------------------------------------------------------------
 
+// Send an error message to discord (with some special handling depending on what the error is)
 exports.sendErrorMessage = (e, path, message) => {
     errMsg = "Error reaching " + path + ": ";
     if (e.message.startsWith("connect ETIMEDOUT")) {
