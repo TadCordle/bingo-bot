@@ -13,6 +13,7 @@ var guild;
 // Maps from speedrun.com game ID (or the string "wr") to server role
 var roles;
 var wrRoles;
+var ilWrRoles;
 
 // Maps from game name to speedrun.com game ID
 const gameIds = {
@@ -66,6 +67,15 @@ exports.init = (c) => {
         guild.roles.cache.get("725437884420587703"), // 9
         guild.roles.cache.get("725437901680279637"), // 10+
     ];
+    ilWrRoles = [
+        guild.roles.cache.get("784118229143781397"), // 1
+        guild.roles.cache.get("784118331388854288"), // 5+
+        guild.roles.cache.get("784118436585799721"), // 10+
+        guild.roles.cache.get("784118484342800384"), // 20+
+        guild.roles.cache.get("784118537933291541"), // 30+
+        guild.roles.cache.get("784118624197672960"), // 40+
+        guild.roles.cache.get("784118766145503232"), // 50+
+    ];
     if (Object.values(roles).includes(undefined)) {
         helpers.log("Couldn't find all roles; Discord roles may have changed.", true);
     }
@@ -88,8 +98,8 @@ exports.init = (c) => {
 }
 
 // Adds the role for gameName to the user with the given discord ID
-exports.giveRoleFromRace = (discordId, gameName, categoryName) => {
-    member = guild.members.cache.get(discordId);
+exports.giveRoleFromRace = async (discordId, gameName, categoryName) => {
+    member = await guild.members.fetch(discordId);
     if (!member) {
         return;
     }
@@ -169,7 +179,7 @@ rolesCmd = (message) => {
 }
 
 // !removeroles [<discord id>]
-removeRolesCmd = (message) => {
+removeRolesCmd = async (message) => {
     param = message.content.replace(/^!removeroles/i, "").trim();
     discordId = message.author.id;
     if (param !== "" && isAdmin(discordId)) {
@@ -177,9 +187,15 @@ removeRolesCmd = (message) => {
     }
 
     client.deleteSrcUser.run(discordId);
-    member = guild.members.cache.get(discordId);
+    member = await guild.members.fetch(discordId);
     if (member) {
         Object.values(roles).forEach((role) => {
+            member.roles.remove(role);
+        });
+        wrRoles.forEach((role) => {
+            member.roles.remove(role);
+        });
+        ilWrRoles.forEach((role) => {
             member.roles.remove(role);
         });
     }
@@ -199,8 +215,8 @@ reloadRolesCmd = () => {
 
 // Update user roles from speedrun.com profile
 doSrcRoleUpdates = (discordId, srcName, message = null) => {
-    callSrc("/api/v1/users/" + srcName + "/personal-bests", message, (dataQueue) => {
-        member = guild.members.cache.get(discordId);
+    callSrc("/api/v1/users/" + srcName + "/personal-bests", message, async (dataQueue) => {
+        member = await guild.members.fetch(discordId);
         if (!member) {
             helpers.log("SRC role update: '" + discordId + "' is not a member of the LBP speedrunning server. Removing...", true);
             client.deleteSrcUser.run(discordId);
@@ -214,21 +230,43 @@ doSrcRoleUpdates = (discordId, srcName, message = null) => {
         // Figure out what roles user should have from races + src
         rolesShouldHave = getRaceRoles(discordId);
         numWrs = 0;
+        numIlWrs = 0;
         JSON.parse(dataQueue).data.forEach((d) => {
             role = roles[d.run.game];
             if (role) {
                 rolesShouldHave.add(role);
-                if (d.place === 1 && d.run.level === null && !exemptCatsFromWrRole.includes(d.run.category) && !exemptGamesFromWrRole.includes(d.run.game)) {
-                    numWrs++;
+                if (d.place === 1) {
+                    if (!exemptCatsFromWrRole.includes(d.run.category) && !exemptGamesFromWrRole.includes(d.run.game) && d.run.level === null) {
+                        numWrs++;
+                    } else {
+                        numIlWrs++;
+                    }
                 }
             }
         });
+        helpers.log(member.displayName + ":\t" + numIlWrs + " IL Wrs");
         if (numWrs > 0) {
             if (numWrs > wrRoles.length) {
                 numWrs = wrRoles.length;
             }
             rolesShouldHave.add(wrRoles[numWrs - 1]);
         }
+        if (numIlWrs >= 50) {
+            rolesShouldHave.add(ilWrRoles[6]);
+        } else if (numIlWrs >= 40) {
+            rolesShouldHave.add(ilWrRoles[5]);
+        } else if (numIlWrs >= 30) {
+            rolesShouldHave.add(ilWrRoles[4]);
+        } else if (numIlWrs >= 20) {
+            rolesShouldHave.add(ilWrRoles[3]);
+        } else if (numIlWrs >= 10) {
+            rolesShouldHave.add(ilWrRoles[2]);
+        } else if (numIlWrs >= 5) {
+            rolesShouldHave.add(ilWrRoles[1]);
+        } else if (numIlWrs > 0) {
+            rolesShouldHave.add(ilWrRoles[0]);
+        }
+
         updateRoles(member, rolesShouldHave);
     });
 }
@@ -262,7 +300,7 @@ getRaceRoles = (discordId) => {
 // Updates member's runner roles to match the ones in rolesShouldHave
 updateRoles = (member, rolesShouldHave) => {
     // Update roles
-    Object.values(roles).concat(Object.values(wrRoles)).forEach((role) => {
+    Object.values(roles).concat(wrRoles).concat(ilWrRoles).forEach((role) => {
         if (rolesShouldHave.has(role)) {
             member.roles.add(role);
         } else {
@@ -321,7 +359,7 @@ callSrc = (path, message, onEnd) => {
 }
 
 // Returns true if the given discord ID is a mod or admin in the server
-isAdmin = (discordId) => {
-    member = guild.members.cache.get(discordId);
+isAdmin = async (discordId) => {
+    member = await guild.members.fetch(discordId);
     return member && member.roles.cache.some(role => role.name === "Admin" || role.name === "Moderator");
 }
