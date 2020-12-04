@@ -852,8 +852,6 @@ doneCmd = (message) => {
     stats = helpers.retrievePlayerStats(sortedRacerList, client.getUserStatsForCategory, gameName, categoryName, teamMap);
     eloDiff = helpers.calculateEloDiffs(stats, teamMap, sortedRacerList, raceState.ffEntrants).get(message.author.id);
 
-    ilPoints = raceState.entrants.size - raceState.doneEntrants.length + 1;
-
     // Calculate finish position
     place = 0;
     entrantsDone = [];
@@ -933,25 +931,36 @@ statusCmd = (message) => {
                 + "**";
         entrantsDone = [];
         entrantsNotDone = [];
+        idsNotDone = [];
         entrantsFFd = [];
+        teamMap = new Map();
         raceState.entrants.forEach((entrant) => {
-            if (raceState.doneEntrants.includes(entrant.message.author.id)) {
+            id = entrant.message.author.id;
+            teamMap.set(id, entrant.team);
+            if (raceState.doneEntrants.includes(id)) {
                 entrantsDone.push(entrant);
-            } else if (raceState.ffEntrants.includes(entrant.message.author.id)) {
+            } else if (raceState.ffEntrants.includes(id)) {
                 entrantsFFd.push(entrant);
             } else {
                 entrantsNotDone.push(entrant);
+                idsNotDone.push(id);
             }
         });
         entrantsDone.sort((entrant1, entrant2) => entrant1.doneTime - entrant2.doneTime);
+
+        // Calculate Elo diff
+        sortedRacerList = raceState.doneEntrants.concat(inProgress).concat(raceState.ffEntrants);
+        stats = helpers.retrievePlayerStats(sortedRacerList, client.getUserStatsForCategory, gameName, categoryName, teamMap);
+        eloDiffs = helpers.calculateEloDiffs(stats, teamMap, sortedRacerList, raceState.ffEntrants);
+        eloDiffStr = (e, hide=false) => hide ? "" : ("(" + emotes.elo + " " + (eloDiffs.get(e.message.author.id) >= 0 ? "+" : "") + eloDiffs.get(e.message.author.id) + ")");
 
         // List done entrants
         place = 0;
         points = raceState.entrants.size;
         helpers.forEachWithTeamHandling(entrantsDone,
-            (individualEntrant) => raceString += "\n\t" + helpers.placeEmote(place++) + " **" + helpers.username(individualEntrant.message) + "** (" + helpers.formatTime(individualEntrant.doneTime) + ")",
+            (individualEntrant) => raceString += "\n\t" + helpers.placeEmote(place++) + " **" + helpers.username(individualEntrant.message) + "** " + eloDiffStr(individualEntrant) + " (" + helpers.formatTime(individualEntrant.doneTime) + ")",
             (firstOnTeam) => raceString += "\n\t" + helpers.placeEmote(place++) + " **" + firstOnTeam.team + "** (" + helpers.formatTime(firstOnTeam.doneTime) + ")",
-            (entrantWithTeam) => raceString += "\n\t\t" + helpers.username(entrantWithTeam.message));
+            (entrantWithTeam) => raceString += "\n\t\t" + helpers.username(entrantWithTeam.message) + " " + eloDiffStr(entrantWithTeam));
 
         // List racers still going
         helpers.forEachWithTeamHandling(entrantsNotDone,
@@ -961,9 +970,9 @@ statusCmd = (message) => {
 
         // List forfeited entrants
         helpers.forEachWithTeamHandling(entrantsFFd,
-            (individualEntrant) => raceString += "\n\t" + emotes.forfeited + " " + helpers.username(individualEntrant.message),
+            (individualEntrant) => raceString += "\n\t" + emotes.forfeited + " " + helpers.username(individualEntrant.message) + " " + eloDiffStr(individualEntrant, idsNotDone.length > 0),
             (firstOnTeam) => raceString += "\n\t" + emotes.forfeited + " **" + firstOnTeam.team + "**",
-            (entrantWithTeam) => raceString += "\n\t\t" + helpers.username(entrantWithTeam.message));
+            (entrantWithTeam) => raceString += "\n\t\t" + helpers.username(entrantWithTeam.message) + " " + eloDiffStr(entrantWithTeam, idsNotDone.length > 0));
 
         message.channel.send(raceString);
     }
@@ -1146,7 +1155,7 @@ ilResultsCmd = (message) => {
 leaderboardCmd = (message) => {
     params = message.content.replace(/^!leaderboard/i, "").replace(/^!elo/i, "").trim().split('/');
     if (params.length !== 2) {
-        message.channel.send("Usage: `!leaderboard <game name> / <category name>` (e.g. `!leaderboard lbp1 / any% no overlord`)");
+        message.channel.send("Usage: `!elo <game name> / <category name>` (e.g. `!elo lbp1 / any% no overlord`)");
         return;
     }
 
