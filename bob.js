@@ -1123,7 +1123,12 @@ ilResultsCmd = (message) => {
         msgs = [];
         messageString = "**Results for current IL series (listed by race ID):**\n";
         raceState.ilResults.forEach((result, num) => {
-            toAdd = "\t#" + result.id + " - " + result.level + " (" + emotes.firstPlace + " " + result.winner + ")\n";
+            winnerEntrant = raceState.entrants.get(result.winner);
+            winnerName = helpers.username(winnerEntrant.message);
+            if (winnerEntrant.team !== "") {
+                winnerName = "**" + winnerEntrant.team + "**";
+            }
+            toAdd = "\t#" + result.id + " - " + result.level + " (" + emotes.firstPlace + " " + winnerName + ")\n";
             if (messageString.length + toAdd.length > 2000) {
                 msgs.push(messageString);
                 messageString = "**Results for current IL series (cont):**\n";
@@ -1249,23 +1254,20 @@ recordResults = () => {
         client.addResult.run(result);
     });
 
-    // Update racers' stats
+    // Keep track of teams and IL series results
     teamMap = new Map();
     raceRankings = raceState.doneEntrants.concat(raceState.ffEntrants);
+    raceState.ilResults.push(new ILResult(raceId, levelName, raceRankings[0]));
     raceRankings.forEach((id, i) => {
-        // Keep track of results for IL series
         if (!raceState.ffEntrants.includes(id) && isILRace()) {
-            if (i === 0) {
-                raceState.ilResults.push(new ILResult(raceId, levelName, helpers.username(raceState.entrants.get(id).message)))
-            }
             raceState.ilScores.set(id, raceState.getILScore(id) + raceState.doneEntrants.length + raceState.ffEntrants.length - i);
         }
         teamMap.set(id, raceState.entrants.get(id).team);
     });
+
+    // Update/save stats
     playerStats = helpers.retrievePlayerStats(raceRankings, client.getUserStatsForCategory, gameName, categoryName, teamMap, (id, i) => raceState.ffEntrants.includes(id), (id, i) => raceState.entrants.get(id).doneTime);
     eloDiffs = helpers.calculateEloDiffs(playerStats, raceState, raceRankings, raceState.ffEntrants);
-
-    // Update/save stats with new Elos
     playerStats.forEach((stat, id) => {
         if (teamMap.get(id) !== "") {
             stat.elo += eloDiffs.get("!team " + teamMap.get(id));
