@@ -855,15 +855,14 @@ doneCmd = (message) => {
     ilPoints = raceState.entrants.size - raceState.doneEntrants.length + 1;
 
     // Calculate finish position
-    team = raceState.entrants.get(message.author.id).team;
     place = 0;
     entrantsDone = [];
     raceState.doneEntrants.forEach((id) => entrantsDone.push(raceState.entrants.get(id)));
     helpers.forEachWithTeamHandling(entrantsDone, (individualEntrante) => place++, (firstOnTeam) => place++, (entrantWithTeame) => {});
 
+    team = raceState.entrants.get(message.author.id).team;
     message.channel.send((team === "" ? helpers.mention(message.author) : team)
             + " has finished in " + helpers.formatPlace(place) + " place "
-            + (isILRace() ? "(+" + ilPoints + " " + emotes.ilPoints + ") " : "")
             + ((eloDiff < 0 ? "(" : "(+") + (Math.round(eloDiff * 100) / 100) + " " + emotes.elo + ") ")
             + "with a time of " + helpers.formatTime(time)) + "! (Use `!undone` if this was a mistake.)";
     if (raceState.ffEntrants.length + raceState.doneEntrants.length === raceState.entrants.size) {
@@ -950,9 +949,9 @@ statusCmd = (message) => {
         place = 0;
         points = raceState.entrants.size;
         helpers.forEachWithTeamHandling(entrantsDone,
-            (individualEntrant) => raceString += "\n\t" + helpers.placeEmote(place++) + " **" + helpers.username(individualEntrant.message) + "** " + (isILRace() ? "(+" + (points--) + " " + emotes.ilPoints + ") " : "") + "(" + helpers.formatTime(individualEntrant.doneTime) + ")",
+            (individualEntrant) => raceString += "\n\t" + helpers.placeEmote(place++) + " **" + helpers.username(individualEntrant.message) + "** (" + helpers.formatTime(individualEntrant.doneTime) + ")",
             (firstOnTeam) => raceString += "\n\t" + helpers.placeEmote(place++) + " **" + firstOnTeam.team + "** (" + helpers.formatTime(firstOnTeam.doneTime) + ")",
-            (entrantWithTeam) => raceString += "\n\t\t" + helpers.username(entrantWithTeam.message) + " " + (isILRace() ? "(+" + (points--) + " " + emotes.ilPoints + ") " : ""));
+            (entrantWithTeam) => raceString += "\n\t\t" + helpers.username(entrantWithTeam.message));
 
         // List racers still going
         helpers.forEachWithTeamHandling(entrantsNotDone,
