@@ -854,9 +854,7 @@ doneCmd = (message) => {
 
     // Calculate finish position
     place = 0;
-    entrantsDone = [];
-    raceState.doneEntrants.forEach((id) => entrantsDone.push(raceState.entrants.get(id)));
-    helpers.forEachWithTeamHandling(entrantsDone, (individualEntrante) => place++, (firstOnTeam) => place++, (entrantWithTeame) => {});
+    helpers.forEachWithTeamHandling(raceState.doneEntrants, (individualEntrante) => place++, (firstOnTeam) => place++, (entrantWithTeame) => {});
 
     team = raceState.entrants.get(message.author.id).team;
     message.channel.send((team === "" ? helpers.mention(message.author) : team)
@@ -905,8 +903,8 @@ statusCmd = (message) => {
             entrantString = (e) => "\t" + (e.ready ? emotes.ready : emotes.notReady) + " " + helpers.username(e.message) + " - " + emotes.ilPoints + " " + raceState.getILScore(e.message.author.id) + "\n";
             helpers.forEachWithTeamHandling(sortedEntrants,
                     (individualEntrant) => raceString += entrantString(individualEntrant),
-                    (firstOnTeam) => raceString += "\t**" + firstOnTeam.team + "**\n",
-                    (entrantWithTeam) => raceString += "\t" + entrantString(entrantWithTeam));
+                    (firstOnTeam)       => raceString += "\t**" + firstOnTeam.team + "**\n",
+                    (entrantWithTeam)   => raceString += "\t" + entrantString(entrantWithTeam));
 
         } else {
             // Show full game race status
@@ -914,8 +912,8 @@ statusCmd = (message) => {
             entrantsWithNoTeam = [];
             helpers.forEachWithTeamHandling(raceState.entrants,
                     (individualEntrant) => entrantsWithNoTeam.push(individualEntrant),
-                    (firstOnTeam) => raceString += "\t**" + firstOnTeam.team + "**\n",
-                    (entrantWithTeam) => raceString += "\t" + entrantString(entrantWithTeam));
+                    (firstOnTeam)       => raceString += "\t**" + firstOnTeam.team + "**\n",
+                    (entrantWithTeam)   => raceString += "\t" + entrantString(entrantWithTeam));
             entrantsWithNoTeam.forEach((entrant) => {
                 raceString += entrantString(entrant);
             });
@@ -958,21 +956,21 @@ statusCmd = (message) => {
         place = 0;
         points = raceState.entrants.size;
         helpers.forEachWithTeamHandling(entrantsDone,
-            (individualEntrant) => raceString += "\n\t" + helpers.placeEmote(place++) + " **" + helpers.username(individualEntrant.message) + "** " + eloDiffStr(individualEntrant) + " (" + helpers.formatTime(individualEntrant.doneTime) + ")",
-            (firstOnTeam) => raceString += "\n\t" + helpers.placeEmote(place++) + " **" + firstOnTeam.team + "** (" + helpers.formatTime(firstOnTeam.doneTime) + ")",
-            (entrantWithTeam) => raceString += "\n\t\t" + helpers.username(entrantWithTeam.message) + " " + eloDiffStr(entrantWithTeam));
+            (individualEntrant) => raceString += "\n\t" + helpers.placeEmote(place++) + " " + helpers.username(individualEntrant.message) + " " + eloDiffStr(individualEntrant) + " (" + helpers.formatTime(individualEntrant.doneTime) + ")",
+            (firstOnTeam)       => raceString += "\n\t" + helpers.placeEmote(place++) + " **" + firstOnTeam.team + "** (" + helpers.formatTime(firstOnTeam.doneTime) + ")",
+            (entrantWithTeam)   => raceString += "\n\t\t" + helpers.username(entrantWithTeam.message) + " " + eloDiffStr(entrantWithTeam));
 
         // List racers still going
         helpers.forEachWithTeamHandling(entrantsNotDone,
             (individualEntrant) => raceString += "\n\t" + emotes.racing + " " + helpers.username(individualEntrant.message),
-            (firstOnTeam) => raceString += "\n\t" + emotes.racing + " **" + firstOnTeam.team + "**",
-            (entrantWithTeam) => raceString += "\n\t\t" + helpers.username(entrantWithTeam.message));
+            (firstOnTeam)       => raceString += "\n\t" + emotes.racing + " **" + firstOnTeam.team + "**",
+            (entrantWithTeam)   => raceString += "\n\t\t" + helpers.username(entrantWithTeam.message));
 
         // List forfeited entrants
         helpers.forEachWithTeamHandling(entrantsFFd,
             (individualEntrant) => raceString += "\n\t" + emotes.forfeited + " " + helpers.username(individualEntrant.message) + " " + eloDiffStr(individualEntrant, idsNotDone.length > 0),
-            (firstOnTeam) => raceString += "\n\t" + emotes.forfeited + " **" + firstOnTeam.team + "**",
-            (entrantWithTeam) => raceString += "\n\t\t" + helpers.username(entrantWithTeam.message) + " " + eloDiffStr(entrantWithTeam, idsNotDone.length > 0));
+            (firstOnTeam)       => raceString += "\n\t" + emotes.forfeited + " **" + firstOnTeam.team + "**",
+            (entrantWithTeam)   => raceString += "\n\t\t" + helpers.username(entrantWithTeam.message) + " " + eloDiffStr(entrantWithTeam, idsNotDone.length > 0));
 
         message.channel.send(raceString);
     }
@@ -1097,22 +1095,30 @@ resultsCmd = (message) => {
         }
         messageString = "Results for race #" + raceNum + " (" + rows[0].game + " / " + cat + "):";
 
-        // First list people who finished, but keep track of the forfeits
+        // Separate finishes and ffs
         ffd = [];
-        placeCount = 0;
+        done = [];
         rows.forEach((row) => {
-            if (row.time < 0) {
+            if (row.ff) {
                 ffd.push(row);
             } else {
-                messageString += "\n\t" + helpers.placeEmote(placeCount) + " " + row.user_name + " (" + helpers.formatTime(row.time) + ")";
-                placeCount++;
+                done.push(row);
             }
         });
 
-        // Now we can list forfeits
-        ffd.forEach((row) => {
-            messageString += "\n\t" + emotes.forfeited + " " + row.user_name;
-        });
+        // List done entrants
+        place = 0;
+        helpers.forEachWithTeamHandling(done,
+            (individualEntrant) => messageString += "\n\t" + helpers.placeEmote(place++) + " " + individualEntrant.user_name + " (" + helpers.formatTime(individualEntrant.time) + ")",
+            (firstOnTeam)       => raceString += "\n\t" + helpers.placeEmote(place++) + " **" + firstOnTeam.team_name + "** (" + helpers.formatTime(firstOnTeam.time) + ")",
+            (entrantWithTeam)   => raceString += "\n\t\t" + entrantWithTeam.user_name);
+
+        // List forfeited entrants
+        helpers.forEachWithTeamHandling(ffd,
+            (individualEntrant) => messageString += "\n\t" + emotes.forfeited + " " + individualEntrant.user_name,
+            (firstOnTeam)       => raceString += "\n\t" + emotes.forfeited + " **" + firstOnTeam.team_name + "**",
+            (entrantWithTeam)   => raceString += "\n\t\t" + entrantWithTeam.user_name);
+
         message.channel.send(messageString);
 
     } else {
