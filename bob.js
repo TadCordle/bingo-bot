@@ -190,6 +190,9 @@ client.on("message", (message) => {
         else if (lowerMessage.startsWith("!team"))
             teamCmd(message);
 
+        else if (lowerMessage.startsWith("!randomteams"))
+            randomTeamsCmd(message);
+
         else if (lowerMessage.startsWith("!exit") ||
                 lowerMessage.startsWith("!unrace") ||
                 lowerMessage.startsWith("!leave") ||
@@ -261,6 +264,7 @@ helpCmd = (message) => {
 \`!game <game name>\` - Sets the game (e.g. \`!game LBP2\`).
 \`!category <category name>\` - Sets the category (e.g. \`!category any%\`).
 \`!team <discord id> [<discord id> ... <team name>]\` - Sets up a team for co-op racing.
+\`!randomteams [<team size>]\` - Randomly assigns entrants to teams of the given size. Default size is 2.
 \`!leave\` - Leave the race.
 \`!ready\` - Indicate that you're ready to start.
 \`!unready\` - Indicate that you're not actually ready.
@@ -672,6 +676,43 @@ teamCmd = (message) => {
     }
     messageString += " under the name **" + teamName + "**";
     message.channel.send(messageString);
+}
+
+// !randomteams
+randomTeamsCmd = (message) => {
+    params = message.content.replace(/^!randomteams/i, "").trim().split(" ");
+    teamSize = 2;
+    if (params[0] !== "") {
+        teamSize = parseInt(params[0]);
+        if (teamSize < 2) {
+            teamSize = 2;
+        }
+    }
+
+    entrantArray = [];
+    raceState.entrants.forEach((entrant) => {
+        if (entrant.team !== "") {
+            raceState.disbandTeam(entrant.team);
+        }
+        entrantArray.push(entrant);
+    });
+    entrantArray.sort((a, b) => Math.floor(Math.random() * 2) - 1);
+
+    teamCount = 0;
+    teamName = "";
+    entrantArray.forEach((entrant) => {
+        if (teamCount === 0) {
+            teamName = "Team " + helpers.username(entrant.message.author);
+        }
+        entrant.team = teamName;
+        teamCount++;
+        if (teamCount >= teamSize) {
+            teamCount = 0;
+        }
+    });
+
+    message.react(emotes.acknowledge);
+    statusCmd(message);
 }
 
 // !ff/!forfeit/!leave/!exit/!unrace
