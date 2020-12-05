@@ -92,6 +92,17 @@ class RaceState {
             }
         });
     }
+
+    // Returns true if any teams are registered, false if not
+    hasTeams() {
+        has = false;
+        this.entrants.forEach((entrant) => {
+            if (entrant.team !== "") {
+                has = true;
+            }
+        });
+        return has;
+    }
 }
 
 // Represents a race entrant
@@ -355,7 +366,13 @@ ilRaceCmd = (message) => {
         recordResults();
     }
 
-    categoryName = "Individual Levels";
+    // If teams are registered, choose co-op IL category
+    if (raceState.hasTeams()) {
+        categoryName = "Individual Levels (Co-op)";
+    } else {
+        categoryName = "Individual Levels";
+    }
+
     if (raceState.state === State.NO_RACE) {
         // Start race
         raceState.addEntrant(message);
@@ -443,9 +460,13 @@ categoryCmd = (message) => {
             return;
         }
 
-        if (normalized === "Individual Levels") {
+        if (normalized.startsWith("Individual Levels")) {
             if (!isILRace()) {
-                categoryName = normalized;
+                if (raceState.hasTeams()) {
+                    categoryName = "Individual Levels (Co-op)";
+                } else {
+                    categoryName = "Individual Levels";
+                }
                 endMsg = " (currently " + gameName + " / " + levelName + ").";
                 if (config.games[gameName].levels === undefined) {
                     endMsg = ".\n**Note:** ILs are not configured for " + gameName + ". Use `!game` to choose a game with ILs, or use `!level` to pick the level if this was not a mistake.";
@@ -674,6 +695,9 @@ teamCmd = (message) => {
     }
 
     // Form new team
+    if (isILRace()) {
+        categoryName = "Individual Levels (Co-op)";
+    }
     if (prevTeamName !== "") {
         raceState.disbandTeam(prevTeamName);
     }
@@ -704,6 +728,10 @@ randomTeamsCmd = (message) => {
         if (teamSize < 2) {
             teamSize = 2;
         }
+    }
+
+    if (isILRace()) {
+        categoryName = "Individual Levels (Co-op)";
     }
 
     entrantArray = [];
@@ -743,6 +771,9 @@ unteamCmd = (message) => {
         return;
     }
     disbandTeam(team);
+    if (isILRace() && !raceState.hasTeams()) {
+        categoryName = "Individual Levels";
+    }
     message.channel.send("**" + team + "** has been disbanded.");
 }
 
@@ -781,6 +812,10 @@ forfeitCmd = (message) => {
                 if (raceState.entrants.size === 1) {
                     // If only one person is left now, make sure they are marked as unready
                     raceState.entrants.forEach((entrant) => { entrant.ready = false; });
+                }
+
+                if (isILRace() && !raceState.hasTeams()) {
+                    categoryName = "Individual Levels";
                 }
             }
         }
@@ -1089,6 +1124,9 @@ clearTeamsCmd = (message) => {
             raceState.disbandTeam(entrant.team);
         }
     });
+    if (isILRace()) {
+        categoryName = "Individual Levels";
+    }
     message.channel.send("Clearing teams.");
 }
 
@@ -1166,7 +1204,7 @@ showUserStats = (message, userId, username) => {
                     + "`   " + emotes.forfeited + "\u00A0`" + helpers.addSpaces(line.ffs.toString(), maxNumberLength.ffs)
                     + "`   " + emotes.elo + "\u00A0`" + helpers.addSpaces(Math.floor(line.elo).toString(), maxNumberLength.elo)
                     + "`   " + emotes.racing + "\u00A0`" + helpers.formatTime(line.pb) + "`";
-            if (line.category === "Individual Levels") {
+            if (line.category.startsWith("Individual Levels")) {
                 ilString = "\n  " + line.category + lineString;
             } else {
                 meString += "\n  " + line.category + lineString;
@@ -1188,7 +1226,7 @@ resultsCmd = (message) => {
     if (rows.length > 0) {
         // Header
         cat = rows[0].category;
-        if (cat === "Individual Levels" && rows[0].level !== null) {
+        if (cat.startsWith("Individual Levels") && rows[0].level !== null) {
             cat = "IL / " + rows[0].level;
         }
         messageString = "Results for race #" + raceNum + " (" + rows[0].game + " / " + cat + "):";
@@ -1423,7 +1461,7 @@ newIL = () => {
 }
 
 isILRace = () => {
-    return categoryName === "Individual Levels";
+    return categoryName.startsWith("Individual Levels");
 }
 
 stopCountDown = () => {

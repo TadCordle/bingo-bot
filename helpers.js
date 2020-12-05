@@ -162,7 +162,7 @@ exports.calculatePlayerStats = (statObj, ffd, racePlace, doneTime) => {
             statObj.bronze++;
         }
 
-        if (statObj.category !== "Individual Levels" && (statObj.pb === -1 || doneTime < statObj.pb)) {
+        if (statObj.category !== "Individual Levels" && statObj.category !== "Individual Levels (Co-op)" && (statObj.pb === -1 || doneTime < statObj.pb)) {
             statObj.pb = doneTime;
         }
     }

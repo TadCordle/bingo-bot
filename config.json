@@ -27,7 +27,11 @@
                 "All Levels": ["al"],
                 "Styrofoam%": [],
                 "Die%": [],
-                "Individual Levels": ["il", "ils", "individuallevel"]
+                "2p Co-op": ["coop", "2p"],
+                "3p Co-op": ["3p"],
+                "4p Co-op": ["4p"],
+                "Individual Levels": ["il", "ils", "individuallevel"],
+                "Individual Levels (Co-op)": ["ilcoop", "ilscoop", "individuallevelcoop", "coopil", "coopils", "teamil", "teamils"]
             },
             "levels": {
                 "Introduction": ["intro"],
@@ -109,7 +113,8 @@
                 "DC Comics Level Pack": ["dc", "dccomics", "dclevelpack"],
                 "DC Comics Level Pack (Vita)": ["dcv", "dccomicsv", "dcvita", "dccomicsvita", "dclevelpackvita", "dclevelpackv"],
                 "LittleBigPlanet 3: The Journey Home": ["lbp3thejourneyhome", "lbp3journeyhome", "journeyhome", "thejourneyhome"],
-                "Individual Levels": ["il", "ils", "individuallevel"]
+                "Individual Levels": ["il", "ils", "individuallevel"],
+                "Individual Levels (Co-op)": ["ilcoop", "ilscoop", "individuallevelcoop", "coopil", "coopils", "teamil", "teamils"]
             },
             "levels": {
                 "Monsters Kit": ["monsters"],
@@ -201,7 +206,12 @@
             "categories": {
                 "Any%": [],
                 "100%": [],
-                "Individual Levels": ["il", "ils", "individuallevel"]
+                "2p Co-op": ["coop", "2p"],
+                "3p Co-op": ["3p"],
+                "4p Co-op": ["4p"],
+                "5p Co-op": ["5p"],
+                "Individual Levels": ["il", "ils", "individuallevel"],
+                "Individual Levels (Co-op)": ["ilcoop", "ilscoop", "individuallevelcoop", "coopil", "coopils", "teamil", "teamils"]
             },
             "levels": {
                 "Learning to Move": ["intro"],
@@ -218,7 +228,11 @@
                 "Any% No Overlord": ["anyno", "no", "ng", "solong", "nooverlord"],
                 "Any%": [],
                 "All Levels": ["al"],
-                "Individual Levels": ["il", "ils", "individuallevel"]
+                "2p Co-op": ["coop", "2p"],
+                "3p Co-op": ["3p"],
+                "4p Co-op": ["4p"],
+                "Individual Levels": ["il", "ils", "individuallevel"],
+                "Individual Levels (Co-op)": ["ilcoop", "ilscoop", "individuallevelcoop", "coopil", "coopils", "teamil", "teamils"]
             },
             "levels": {
                 "Introduction": ["intro"],
@@ -283,7 +297,11 @@
             "categories": {
                 "Any%": [],
                 "100%": [],
-                "Individual Levels": ["il", "ils", "individuallevel"]
+                "2p Co-op": ["coop", "2p"],
+                "3p Co-op": ["3p"],
+                "4p Co-op": ["4p"],
+                "Individual Levels": ["il", "ils", "individuallevel"],
+                "Individual Levels (Co-op)": ["ilcoop", "ilscoop", "individuallevelcoop", "coopil", "coopils", "teamil", "teamils"]
             },
             "levels": {
                 "Introduction": ["intro"],
@@ -337,7 +355,11 @@
             "categories": {
                 "Any%": [],
                 "100%": [],
-                "Individual Levels": ["il", "ils", "individuallevel"]
+                "2p Co-op": ["coop", "2p"],
+                "3p Co-op": ["3p"],
+                "4p Co-op": ["4p"],
+                "Individual Levels": ["il", "ils", "individuallevel"],
+                "Individual Levels (Co-op)": ["ilcoop", "ilscoop", "individuallevelcoop", "coopil", "coopils", "teamil", "teamils"]
             },
             "levels": {
                 "Karting Lessons": ["intro", "introduction"],
@@ -403,7 +425,8 @@
                 "3p Co-op": ["3p"],
                 "4p Co-op": ["4p"],
                 "Profile Corruption%": ["corruption"],
-                "Individual Levels": ["il", "ils", "individuallevel"]
+                "Individual Levels": ["il", "ils", "individuallevel"],
+                "Individual Levels (Co-op)": ["ilcoop", "ilscoop", "individuallevelcoop", "coopil", "coopils", "teamil", "teamils"]
             },
             "levels": {
                 "Introduction": ["intro"],
@@ -450,7 +473,8 @@
                 "3p Co-op": ["3p"],
                 "4p Co-op": ["4p"],
                 "Trial 16": ["allknittedknighttrials", "allknittedknights", "ripsnorter"],
-                "Individual Levels": ["il", "ils", "individuallevel"]
+                "Individual Levels": ["il", "ils", "individuallevel"],
+                "Individual Levels (Co-op)": ["ilcoop", "ilscoop", "individuallevelcoop", "coopil", "coopils", "teamil", "teamils"]
             },
             "levels": {
                 "Trial 1: Ain't Seen Nothing Yeti": ["trial1", "aintseennothingyeti"],
