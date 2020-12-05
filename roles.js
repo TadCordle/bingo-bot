@@ -29,12 +29,12 @@ const gameIds = {
     "Sackboy: A Big Adventure"       : "j1nevzx1",
 };
 
-const exemptCatsFromWrRole = [
+const fullGameCatsThatAreILs = [
     "824xr8md", // LBP1 Styrofoam%
     "9d8pgl6k", // LBP1 Die%
     "7dg8qml2", // LBP3 Corruption%
 ];
-
+const exemptCatsFromWrRole = [];
 const exemptGamesFromWrRole = [];
 
 exports.init = (c) => {
@@ -236,16 +236,16 @@ doSrcRoleUpdates = (discordId, srcName, message = null) => {
             role = roles[d.run.game];
             if (role) {
                 rolesShouldHave.add(role);
-                if (d.place === 1) {
-                    if (!exemptCatsFromWrRole.includes(d.run.category) && !exemptGamesFromWrRole.includes(d.run.game) && d.run.level === null) {
-                        numWrs++;
-                    } else {
+                if (d.place === 1 && !exemptGamesFromWrRole.includes(d.run.game)) {
+                    if (d.run.level !== null || fullGameCatsThatAreILs.includes(d.run.category)) {
                         numIlWrs++;
+                    } else if (!exemptCatsFromWrRole.includes(d.run.category)) {
+                        numWrs++;
                     }
                 }
             }
         });
-        helpers.log(member.displayName + ":\t" + numIlWrs + " IL Wrs");
+        helpers.log(member.displayName + ":\t" + numIlWrs + " IL Wrs / " + numWrs + " Wrs");
         if (numWrs > 0) {
             if (numWrs > wrRoles.length) {
                 numWrs = wrRoles.length;
@@ -253,17 +253,17 @@ doSrcRoleUpdates = (discordId, srcName, message = null) => {
             rolesShouldHave.add(wrRoles[numWrs - 1]);
         }
         if (numIlWrs >= 50) {
-            rolesShouldHave.add(ilWrRoles[6]);
+            rolesShouldHave.add(ilWrRoles[9]);
         } else if (numIlWrs >= 40) {
-            rolesShouldHave.add(ilWrRoles[5]);
+            rolesShouldHave.add(ilWrRoles[8]);
         } else if (numIlWrs >= 30) {
-            rolesShouldHave.add(ilWrRoles[4]);
+            rolesShouldHave.add(ilWrRoles[7]);
         } else if (numIlWrs >= 20) {
-            rolesShouldHave.add(ilWrRoles[3]);
+            rolesShouldHave.add(ilWrRoles[6]);
         } else if (numIlWrs >= 10) {
-            rolesShouldHave.add(ilWrRoles[2]);
+            rolesShouldHave.add(ilWrRoles[5]);
         } else if (numIlWrs >= 5) {
-            rolesShouldHave.add(ilWrRoles[1]);
+            rolesShouldHave.add(ilWrRoles[4]);
         } else if (numIlWrs > 0) {
             rolesShouldHave.add(ilWrRoles[numIlWrs - 1]);
         }
