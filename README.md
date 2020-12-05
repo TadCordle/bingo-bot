@@ -70,6 +70,7 @@ npm start
 **Admin/moderator only (mid-race)**
 * `!modhelp` - Shows mod-only commands.
 * `!clearrace` - Resets the bot; forces ending the race without recording any results.
+* `!clearteams` - Disbands all current teams.
 * `!roles <speedrun.com name> <discord id>` - Updates someone else's roles.
 * `!removeroles <discord id>` - Remove someone else's roles.
 * `!reloadroles` - Refreshes all registered roles.
