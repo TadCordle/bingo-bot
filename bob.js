@@ -95,7 +95,7 @@ class RaceState {
 
     // Returns true if any teams are registered, false if not
     hasTeams() {
-        has = false;
+        let has = false;
         this.entrants.forEach((entrant) => {
             if (entrant.team !== "") {
                 has = true;
@@ -770,7 +770,7 @@ unteamCmd = (message) => {
     if (team === "") {
         return;
     }
-    disbandTeam(team);
+    raceState.disbandTeam(team);
     if (isILRace() && !raceState.hasTeams()) {
         categoryName = "Individual Levels";
     }
