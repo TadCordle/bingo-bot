@@ -44,7 +44,7 @@ for (categoryIndex = 0; categoryIndex < categoriesFix.length; categoryIndex++) {
                 ds.push(rows[i].user_id);
                 dtimes.push(rows[i].time);
             }
-            teamMap.set(rows[i].user_id, rows[i].team);
+            teamMap.set(rows[i].user_id, rows[i].team_name);
             prevId = rows[i].race_id;
             i++;
         }
@@ -54,7 +54,7 @@ for (categoryIndex = 0; categoryIndex < categoriesFix.length; categoryIndex++) {
 
         // Update racers' stats
         raceRankings = ds.concat(ffs);
-        playerStats = helpers.retrievePlayerStats(raceRankings, client.getUserStatsForCategory_fix, game, category, teamMap, (id, j) => ffs.includes(id), (id, j) => dtimes[j]);
+        playerStats = helpers.retrievePlayerStats(raceRankings, getUserStatsForCategory_fix, game, category, teamMap, (id, j) => ffs.includes(id), (id, j) => dtimes[j]);
         eloDiffs = helpers.calculateEloDiffs(playerStats, teamMap, raceRankings, ffs);
         playerStats.forEach((stat, id) => {
             if (teamMap.get(id) !== "") {

@@ -172,24 +172,28 @@ exports.calculatePlayerStats = (statObj, ffd, racePlace, doneTime) => {
 // See https://en.wikipedia.org/wiki/Elo_rating_system
 exports.calculateEloDiffs = (stats, teamMap, raceRankings, ffs) => {
     oldElos = new Map();
-    prevTeam = teamMap.get(stats[0].user_id);
+    prevTeam = teamMap.get(stats.values().next().value.user_id);
     maxElo = Number.MIN_VALUE;
     eloAccum = 0;
     teamCount = 0;
-    stats.forEach((stat) => {
-        curTeam = teamMap.get(stats[0].user_id);
+    calculateTeamElo = () => {
+        elo = (maxElo * (teamCount - 1) + eloAccum) / (2 * teamCount - 1);
+        oldElos.set("!team " + prevTeam, elo);
+        maxElo = Number.MIN_VALUE;
+        eloAccum = 0;
+        teamCount = 0;
+    }
+
+    raceRankings.forEach((id) => {
+        curTeam = teamMap.get(id);
+        stat = stats.get(id);
         if (prevTeam !== "" && prevTeam !== curTeam) {
-            // Done counting prevTeam; Calculate and store weighted average of team's elo            
-            elo = (maxElo * (teamCount - 1) + eloAccum) / (2 * teamCount - 1);
-            oldElos.set("!team " + prevTeam, elo);
-            maxElo = Number.MIN_VALUE;
-            eloAccum = 0;
-            teamCount = 0;
+            calculateTeamElo();
         }
         if (curTeam === "") {
             // Individual; store Elo
-            oldElos.set(stat.user_id, stat.elo);
-        } else if (curTeam === prevTeam) {
+            oldElos.set(id, stat.elo);
+        } else {
             // Team member; accumulate Elo to average with whole team
             teamCount++;
             eloAccum += stat.elo;
@@ -199,18 +203,37 @@ exports.calculateEloDiffs = (stats, teamMap, raceRankings, ffs) => {
         }
         prevTeam = curTeam;
     });
+    if (prevTeam !== "") {
+        calculateTeamElo();
+    }
 
     eloDiffs = new Map();
     raceRankings.forEach((id1, p1Place) => {
+        actualId1 = id1;
+        if (teamMap.get(id1) !== "") {
+            actualId1 = "!team " + teamMap.get(id1);
+        }
+
         actualScore = 0;
         expectedScore = 0;
+        alreadyCompared = new Set();
         raceRankings.forEach((id2, p2Place) => {
             // Don't compare the player against themselves
-            if (id1 === id2) {
+            if (id1 === id2 || (teamMap.get(id1) !== "" && teamMap.get(id2) === teamMap.get(id1))) {
                 return;
             }
 
-            expectedDiff = 1.0 / (1 + Math.pow(10, (oldElos.get(id2) - oldElos.get(id1)) / 400));
+            // If user is on a team, compare against averaged team elo instead of individual
+            actualId2 = id2;
+            if (teamMap.get(id2) !== "") {
+                actualId2 = "!team " + teamMap.get(id2);
+            }
+            if (alreadyCompared.has(actualId2)) {
+                return;
+            }
+            alreadyCompared.add(actualId2);
+
+            expectedDiff = 1.0 / (1 + Math.pow(10, (oldElos.get(actualId2) - oldElos.get(actualId1)) / 400));
             expectedScore += expectedDiff;
 
             if (ffs.includes(id1)) {
@@ -228,7 +251,7 @@ exports.calculateEloDiffs = (stats, teamMap, raceRankings, ffs) => {
             }
         });
 
-        eloDiffs.set(id1, 32 * (actualScore - expectedScore));
+        eloDiffs.set(actualId1, 32 * (actualScore - expectedScore));
     });
     return eloDiffs;
 }
@@ -298,13 +321,14 @@ exports.forEachWithTeamHandling = (collection, individualEntrantFunc, teamNameFu
 // Returns true if there is exactly one team registered (and no individuals)
 exports.isOneTeamRegistered = (raceState) => {
     foundTeam = "";
-    for (var entry in raceState.entrants) {
-        if (entry[1].team === "" || (foundTeam !== "" && entry[1].team !== foundTeam)) {
-            return false;
+    oneTeam = true;
+    raceState.entrants.forEach((entrant) => {
+        if (entrant.team === "" || (foundTeam !== "" && entrant.team !== foundTeam)) {
+            oneTeam = false;
         }
-        foundTeam = entry[1].team;
-    }
-    return true;
+        foundTeam = entrant.team;
+    });
+    return oneTeam;
 }
 
 // The following code is based on https://github.com/intesso/decode-html to avoid additional dependencies ---------
