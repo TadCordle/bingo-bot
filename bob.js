@@ -193,6 +193,9 @@ client.on("message", (message) => {
         else if (lowerMessage.startsWith("!randomteams"))
             randomTeamsCmd(message);
 
+        else if (lowerMessage.startsWith("!unteam"))
+            unteamCmd(message);
+
         else if (lowerMessage.startsWith("!exit") ||
                 lowerMessage.startsWith("!unrace") ||
                 lowerMessage.startsWith("!leave") ||
@@ -223,6 +226,9 @@ client.on("message", (message) => {
 
             else if (lowerMessage.startsWith("!clearrace"))
                 clearRaceCmd(message);
+
+            else if (lowerMessage.startsWith("!clearteams"))
+                clearTeamsCmd(message);
         }
     }
 
@@ -265,6 +271,7 @@ helpCmd = (message) => {
 \`!category <category name>\` - Sets the category (e.g. \`!category any%\`).
 \`!team <discord id> [<discord id> ... <team name>]\` - Sets up a team for co-op racing.
 \`!randomteams [<team size>]\` - Randomly assigns entrants to teams of the given size. Default size is 2.
+\`!unteam\` - Disband your current team.
 \`!leave\` - Leave the race.
 \`!ready\` - Indicate that you're ready to start.
 \`!unready\` - Indicate that you're not actually ready.
@@ -300,6 +307,7 @@ modHelpCmd = (message) => {
 **Admin/moderator only (mid-race)**
 \`!modhelp\` - Shows this message.
 \`!clearrace\` - Resets the bot; forces ending the race without recording any results.
+\`!clearteams\` - Disbands all current teams.
 \`!roles <speedrun.com name> <discord id>\` - Updates someone else's roles.
 \`!removeroles <discord id>\` - Remove someone else's roles.
 \`!reloadroles\` - Refreshes all registered roles.
@@ -684,6 +692,11 @@ teamCmd = (message) => {
 
 // !randomteams
 randomTeamsCmd = (message) => {
+    // Can only run command if you've joined the race and it hasn't started
+    if (raceState.state !== State.JOINING || !raceState.entrants.has(message.author.id)) {
+        return;
+    }
+
     params = message.content.replace(/^!randomteams/i, "").trim().split(" ");
     teamSize = 2;
     if (params[0] !== "") {
@@ -717,6 +730,20 @@ randomTeamsCmd = (message) => {
 
     message.react(emotes.acknowledge);
     statusCmd(message);
+}
+
+// !unteam
+unteamCmd = (message) => {
+    // Can only run command if you've joined the race and it hasn't started
+    if (raceState.state !== State.JOINING || !raceState.entrants.has(message.author.id)) {
+        return;
+    }
+    team = raceState.entrants.get(message.author.id).team;
+    if (team === "") {
+        return;
+    }
+    disbandTeam(team);
+    message.channel.send("**" + team + "** has been disbanded.");
 }
 
 // !ff/!forfeit/!leave/!exit/!unrace
@@ -1053,6 +1080,16 @@ clearRaceCmd = (message) => {
     }
     raceId++;
     message.channel.send("Clearing race.");
+}
+
+// !clearteams
+clearTeamsCmd = (message) => {
+    raceState.entrants.forEach((entrant) => {
+        if (entrant.team !== "") {
+            raceState.disbandTeam(entrant.team);
+        }
+    });
+    message.channel.send("Clearing teams.");
 }
 
 // !me
