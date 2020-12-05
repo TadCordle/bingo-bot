@@ -35,9 +35,7 @@ const exemptCatsFromWrRole = [
     "7dg8qml2", // LBP3 Corruption%
 ];
 
-const exemptGamesFromWrRole = [
-    "j1llxz71", // LittleBigPlanet Series DLC
-];
+const exemptGamesFromWrRole = [];
 
 exports.init = (c) => {
     let sql = new SQLite("./data/roles.sqlite");
