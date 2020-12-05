@@ -68,7 +68,10 @@ exports.init = (c) => {
         guild.roles.cache.get("725437901680279637"), // 10+
     ];
     ilWrRoles = [
-        guild.roles.cache.get("784118229143781397"), // 1+
+        guild.roles.cache.get("784118229143781397"), // 1
+        guild.roles.cache.get("784627988703739976"), // 2
+        guild.roles.cache.get("784628034317058058"), // 3
+        guild.roles.cache.get("784628058149617684"), // 4
         guild.roles.cache.get("784118331388854288"), // 5+
         guild.roles.cache.get("784118436585799721"), // 10+
         guild.roles.cache.get("784118484342800384"), // 20+
@@ -264,7 +267,7 @@ doSrcRoleUpdates = (discordId, srcName, message = null) => {
         } else if (numIlWrs >= 5) {
             rolesShouldHave.add(ilWrRoles[1]);
         } else if (numIlWrs > 0) {
-            rolesShouldHave.add(ilWrRoles[0]);
+            rolesShouldHave.add(ilWrRoles[numIlWrs - 1]);
         }
 
         updateRoles(member, rolesShouldHave);
