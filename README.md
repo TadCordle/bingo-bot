@@ -36,7 +36,9 @@ npm start
 * `!race` - Starts a new full-game race, or joins the current open race if someone already started one.
 * `!game <game name>` - Sets the game (e.g. `!game LBP2`).
 * `!category <category name>` - Sets the category (e.g. `!category styrofoam%`).
-* `!exit` - Leave the race.
+* `!team <discord id> [<discord id> ... <team name>]` - Creates a team of you + the specified users for co-op races (with an optional team name).
+* `!randomteams [<team size>]` - Randomly assigns entrants to teams of the given size. Default size is 2.
+* `!leave` - Leave the race.
 * `!ready` - Indicate that you're ready to start.
 * `!unready` - Indicate that you're not actually ready.
 

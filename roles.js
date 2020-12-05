@@ -68,7 +68,7 @@ exports.init = (c) => {
         guild.roles.cache.get("725437901680279637"), // 10+
     ];
     ilWrRoles = [
-        guild.roles.cache.get("784118229143781397"), // 1
+        guild.roles.cache.get("784118229143781397"), // 1+
         guild.roles.cache.get("784118331388854288"), // 5+
         guild.roles.cache.get("784118436585799721"), // 10+
         guild.roles.cache.get("784118484342800384"), // 20+

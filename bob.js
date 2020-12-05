@@ -40,7 +40,7 @@ var State = {
 // Keeps track of the current stage of racing the bot is occupied with
 class RaceState {
     constructor() {
-        this.entrants = new Map(); // Maps from user id to their current race state ()
+        this.entrants = new Map(); // Maps from user id to their current race state
         this.doneEntrants = [];
         this.ffEntrants = [];
         this.state = State.NO_RACE;
@@ -62,6 +62,9 @@ class RaceState {
     // Removes an entrant. Returns true if successful, returns false if the user isn't an entrant.
     removeEntrant(id) {
         if (this.entrants.has(id)) {
+            if (this.entrants.get(id).team !== "") {
+                this.disbandTeam(this.entrants.get(id).team);
+            }
             this.entrants.delete(id);
             return true;
         }
@@ -80,6 +83,15 @@ class RaceState {
         }
         return 0;
     }
+
+    // Resets the team name of all entrants using teamName
+    disbandTeam(teamName) {
+        this.entrants.forEach((entrant) => {
+            if (entrant.team === teamName) {
+                entrant.team = "";
+            }
+        });
+    }
 }
 
 // Represents a race entrant
@@ -88,6 +100,7 @@ class Entrant {
         this.message = message;
         this.ready = false;
         this.doneTime = 0;
+        this.team = "";
     }
 }
 
@@ -105,7 +118,7 @@ var raceState = new RaceState();
 client.on("ready", () => {
     // Setup tables for keeping track of race results
     if (!sql.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='results'").get()['count(*)']) {
-        sql.prepare("CREATE TABLE results (race_id INTEGER, user_id TEXT, user_name TEXT, game TEXT, category TEXT, level TEXT, time INTEGER, ff INTEGER);").run();
+        sql.prepare("CREATE TABLE results (race_id INTEGER, user_id TEXT, user_name TEXT, game TEXT, category TEXT, level TEXT, time INTEGER, ff INTEGER, team_name TEXT);").run();
         sql.prepare("CREATE UNIQUE INDEX idx_results_race ON results (race_id, user_id);").run();
         sql.pragma("synchronous = 1");
         sql.pragma("journal_mode = wal");
@@ -122,7 +135,7 @@ client.on("ready", () => {
     // Setup SQL queries for setting/retrieving results
     client.getLastRaceID = sql.prepare("SELECT MAX(race_id) AS id FROM results");
     client.getResults = sql.prepare("SELECT * FROM results WHERE race_id = ? ORDER BY time ASC");
-    client.addResult = sql.prepare("INSERT OR REPLACE INTO results (race_id, user_id, user_name, game, category, level, time, ff) VALUES (@race_id, @user_id, @user_name, @game, @category, @level, @time, @ff);");
+    client.addResult = sql.prepare("INSERT OR REPLACE INTO results (race_id, user_id, user_name, game, category, level, time, ff, team_name) VALUES (@race_id, @user_id, @user_name, @game, @category, @level, @time, @ff, @team_name);");
 
     // Setup SQL queries for setting/retrieving user stats
     client.getUserStatsForGame = sql.prepare("SELECT * FROM users WHERE user_id = ? AND game = ? ORDER BY category ASC");
@@ -173,6 +186,12 @@ client.on("message", (message) => {
 
         else if (lowerMessage.startsWith("!luckydip"))
             luckyDipCmd(message);
+
+        else if (lowerMessage.startsWith("!team"))
+            teamCmd(message);
+
+        else if (lowerMessage.startsWith("!randomteams"))
+            randomTeamsCmd(message);
 
         else if (lowerMessage.startsWith("!exit") ||
                 lowerMessage.startsWith("!unrace") ||
@@ -242,36 +261,37 @@ helpCmd = (message) => {
     message.channel.send(`
 **Pre-race commands**
 \`!race\` - Starts a new full-game race, or joins the current open race if someone already started one.
-\`!game <game name>\` - Sets the game (e.g. \`!game LBP2\`). Default is "LittleBigPlanet".
-\`!category <category name>\` - Sets the category. Default is "Any% No Overlord".
-\`!exit\` - Leave the race.
+\`!game <game name>\` - Sets the game (e.g. \`!game LBP2\`).
+\`!category <category name>\` - Sets the category (e.g. \`!category any%\`).
+\`!team <discord id> [<discord id> ... <team name>]\` - Sets up a team for co-op racing.
+\`!randomteams [<team size>]\` - Randomly assigns entrants to teams of the given size. Default size is 2.
+\`!leave\` - Leave the race.
 \`!ready\` - Indicate that you're ready to start.
 \`!unready\` - Indicate that you're not actually ready.
 
 **Mid-race commands**
-\`!d\` / \`!done\` - Indicate that you finished.
-\`!ud\` / \`!undone\` - Get back in the race if you finished by accident.
-\`!f\` / \`!forfeit\` - Drop out of the race.
-\`!uf\` / \`!unforfeit\` - Rejoin the race if you forfeited by accident.
+\`!d\` - Indicate that you finished.
+\`!ud\` - Get back in the race if you finished by accident.
+\`!f\` - Drop out of the race.
+\`!uf\` - Rejoin the race if you forfeited by accident.
 
 **IL race commands**
 \`!ilrace\` - Starts a new series of IL races.
-\`!level <level name>\` - Sets the next level to race. Also accepts lbp.me links. Default is "Introduction".
+\`!level <level name>\` - Sets the next level to race. Also accepts lbp.me links.
 \`!luckydip\` - Sets the next level to race to a random lucky dip level.
 \`!ilresults\` - Shows the ILs that have been played so far in a series, and the winner of each one.
 
 **Stat commands**
 \`!status\` - Shows current race status/entrants.
-\`!results raceNum\` - Shows results of the specified race number (e.g. \`!results 2\`).
-\`!me <game name>\` - Shows your race statistics for the specified game (e.g. \`!me LBP\` shows your LBP1 stats).
-\`!runner <username or id> <game name>\` - Shows someone else's race statistics (e.g. \`!runner RbdJellyfish LBP\` shows RbdJellyfish's LBP1 stats).
-\`!elo <game name>/<category name>\` - Shows the ELO leaderboard for the given game/category (e.g. \`!elo lbp/die%\` shows the LBP1 Die% leaderboard).
+\`!results <race #>\` - Shows results of the specified race number (e.g. \`!results 2\`).
+\`!me <game name>\` - Shows your race statistics for the specified game (e.g. \`!me lbp\`).
+\`!runner <username or id> <game name>\` - Shows someone else's race statistics (e.g. \`!runner RbdJellyfish lbp\`).
+\`!elo <game name>/<category name>\` - Shows the ELO leaderboard for the given game/category (e.g. \`!elo lbp/any% no overlord\`).
 \`!help\` - Shows this message.
 
 **Other commands**
 \`!roles <speedrun.com name>\` - Updates your roles to match races finished + speedrun.com PBs (if you linked your discord account on speedrun.com).
 \`!removeroles\` - Removes your runner roles.
-\`!nr\` / \`!newrunner\` - Mixes two halves of the names of random LBP runners (that have a full-game run on sr.c) together.
 `);
 }
 
@@ -578,6 +598,127 @@ chooseLbpMeLevel = (level, message) => {
     });
 }
 
+// !team
+teamCmd = (message) => {
+    // Can only run command if you've joined the race and it hasn't started
+    if (raceState.state !== State.JOINING || !raceState.entrants.has(message.author.id)) {
+        return;
+    }
+
+    params = message.content.replace(/^!team/i, "").trim().split(" ");
+    if (params[0] === "") {
+        message.channel.send("Usage: `!team @teammate1 [@teammate2 @teammate3 ... team name]`");
+        return;
+    }
+
+    // Parse custom team name first; need to validate this before we start constructing the team
+    teamName = "Team " + helpers.username(message);
+    customTeamName = false;
+    for(var i = 0; i < params.length; i++) {
+        if (customTeamName) {
+            teamName += " " + params[i];
+        } else {
+            if (params[i].startsWith("<@!")) {
+                // Skip over team members
+                continue;
+            }
+            teamName = params[i];
+            customTeamName = true;
+        }
+    }
+
+    // Validate that team name is unused
+    prevTeamName = raceState.entrants.get(message.author.id).team;
+    if (teamName !== prevTeamName) {
+        for(var entry in raceState.entrants) {
+            if (entry[1].team === teamName) {
+                message.channel.send(helpers.mention(message.author) + ": Cannot create team; the team name \"" + teamName + "\" is already being used.");
+                return;
+            }
+        }
+    }
+
+    // Validate selected team members
+    selectedUsers = [raceState.entrants.get(message.author.id)];
+    for(var i = 0; i < params.length; i++) {
+        if (!params[i].startsWith("<@!")) {
+            break;
+        }
+        discordId = params[i].replace("<@!", "").replace(">", "").trim();
+        if (!raceState.entrants.has(discordId)) {
+            message.channel.send(helpers.mention(message.author) + ": Cannot create team; all team members must join the race first.");
+            return;
+        }
+        if (discordId === message.author.id) {
+            message.channel.send(helpers.mention(message.author) + ": Cannot create team; you can't team with yourself!");
+            return;
+        }
+        entrant = raceState.entrants.get(discordId);
+        if (entrant.team !== "" && entrant.team !== teamName && entrant.team !== prevTeamName) {
+            message.channel.send(helpers.mention(message.author) + ": Cannot create team; <@" + discordId + "> is already on another team (" + userTeam + ").");
+            return;
+        }
+        selectedUsers.push(entrant);
+    }
+    if (selectedUsers.length <= 1) {
+        message.channel.send(helpers.mention(message.author) + ": Cannot create team; you must choose teammates.");
+        return;
+    }
+
+    // Form new team
+    if (prevTeamName !== "") {
+        raceState.disbandTeam(prevTeamName);
+    }
+    for (var i = 0; i < selectedUsers.length; i++) {
+        selectedUsers[i].team = teamName;
+    }
+
+    // Send confirmation message
+    messageString = helpers.mention(selectedUsers[0].message.author) + " has teamed with ";
+    for (var i = 1; i < selectedUsers.length; i++) {
+        messageString += (i > 1 ? ", " : "") + helpers.mention(selectedUsers[i].message.author)
+    }
+    messageString += " under the name **" + teamName + "**";
+    message.channel.send(messageString);
+}
+
+// !randomteams
+randomTeamsCmd = (message) => {
+    params = message.content.replace(/^!randomteams/i, "").trim().split(" ");
+    teamSize = 2;
+    if (params[0] !== "") {
+        teamSize = parseInt(params[0]);
+        if (teamSize < 2) {
+            teamSize = 2;
+        }
+    }
+
+    entrantArray = [];
+    raceState.entrants.forEach((entrant) => {
+        if (entrant.team !== "") {
+            raceState.disbandTeam(entrant.team);
+        }
+        entrantArray.push(entrant);
+    });
+    entrantArray.sort((a, b) => Math.floor(Math.random() * 3) - 1);
+
+    teamCount = 0;
+    teamName = "";
+    entrantArray.forEach((entrant) => {
+        if (teamCount === 0) {
+            teamName = "Team " + helpers.username(entrant.message);
+        }
+        entrant.team = teamName;
+        teamCount++;
+        if (teamCount >= teamSize) {
+            teamCount = 0;
+        }
+    });
+
+    message.react(emotes.acknowledge);
+    statusCmd(message);
+}
+
 // !ff/!forfeit/!leave/!exit/!unrace
 forfeitCmd = (message) => {
     if (!raceState.entrants.has(message.author.id)){
@@ -596,6 +737,19 @@ forfeitCmd = (message) => {
                     categoryName = helpers.normalizeCategory(gameName, null);
                 }
             } else {
+                if (helpers.isOneTeamRegistered(raceState)) {
+                    // If only one team  is left, unready one of its members
+                    allReady = true;
+                    raceState.entrants.forEach((entrant) => {
+                        if (!entrant.ready) {
+                            allReady = false;
+                        }
+                    });
+                    if (allReady) {
+                        raceState.entrants.values().next().value.ready = false;
+                    }
+                }
+
                 message.channel.send(helpers.username(message) + " has left the race.");
                 if (raceState.entrants.size === 1) {
                     // If only one person is left now, make sure they are marked as unready
@@ -614,11 +768,13 @@ forfeitCmd = (message) => {
 
         } else {
             // Otherwise mark them as forfeited
-            raceState.ffEntrants.push(message.author.id);
-            message.channel.send(helpers.username(message) + " has forfeited (use `!unforfeit` to rejoin if this was an accident).");
+            helpers.doForWholeTeam(raceState, message.author.id, (e) => raceState.ffEntrants.push(e.message.author.id));
+            team = raceState.entrants.get(message.author.id).team;
+            message.channel.send((team === "" ? helpers.username(message) : "**" + team + "**") + " has forfeited (use `!unforfeit` to rejoin if this was an accident).");
+
+            // Check if everyone forfeited
             if (raceState.ffEntrants.length + raceState.doneEntrants.length === raceState.entrants.size) {
                 if (raceState.state === State.COUNTDOWN) {
-                    // Everyone forfeited during the countdown
                     stopCountDown();
                     if (isILRace()) {
                         newIL();
@@ -637,13 +793,22 @@ forfeitCmd = (message) => {
 
 // !uff/!unforfeit
 unforfeitCmd = (message) => {
+    if (!raceState.entrants.has(message.author.id)){
+        // Can't unforfeit if you're not in the race
+        return;
+    }
+
     if (raceState.state === State.ACTIVE || raceState.state === State.COUNTDOWN || raceState.state === State.DONE) {
-        if (raceState.leavingWhenDone.has(message.author.id)) {
-            raceState.leavingWhenDone.delete(message.author.id);
-        }
-        if (raceState.entrants.has(message.author.id) && raceState.ffEntrants.includes(message.author.id)) {
+        ufPlayers = [];
+        helpers.doForWholeTeam(raceState, message.author.id, (e) => ufPlayers.push(e.message.author.id));
+        if (ufPlayers.length > 0) {
+            ufPlayers.forEach((id) => {
+                if (raceState.leavingWhenDone.has(id)) {
+                    raceState.leavingWhenDone.delete(id);
+                }
+                raceState.ffEntrants = helpers.arrayRemove(raceState.ffEntrants, id);
+            });
             raceState.state = State.ACTIVE;
-            raceState.ffEntrants = helpers.arrayRemove(raceState.ffEntrants, message.author.id);
             clearTimeout(raceDoneTimeout);
             clearTimeout(raceDoneWarningTimeout);
             message.react(emotes.acknowledge);
@@ -654,18 +819,18 @@ unforfeitCmd = (message) => {
 // !ready
 readyCmd = (message) => {
     if (raceState.state === State.JOINING) {
-        // Don't allow readying up if only one person has joined.
+        // Don't allow readying up if only one person has joined
         if (raceState.entrants.size === 1) {
             if (raceState.entrants.has(message.author.id)) {
                 message.channel.send("Need more than one entrant before starting!");
                 return;
             }
         }
+
         if (!raceState.entrantIsReady(message.author.id)) {
             // Mark as ready
             raceState.addEntrant(message);
             raceState.entrants.get(message.author.id).ready = true;
-            message.react(emotes.acknowledge);
 
             // Start countdown if everyone is ready
             everyoneReady = true;
@@ -675,8 +840,15 @@ readyCmd = (message) => {
                 }
             });
             if (everyoneReady) {
+                // Don't start if only one team has joined
+                if (helpers.isOneTeamRegistered(raceState)) {
+                    message.channel.send("Can't ready up/start; everyone is on the same team!");
+                    raceState.entrants.get(message.author.id).ready = false;
+                    return;
+                }
                 doCountDown(message);
             }
+            message.react(emotes.acknowledge);
         }
     }
 }
@@ -701,54 +873,64 @@ unreadyCmd = (message) => {
 
 // !d/!done
 doneCmd = (message) => {
-    if (raceState.state === State.ACTIVE) {
-        if (raceState.entrants.has(message.author.id) && !raceState.doneEntrants.includes(message.author.id) && !raceState.ffEntrants.includes(message.author.id)) {
-            time = message.createdTimestamp / 1000 - raceState.startTime;
-            raceState.entrants.get(message.author.id).doneTime = time;
-            raceState.doneEntrants.push(message.author.id);
+    if (raceState.state !== State.ACTIVE || !raceState.entrants.has(message.author.id) || raceState.doneEntrants.includes(message.author.id) || raceState.ffEntrants.includes(message.author.id)) {
+        return;
+    }
 
-            // Calculate Elo diff
-            inProgress = [];
-            raceState.entrants.forEach((entrant) => {
-                id = entrant.message.author.id;
-                if (!raceState.doneEntrants.includes(id) && !raceState.ffEntrants.includes(id)) {
-                    inProgress.push(id);
-                }
-            });
-            sortedRacerList = raceState.doneEntrants.concat(inProgress).concat(raceState.ffEntrants);
-            stats = helpers.retrievePlayerStats(sortedRacerList, client.getUserStatsForCategory, gameName, categoryName);
-            newElos = helpers.calculateElos(stats, sortedRacerList, raceState.ffEntrants);
-            eloDiff = newElos.get(message.author.id) - stats.get(message.author.id).elo;
+    time = message.createdTimestamp / 1000 - raceState.startTime;
+    helpers.doForWholeTeam(raceState, message.author.id, (e) => {
+        e.doneTime = time;
+        raceState.doneEntrants.push(e.message.author.id);
+    });
 
-            ilPoints = raceState.entrants.size - raceState.doneEntrants.length + 1;
-            message.channel.send(helpers.mention(message.author)
-                        + " has finished in "
-                        + helpers.formatPlace(raceState.doneEntrants.length)
-                        + " place "
-                        + (isILRace() ? "(+" + ilPoints + " point" + (ilPoints > 1 ? "s" : "") + ") " : "")
-                        + ((eloDiff < 0 ? "(" : "(+") + (Math.round(eloDiff * 100) / 100) + " " + emotes.elo + ") ")
-                        + "with a time of " + helpers.formatTime(time)) + "! (Use `!undone` if this was a mistake.)";
-            if (raceState.ffEntrants.length + raceState.doneEntrants.length === raceState.entrants.size) {
-                doEndRace(message);
-            }
+    // Calculate Elo diff
+    inProgress = [];
+    teamMap = new Map();
+    raceState.entrants.forEach((entrant) => {
+        id = entrant.message.author.id;
+        teamMap.set(id, entrant.team);
+        if (!raceState.doneEntrants.includes(id) && !raceState.ffEntrants.includes(id)) {
+            inProgress.push(id);
         }
-    } else if (isILRace() && raceState.State === State.JOINING) {
-        // Leave the IL race lobby
-        forfeitCmd(message);
+    });
+    sortedRacerList = raceState.doneEntrants.concat(inProgress).concat(raceState.ffEntrants);
+    stats = helpers.retrievePlayerStats(sortedRacerList, client.getUserStatsForCategory, gameName, categoryName, teamMap);
+    eloId = message.author.id;
+    if (teamMap.get(message.author.id) !== "") {
+        eloId = "!team " + teamMap.get(message.author.id);
+    }
+    eloDiff = helpers.calculateEloDiffs(stats, teamMap, sortedRacerList, raceState.ffEntrants).get(eloId);
+
+    // Calculate finish position
+    place = 0;
+    entrantsDone = [];
+    raceState.doneEntrants.forEach((id) => entrantsDone.push(raceState.entrants.get(id)));
+    helpers.forEachWithTeamHandling(entrantsDone, (individualEntrante) => place++, (firstOnTeam) => place++, (entrantWithTeame) => {});
+
+    team = raceState.entrants.get(message.author.id).team;
+    message.channel.send((team === "" ? helpers.mention(message.author) : "**" + team + "**")
+            + " has finished in " + helpers.formatPlace(place) + " place "
+            + ((eloDiff < 0 ? "(" : "(+") + (Math.round(eloDiff * 100) / 100) + " " + emotes.elo + ") ")
+            + "with a time of " + helpers.formatTime(time)) + "! (Use `!undone` if this was a mistake.)";
+    if (raceState.ffEntrants.length + raceState.doneEntrants.length === raceState.entrants.size) {
+        doEndRace(message);
     }
 }
 
 // !ud/!undone
 undoneCmd = (message) => {
-    if (raceState.state === State.ACTIVE || raceState.state === State.DONE) {
-        if (raceState.entrants.has(message.author.id) && raceState.doneEntrants.includes(message.author.id)) {
-            raceState.state = State.ACTIVE;
-            raceState.entrants.get(message.author.id).doneTime = 0;
-            raceState.doneEntrants = helpers.arrayRemove(raceState.doneEntrants, message.author.id);
-            clearTimeout(raceDoneTimeout);
-            clearTimeout(raceDoneWarningTimeout);
-            message.react(emotes.acknowledge);
-        }
+    if (raceState.state !== State.ACTIVE && raceState.state !== State.DONE) {
+        return;
+    }
+    if (raceState.entrants.has(message.author.id) && raceState.doneEntrants.includes(message.author.id)) {
+        helpers.doForWholeTeam(raceState, message.author.id, (e) => {
+            e.doneTime = 0;
+            raceState.doneEntrants = helpers.arrayRemove(raceState.doneEntrants, e.message.author.id);
+        });
+        raceState.state = State.ACTIVE;
+        clearTimeout(raceDoneTimeout);
+        clearTimeout(raceDoneWarningTimeout);
+        message.react(emotes.acknowledge);
     }
 }
 
@@ -760,27 +942,31 @@ statusCmd = (message) => {
     } else if (raceState.state === State.JOINING) {
         raceString = "**" + gameName + " / " + categoryName + " race is currently open with " + raceState.entrants.size + " entrant"
                 + (raceState.entrants.size === 1 ? "" : "s") + ". Type `!race` to join!**\n";
+
         if (isILRace()) {
+            // Show IL race status
             raceString += "*Starting " + helpers.formatPlace(raceState.ilResults.length + 1) + " IL (" + levelName + " - id: " + raceId + ")*\n";
             sortedEntrants = [];
             raceState.entrants.forEach((entrant) => {
                 sortedEntrants.push(entrant);
             });
-            sortedEntrants.sort((entrant1, entrant2) => {
-                score1 = raceState.getILScore(entrant1.message.author.id);
-                score2 = raceState.getILScore(entrant2.message.author.id);
-                if (score1 > score2) return -1;
-                if (score1 < score2) return 1;
-                return 0;
-            });
-            sortedEntrants.forEach((entrant) => {
-                raceString += "\t" + (entrant.ready ? emotes.ready : emotes.notReady) + " ";
-                raceString += helpers.username(entrant.message) + " - " + raceState.getILScore(entrant.message.author.id) + "\n";
-            });
+            sortedEntrants.sort((entrant1, entrant2) => raceState.getILScore(entrant2.message.author.id) - raceState.getILScore(entrant1.message.author.id));
+            entrantString = (e) => "\t" + (e.ready ? emotes.ready : emotes.notReady) + " " + helpers.username(e.message) + " - " + raceState.getILScore(e.message.author.id) + "\n";
+            helpers.forEachWithTeamHandling(sortedEntrants,
+                    (individualEntrant) => raceString += entrantString(individualEntrant),
+                    (firstOnTeam)       => raceString += "\t**" + firstOnTeam.team + "**\n",
+                    (entrantWithTeam)   => raceString += "\t" + entrantString(entrantWithTeam));
+
         } else {
-            raceState.entrants.forEach((entrant) => {
-                raceString += "\t" + (entrant.ready ? emotes.ready : emotes.notReady) + " ";
-                raceString += helpers.username(entrant.message) + "\n";
+            // Show full game race status
+            entrantString = (e) => "\t" + (e.ready ? emotes.ready : emotes.notReady) + " " + helpers.username(e.message) + "\n";
+            entrantsWithNoTeam = [];
+            helpers.forEachWithTeamHandling(raceState.entrants,
+                    (individualEntrant) => entrantsWithNoTeam.push(individualEntrant),
+                    (firstOnTeam)       => raceString += "\t**" + firstOnTeam.team + "**\n",
+                    (entrantWithTeam)   => raceString += "\t" + entrantString(entrantWithTeam));
+            entrantsWithNoTeam.forEach((entrant) => {
+                raceString += entrantString(entrant);
             });
         }
         message.channel.send(raceString);
@@ -792,29 +978,60 @@ statusCmd = (message) => {
                         ? "in progress. Current time: " + helpers.formatTime(Date.now() / 1000 - raceState.startTime)
                         : "done!" + (raceState.ffEntrants.length === raceState.entrants.size ? "" : " Results will be recorded soon."))
                 + "**";
-
-        // List done entrants
-        raceState.doneEntrants.forEach((id, i) => {
-            entrant = raceState.entrants.get(id);
-            points = raceState.entrants.size - i;
-            raceString += "\n\t" + helpers.placeEmote(i)
-                    + " **" + helpers.username(entrant.message) + "** "
-                    + (isILRace() ? "(+" + points + " point" + (points > 1 ? "s" : "") + ") " : "")
-                    + "(" + helpers.formatTime(entrant.doneTime) + ")";
-        });
-
-        // List racers still going
+        entrantsDone = [];
+        entrantsNotDone = [];
+        idsNotDone = [];
+        entrantsFFd = [];
+        teamMap = new Map();
         raceState.entrants.forEach((entrant) => {
-            if (!raceState.doneEntrants.includes(entrant.message.author.id) && !raceState.ffEntrants.includes(entrant.message.author.id)) {
-                raceString += "\n\t" + emotes.racing + " " + helpers.username(entrant.message);
+            id = entrant.message.author.id;
+            teamMap.set(id, entrant.team);
+            if (raceState.doneEntrants.includes(id)) {
+                entrantsDone.push(entrant);
+            } else if (raceState.ffEntrants.includes(id)) {
+                entrantsFFd.push(entrant);
+            } else {
+                entrantsNotDone.push(entrant);
+                idsNotDone.push(id);
             }
         });
+        entrantsDone.sort((entrant1, entrant2) => entrant1.doneTime - entrant2.doneTime);
+
+        // Calculate Elo diff
+        sortedRacerList = raceState.doneEntrants.concat(idsNotDone).concat(raceState.ffEntrants);
+        stats = helpers.retrievePlayerStats(sortedRacerList, client.getUserStatsForCategory, gameName, categoryName, teamMap);
+        eloDiffs = helpers.calculateEloDiffs(stats, teamMap, sortedRacerList, raceState.ffEntrants);
+        eloDiffStr = (e, hide=false) => {
+            if (hide){
+                return "";
+            } else {
+                eloId = e.message.author.id;
+                if (e.team !== "") {
+                    eloId = "!team " + e.team;
+                }
+                return "(" + emotes.elo + " " + (eloDiffs.get(eloId) >= 0 ? "+" : "") + (Math.round(eloDiffs.get(eloId) * 100) / 100) + ")";
+            }
+        };
+
+        // List done entrants
+        place = 0;
+        points = raceState.entrants.size;
+        helpers.forEachWithTeamHandling(entrantsDone,
+            (individualEntrant) => raceString += "\n\t" + helpers.placeEmote(place++) + " " + helpers.username(individualEntrant.message) + " " + eloDiffStr(individualEntrant) + " (" + helpers.formatTime(individualEntrant.doneTime) + ")",
+            (firstOnTeam)       => raceString += "\n\t" + helpers.placeEmote(place++) + " **" + firstOnTeam.team + "** (" + helpers.formatTime(firstOnTeam.doneTime) + ")",
+            (entrantWithTeam)   => raceString += "\n\t\t" + helpers.username(entrantWithTeam.message) + " " + eloDiffStr(entrantWithTeam));
+
+        // List racers still going
+        helpers.forEachWithTeamHandling(entrantsNotDone,
+            (individualEntrant) => raceString += "\n\t" + emotes.racing + " " + helpers.username(individualEntrant.message),
+            (firstOnTeam)       => raceString += "\n\t" + emotes.racing + " **" + firstOnTeam.team + "**",
+            (entrantWithTeam)   => raceString += "\n\t\t" + helpers.username(entrantWithTeam.message));
 
         // List forfeited entrants
-        raceState.ffEntrants.forEach((id) => {
-            entrant = raceState.entrants.get(id);
-            raceString += "\n\t" + emotes.forfeited + " " + helpers.username(entrant.message);
-        });
+        helpers.forEachWithTeamHandling(entrantsFFd,
+            (individualEntrant) => raceString += "\n\t" + emotes.forfeited + " " + helpers.username(individualEntrant.message) + " " + eloDiffStr(individualEntrant, idsNotDone.length > 0),
+            (firstOnTeam)       => raceString += "\n\t" + emotes.forfeited + " **" + firstOnTeam.team + "**",
+            (entrantWithTeam)   => raceString += "\n\t\t" + helpers.username(entrantWithTeam.message) + " " + eloDiffStr(entrantWithTeam, idsNotDone.length > 0));
 
         message.channel.send(raceString);
     }
@@ -939,22 +1156,31 @@ resultsCmd = (message) => {
         }
         messageString = "Results for race #" + raceNum + " (" + rows[0].game + " / " + cat + "):";
 
-        // First list people who finished, but keep track of the forfeits
+        // Separate finishes and ffs
         ffd = [];
-        placeCount = 0;
+        done = [];
         rows.forEach((row) => {
-            if (row.time < 0) {
-                ffd.push(row);
+            e = { user_name: row.user_name, time: row.time, team: row.team_name };
+            if (row.ff) {
+                ffd.push(e);
             } else {
-                messageString += "\n\t" + helpers.placeEmote(placeCount) + " " + row.user_name + " (" + helpers.formatTime(row.time) + ")";
-                placeCount++;
+                done.push(e);
             }
         });
 
-        // Now we can list forfeits
-        ffd.forEach((row) => {
-            messageString += "\n\t" + emotes.forfeited + " " + row.user_name;
-        });
+        // List done entrants
+        place = 0;
+        helpers.forEachWithTeamHandling(done,
+            (individualEntrant) => messageString += "\n\t" + helpers.placeEmote(place++) + " " + individualEntrant.user_name + " (" + helpers.formatTime(individualEntrant.time) + ")",
+            (firstOnTeam)       => messageString += "\n\t" + helpers.placeEmote(place++) + " **" + firstOnTeam.team + "** (" + helpers.formatTime(firstOnTeam.time) + ")",
+            (entrantWithTeam)   => messageString += "\n\t\t" + entrantWithTeam.user_name);
+
+        // List forfeited entrants
+        helpers.forEachWithTeamHandling(ffd,
+            (individualEntrant) => messageString += "\n\t" + emotes.forfeited + " " + individualEntrant.user_name,
+            (firstOnTeam)       => messageString += "\n\t" + emotes.forfeited + " **" + firstOnTeam.team + "**",
+            (entrantWithTeam)   => messageString += "\n\t\t" + entrantWithTeam.user_name);
+
         message.channel.send(messageString);
 
     } else {
@@ -974,7 +1200,12 @@ ilResultsCmd = (message) => {
         msgs = [];
         messageString = "**Results for current IL series (listed by race ID):**\n";
         raceState.ilResults.forEach((result, num) => {
-            toAdd = "\t#" + result.id + " - " + result.level + " (" + emotes.firstPlace + " " + result.winner + ")\n";
+            winnerEntrant = raceState.entrants.get(result.winner);
+            winnerName = helpers.username(winnerEntrant.message);
+            if (winnerEntrant.team !== "") {
+                winnerName = "**" + winnerEntrant.team + "**";
+            }
+            toAdd = "\t#" + result.id + " - " + result.level + " (" + emotes.firstPlace + " " + winnerName + ")\n";
             if (messageString.length + toAdd.length > 2000) {
                 msgs.push(messageString);
                 messageString = "**Results for current IL series (cont):**\n";
@@ -992,7 +1223,7 @@ ilResultsCmd = (message) => {
 leaderboardCmd = (message) => {
     params = message.content.replace(/^!leaderboard/i, "").replace(/^!elo/i, "").trim().split('/');
     if (params.length !== 2) {
-        message.channel.send("Usage: `!leaderboard <game name> / <category name>` (e.g. `!leaderboard lbp1 / any% no overlord`)");
+        message.channel.send("Usage: `!elo <game name> / <category name>` (e.g. `!elo lbp1 / any% no overlord`)");
         return;
     }
 
@@ -1090,33 +1321,49 @@ recordResults = () => {
     }
     raceState.doneEntrants.forEach((id) => {
         entrant = raceState.entrants.get(id);
-        result = { race_id: `${raceId}`, user_id: `${id}`, user_name: `${helpers.username(entrant.message)}`, game: `${gameName}`, category: `${categoryName}`, level: `${level}`, time: `${entrant.doneTime}`, ff: 0 };
+        result = { race_id: `${raceId}`, user_id: `${id}`, user_name: `${helpers.username(entrant.message)}`, game: `${gameName}`, category: `${categoryName}`, level: `${level}`, time: `${entrant.doneTime}`, ff: 0, team_name: `${entrant.team}` };
         client.addResult.run(result);
         roles.giveRoleFromRace(id, gameName, categoryName);
     });
     raceState.ffEntrants.forEach((id) => {
         entrant = raceState.entrants.get(id);
-        result = { race_id: `${raceId}`, user_id: `${id}`, user_name: `${helpers.username(entrant.message)}`, game: `${gameName}`, category: `${categoryName}`, level: `${level}`, time: -1, ff: 1 };
+        result = { race_id: `${raceId}`, user_id: `${id}`, user_name: `${helpers.username(entrant.message)}`, game: `${gameName}`, category: `${categoryName}`, level: `${level}`, time: -1, ff: 1, team_name: `${entrant.team}` };
         client.addResult.run(result);
     });
 
-    // Update racers' stats
+    // Keep track of teams and IL series results
+    teamMap = new Map();
     raceRankings = raceState.doneEntrants.concat(raceState.ffEntrants);
-    raceRankings.forEach((id, i) => {
-        // Keep track of results for IL series
-        if (!raceState.ffEntrants.includes(id) && isILRace()) {
-            if (i === 0) {
-                raceState.ilResults.push(new ILResult(raceId, levelName, helpers.username(raceState.entrants.get(id).message)))
-            }
-            raceState.ilScores.set(id, raceState.getILScore(id) + raceState.doneEntrants.length + raceState.ffEntrants.length - i);
-        }
-    });
-    playerStats = helpers.retrievePlayerStats(raceRankings, client.getUserStatsForCategory, gameName, categoryName, (id, i) => raceState.ffEntrants.includes(id), (id, i) => raceState.entrants.get(id).doneTime);
-    newElos = helpers.calculateElos(playerStats, raceRankings, raceState.ffEntrants);
+    raceState.ilResults.push(new ILResult(raceId, levelName, raceRankings[0]));
 
-    // Update/save stats with new Elos
+    points = 0;
+    helpers.forEachWithTeamHandling(raceState.entrants, (individualEntrant) => points++, (firstOnTeam) => points++, (entrantWithTeam) => {});
+
+    prevTeam = undefined;
+    raceRankings.forEach((id, i) => {
+        if (!raceState.ffEntrants.includes(id) && isILRace()) {
+            curTeam = raceState.entrants.get(id).team;
+            if (prevTeam === undefined) {
+                prevTeam = curTeam;
+            }
+            if (curTeam === "" || curTeam !== prevTeam) {
+                points--;
+            }
+            raceState.ilScores.set(id, raceState.getILScore(id) + points);
+            prevTeam = curTeam;
+        }
+        teamMap.set(id, raceState.entrants.get(id).team);
+    });
+
+    // Update/save stats
+    playerStats = helpers.retrievePlayerStats(raceRankings, client.getUserStatsForCategory, gameName, categoryName, teamMap, (id, i) => raceState.ffEntrants.includes(id), (id, i) => raceState.entrants.get(id).doneTime);
+    eloDiffs = helpers.calculateEloDiffs(playerStats, teamMap, raceRankings, raceState.ffEntrants);
     playerStats.forEach((stat, id) => {
-        stat.elo = newElos.get(id);
+        if (teamMap.get(id) !== "") {
+            stat.elo += eloDiffs.get("!team " + teamMap.get(id));
+        } else {
+            stat.elo += eloDiffs.get(id);
+        }
         client.addUserStat.run(stat);
     });
 
