@@ -1275,12 +1275,7 @@ ilResultsCmd = (message) => {
         msgs = [];
         messageString = "**Results for current IL series (listed by race ID):**\n";
         raceState.ilResults.forEach((result, num) => {
-            winnerEntrant = raceState.entrants.get(result.winner);
-            winnerName = helpers.username(winnerEntrant.message);
-            if (winnerEntrant.team !== "") {
-                winnerName = "**" + winnerEntrant.team + "**";
-            }
-            toAdd = "\t#" + result.id + " - " + result.level + " (" + emotes.firstPlace + " " + winnerName + ")\n";
+            toAdd = "\t#" + result.id + " - " + result.level + " (" + emotes.firstPlace + " " + result.winner + ")\n";
             if (messageString.length + toAdd.length > 2000) {
                 msgs.push(messageString);
                 messageString = "**Results for current IL series (cont):**\n";
@@ -1409,7 +1404,8 @@ recordResults = () => {
     // Keep track of teams and IL series results
     teamMap = new Map();
     raceRankings = raceState.doneEntrants.concat(raceState.ffEntrants);
-    raceState.ilResults.push(new ILResult(raceId, levelName, raceRankings[0]));
+    winner = raceState.entrants.get(raceRankings[0]);
+    raceState.ilResults.push(new ILResult(raceId, levelName, winner.team === "" ? helpers.username(winner.message) : ("**" + winner.team + "**")));
 
     points = 0;
     helpers.forEachWithTeamHandling(raceState.entrants, (individualEntrant) => points++, (firstOnTeam) => points++, (entrantWithTeam) => {});
