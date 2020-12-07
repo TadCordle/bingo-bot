@@ -366,13 +366,6 @@ ilRaceCmd = (message) => {
         recordResults();
     }
 
-    // If teams are registered, choose co-op IL category
-    if (raceState.hasTeams()) {
-        categoryName = "Individual Levels (Co-op)";
-    } else {
-        categoryName = "Individual Levels";
-    }
-
     if (raceState.state === State.NO_RACE) {
         // Start race
         raceState.addEntrant(message);
@@ -395,44 +388,50 @@ ilRaceCmd = (message) => {
     } else if (raceState.state === State.COUNTDOWN || raceState.state === State.ACTIVE) {
         // Can't join race that already started
         message.author.send("Can't join because there's a race already in progress!");
+        return;
     }
+
+    // Update category to IL races
+    categoryName = raceState.hasTeams() ? "Individual Levels (Co-op)" : "Individual Levels";
 }
 
 // !game
 gameCmd = (message) => {
-    if (raceState.state === State.JOINING) {
-        game = message.content.replace(/^!game/i, "").trim();
-        word = isILRace() ? "level" : "category";
-        name = isILRace() ? levelName : categoryName;
+    if (raceState.state !== State.JOINING) {
+        return;
+    }
 
-        if (game === null || game === "") {
-            message.channel.send("Game / " + word + " is currently set to " + gameName + " / " + name + ". Set the game using: `!game <game name>`");
-            return;
-        }
+    game = message.content.replace(/^!game/i, "").trim();
+    word = isILRace() ? "level" : "category";
+    name = isILRace() ? levelName : categoryName;
 
-        game = helpers.normalizeGameName(game);
-        if (game === null) {
-            message.channel.send("Specified game name was not valid, try something else.");
-            return;
-        }
+    if (game === null || game === "") {
+        message.channel.send("Game / " + word + " is currently set to " + gameName + " / " + name + ". Set the game using: `!game <game name>`");
+        return;
+    }
 
-        if (gameName !== game) {
-            gameName = game;
-            warning = "";
-            if (isILRace()) {
-                levelName = helpers.normalizeLevel(game, null);
-                name = levelName;
-                if (config.games[game].levels === undefined) {
-                    warning = "\n**Note:** IL races are not configured for " + gameName + ". Use `!game` to choose another game, or use `!level` to pick the level if this was not a mistake.";
-                }
-            } else {
-                categoryName = helpers.normalizeCategory(game, null);
-                name = categoryName;
+    game = helpers.normalizeGameName(game);
+    if (game === null) {
+        message.channel.send("Specified game name was not valid, try something else.");
+        return;
+    }
+
+    if (gameName !== game) {
+        gameName = game;
+        warning = "";
+        if (isILRace()) {
+            levelName = helpers.normalizeLevel(game, null);
+            name = levelName;
+            if (config.games[game].levels === undefined) {
+                warning = "\n**Note:** IL races are not configured for " + gameName + ". Use `!game` to choose another game, or use `!level` to pick the level if this was not a mistake.";
             }
-            message.channel.send("Game / " + word + " updated to " + gameName + " / " + name + "." + warning);
         } else {
-            message.channel.send("Game / " + word + " was already set to " + gameName + " / " + name + ".");
+            categoryName = helpers.normalizeCategory(game, null);
+            name = categoryName;
         }
+        message.channel.send("Game / " + word + " updated to " + gameName + " / " + name + "." + warning);
+    } else {
+        message.channel.send("Game / " + word + " was already set to " + gameName + " / " + name + ".");
     }
 }
 
@@ -462,11 +461,7 @@ categoryCmd = (message) => {
 
         if (normalized.startsWith("Individual Levels")) {
             if (!isILRace()) {
-                if (raceState.hasTeams()) {
-                    categoryName = "Individual Levels (Co-op)";
-                } else {
-                    categoryName = "Individual Levels";
-                }
+                categoryName = raceState.hasTeams() ? "Individual Levels (Co-op)" : "Individual Levels";
                 endMsg = " (currently " + gameName + " / " + levelName + ").";
                 if (config.games[gameName].levels === undefined) {
                     endMsg = ".\n**Note:** ILs are not configured for " + gameName + ". Use `!game` to choose a game with ILs, or use `!level` to pick the level if this was not a mistake.";
@@ -684,7 +679,7 @@ teamCmd = (message) => {
         }
         entrant = raceState.entrants.get(discordId);
         if (entrant.team !== "" && entrant.team !== teamName && entrant.team !== prevTeamName) {
-            message.channel.send(helpers.mention(message.author) + ": Cannot create team; <@" + discordId + "> is already on another team (" + userTeam + ").");
+            message.channel.send(helpers.mention(message.author) + ": Cannot create team; <@" + discordId + "> is already on another team (" + userTeam + "). They must run `!unteam` before you can add them to your team.");
             return;
         }
         selectedUsers.push(entrant);
@@ -796,7 +791,7 @@ forfeitCmd = (message) => {
                 }
             } else {
                 if (helpers.isOneTeamRegistered(raceState)) {
-                    // If only one team  is left, unready one of its members
+                    // If only one team  is left, make sure at least one of its members is unreadied
                     allReady = true;
                     raceState.entrants.forEach((entrant) => {
                         if (!entrant.ready) {
@@ -880,21 +875,22 @@ unforfeitCmd = (message) => {
 
 // !ready
 readyCmd = (message) => {
-    if (raceState.state === State.JOINING) {
-        // Don't allow readying up if only one person has joined
-        if (raceState.entrants.size === 1) {
-            if (raceState.entrants.has(message.author.id)) {
-                message.channel.send("Need more than one entrant before starting!");
-                return;
-            }
-        }
+    if (raceState.state !== State.JOINING) {
+        return;
+    }
 
-        if (!raceState.entrantIsReady(message.author.id)) {
-            // Mark as ready
-            raceState.addEntrant(message);
-            raceState.entrants.get(message.author.id).ready = true;
+    // Don't allow readying up if only one person has joined
+    if (raceState.entrants.size === 1 && raceState.entrants.has(message.author.id)) {
+        message.channel.send("Need more than one entrant before starting!");
+        return;
+    }
 
-            // Start countdown if everyone is ready
+    if (!raceState.entrantIsReady(message.author.id)) {
+        // Mark as ready
+        raceState.addEntrant(message);
+        raceState.entrants.get(message.author.id).ready = true;
+
+        // Start countdown if everyone is ready
             everyoneReady = true;
             raceState.entrants.forEach((entrant) => {
                 if (!entrant.ready) {
@@ -902,16 +898,15 @@ readyCmd = (message) => {
                 }
             });
             if (everyoneReady) {
-                // Don't start if only one team has joined
-                if (helpers.isOneTeamRegistered(raceState)) {
-                    message.channel.send("Can't ready up/start; everyone is on the same team!");
-                    raceState.entrants.get(message.author.id).ready = false;
-                    return;
-                }
-                doCountDown(message);
+            // Don't start if only one team has joined
+            if (helpers.isOneTeamRegistered(raceState)) {
+                message.channel.send("Can't ready up/start; everyone is on the same team!");
+                raceState.entrants.get(message.author.id).ready = false;
+                return;
             }
-            message.react(emotes.acknowledge);
+            doCountDown(message);
         }
+        message.react(emotes.acknowledge);
     }
 }
 
@@ -1063,14 +1058,11 @@ statusCmd = (message) => {
         sortedRacerList = raceState.doneEntrants.concat(idsNotDone).concat(raceState.ffEntrants);
         stats = helpers.retrievePlayerStats(sortedRacerList, client.getUserStatsForCategory, gameName, categoryName, teamMap);
         eloDiffs = helpers.calculateEloDiffs(stats, teamMap, sortedRacerList, raceState.ffEntrants);
-        eloDiffStr = (e, hide=false) => {
-            if (hide){
+        eloDiffStr = (e) => {
+            if (idsNotDone.length > 0){
                 return "";
             } else {
-                eloId = e.message.author.id;
-                if (e.team !== "") {
-                    eloId = "!team " + e.team;
-                }
+                eloId = e.team === "" ? e.message.author.id : ("!team " + e.team);
                 return "(" + emotes.elo + " " + (eloDiffs.get(eloId) >= 0 ? "+" : "") + (Math.round(eloDiffs.get(eloId) * 100) / 100) + ")";
             }
         };
@@ -1091,9 +1083,9 @@ statusCmd = (message) => {
 
         // List forfeited entrants
         helpers.forEachWithTeamHandling(entrantsFFd,
-            (individualEntrant) => raceString += "\n\t" + emotes.forfeited + " " + helpers.username(individualEntrant.message) + " " + eloDiffStr(individualEntrant, idsNotDone.length > 0),
+            (individualEntrant) => raceString += "\n\t" + emotes.forfeited + " " + helpers.username(individualEntrant.message) + " " + eloDiffStr(individualEntrant),
             (firstOnTeam)       => raceString += "\n\t" + emotes.forfeited + " **" + firstOnTeam.team + "**",
-            (entrantWithTeam)   => raceString += "\n\t\t" + helpers.username(entrantWithTeam.message) + " " + eloDiffStr(entrantWithTeam, idsNotDone.length > 0));
+            (entrantWithTeam)   => raceString += "\n\t\t" + helpers.username(entrantWithTeam.message) + " " + eloDiffStr(entrantWithTeam));
 
         message.channel.send(raceString);
     }
@@ -1430,11 +1422,7 @@ recordResults = () => {
     playerStats = helpers.retrievePlayerStats(raceRankings, client.getUserStatsForCategory, gameName, categoryName, teamMap, (id, i) => raceState.ffEntrants.includes(id), (id, i) => raceState.entrants.get(id).doneTime);
     eloDiffs = helpers.calculateEloDiffs(playerStats, teamMap, raceRankings, raceState.ffEntrants);
     playerStats.forEach((stat, id) => {
-        if (teamMap.get(id) !== "") {
-            stat.elo += eloDiffs.get("!team " + teamMap.get(id));
-        } else {
-            stat.elo += eloDiffs.get(id);
-        }
+        stat.elo += eloDiffs.get(teamMap.get(id) === "" ? id : ("!team " + teamMap.get(id)));
         client.addUserStat.run(stat);
     });
 
