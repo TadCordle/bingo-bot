@@ -642,12 +642,10 @@ teamCmd = (message) => {
         if (customTeamName) {
             teamName += " " + params[i];
         } else {
-            if (params[i].startsWith("<@!")) {
-                // Skip over team members
-                continue;
+            if (!params[i].startsWith("<@!")) {
+                teamName = params[i];
+                customTeamName = true;
             }
-            teamName = params[i];
-            customTeamName = true;
         }
     }
 
@@ -684,8 +682,15 @@ teamCmd = (message) => {
         }
         selectedUsers.push(entrant);
     }
+
+    // Didn't specify team members
     if (selectedUsers.length <= 1) {
-        message.channel.send(helpers.mention(message.author) + ": Cannot create team; you must choose teammates.");
+        if (raceState.entrants.get(message.author.id).team !== "" && customTeamName) {
+            helpers.doForWholeTeam(raceState, message.author.id, (e) => e.team = teamName);
+            message.channel.send(helpers.mention(message.author) + ": Team name has been changed to **" + teamName + "**.");
+        } else {
+            message.channel.send(helpers.mention(message.author) + ": Cannot create team; you must choose teammates.");
+        }
         return;
     }
 
