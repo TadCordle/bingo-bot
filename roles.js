@@ -19,6 +19,7 @@ var ilWrRoles;
 const gameIds = {
     "LittleBigPlanet"                : "369pp31l",
     "LittleBigPlanet Series DLC"     : "j1llxz71",
+    "Multiple LittleBigPlanet Games" : "4d79me31",
     "LittleBigPlanet PSP"            : "pd0n821e",
     "Sackboy's Prehistoric Moves"    : "4d704r17",
     "LittleBigPlanet 2"              : "pdvzzk6w",
@@ -27,13 +28,12 @@ const gameIds = {
     "LittleBigPlanet 3"              : "k6qw8z6g",
     "Sackboy: A Big Adventure"       : "j1nevzx1",
 };
+
 const fullGameCatsThatAreILs = [
     "824xr8md", // LBP1 Styrofoam%
     "9d8pgl6k", // LBP1 Die%
     "7dg8qml2", // LBP3 Corruption%
 ];
-const exemptCatsFromWrRole = [];
-const exemptGamesFromWrRole = [];
 
 exports.init = (c) => {
     let sql = new SQLite("./data/roles.sqlite");
@@ -42,7 +42,7 @@ exports.init = (c) => {
     gameRoles = {
         "369pp31l": guild.roles.cache.get("716015233256390696"),
         "j1llxz71": guild.roles.cache.get("729768987365474355"),
-        "4d79me31": guild.roles.cache.get("729904575649415178"),
+        // No multi-game role; individual game roles are assigned instead
         "pd0n821e": guild.roles.cache.get("716015332040507503"),
         "4d704r17": guild.roles.cache.get("716015421878435891"),
         "pdvzzk6w": guild.roles.cache.get("716015284183367701"),
@@ -224,15 +224,18 @@ doSrcRoleUpdates = (discordId, srcName, message = null) => {
         numWrs = 0;
         numIlWrs = 0;
         JSON.parse(dataQueue).data.forEach((d) => {
-            role = gameRoles[d.run.game];
-            if (role) {
-                rolesShouldHave.push(role);
-                if (d.place === 1 && !exemptGamesFromWrRole.includes(d.run.game)) {
-                    if (d.run.level !== null || fullGameCatsThatAreILs.includes(d.run.category)) {
-                        numIlWrs++;
-                    } else if (!exemptCatsFromWrRole.includes(d.run.category)) {
-                        numWrs++;
-                    }
+            if (!Object.values(gameIds).includes(d.run.game)) {
+                // Not an LBP game
+                return;
+            }
+            if (gameRoles[d.run.game]) {
+                rolesShouldHave.push(gameRoles[d.run.game]);
+            }
+            if (d.place === 1) {
+                if (d.run.level !== null || fullGameCatsThatAreILs.includes(d.run.category)) {
+                    numIlWrs++;
+                } else {
+                    numWrs++;
                 }
             }
         });
