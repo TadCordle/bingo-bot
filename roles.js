@@ -11,7 +11,7 @@ var client;
 var guild;
 
 // Maps from speedrun.com game ID (or the string "wr") to server role
-var roles;
+var gameRoles;
 var wrRoles;
 var ilWrRoles;
 
@@ -19,7 +19,6 @@ var ilWrRoles;
 const gameIds = {
     "LittleBigPlanet"                : "369pp31l",
     "LittleBigPlanet Series DLC"     : "j1llxz71",
-    "Multiple LittleBigPlanet Games" : "4d79me31",
     "LittleBigPlanet PSP"            : "pd0n821e",
     "Sackboy's Prehistoric Moves"    : "4d704r17",
     "LittleBigPlanet 2"              : "pdvzzk6w",
@@ -28,7 +27,6 @@ const gameIds = {
     "LittleBigPlanet 3"              : "k6qw8z6g",
     "Sackboy: A Big Adventure"       : "j1nevzx1",
 };
-
 const fullGameCatsThatAreILs = [
     "824xr8md", // LBP1 Styrofoam%
     "9d8pgl6k", // LBP1 Die%
@@ -41,7 +39,7 @@ exports.init = (c) => {
     let sql = new SQLite("./data/roles.sqlite");
     client = c;
     guild = client.guilds.cache.get('129652811754504192');
-    roles = {
+    gameRoles = {
         "369pp31l": guild.roles.cache.get("716015233256390696"),
         "j1llxz71": guild.roles.cache.get("729768987365474355"),
         "4d79me31": guild.roles.cache.get("729904575649415178"),
@@ -77,7 +75,7 @@ exports.init = (c) => {
         guild.roles.cache.get("784118624197672960"), // 40+
         guild.roles.cache.get("784118766145503232"), // 50+
     ];
-    if (Object.values(roles).includes(undefined)) {
+    if (Object.values(gameRoles).includes(undefined)) {
         helpers.log("Couldn't find all roles; Discord roles may have changed.", true);
     }
 
@@ -104,23 +102,24 @@ exports.giveRoleFromRace = async (discordId, gameName, categoryName) => {
     if (!member) {
         return;
     }
-    member.roles.add(roles[gameIds[gameName]]);
-
-    // Add individual game roles for multi-game races
     if (gameName === "Multiple LittleBigPlanet Games") {
+        rolesShouldHave = [];
         if (categoryName === "An3%") {
-            member.roles.add(roles[gameIds["LittleBigPlanet"]]);
-            member.roles.add(roles[gameIds["LittleBigPlanet 2"]]);
-            member.roles.add(roles[gameIds["LittleBigPlanet 3"]]);
+            rolesShouldHave.push(gameRoles[gameIds["LittleBigPlanet"]]);
+            rolesShouldHave.push(gameRoles[gameIds["LittleBigPlanet 2"]]);
+            rolesShouldHave.push(gameRoles[gameIds["LittleBigPlanet 3"]]);
         } else if (categoryName === "7ny%") {
-            member.roles.add(roles[gameIds["LittleBigPlanet"]]);
-            member.roles.add(roles[gameIds["LittleBigPlanet PSP"]]);
-            member.roles.add(roles[gameIds["Sackboy's Prehistoric Moves"]]);
-            member.roles.add(roles[gameIds["LittleBigPlanet 2"]]);
-            member.roles.add(roles[gameIds["LittleBigPlanet PS Vita"]]);
-            member.roles.add(roles[gameIds["LittleBigPlanet Karting"]]);
-            member.roles.add(roles[gameIds["LittleBigPlanet 3"]]);
+            rolesShouldHave.push(gameRoles[gameIds["LittleBigPlanet"]]);
+            rolesShouldHave.push(gameRoles[gameIds["LittleBigPlanet PSP"]]);
+            rolesShouldHave.push(gameRoles[gameIds["Sackboy's Prehistoric Moves"]]);
+            rolesShouldHave.push(gameRoles[gameIds["LittleBigPlanet 2"]]);
+            rolesShouldHave.push(gameRoles[gameIds["LittleBigPlanet PS Vita"]]);
+            rolesShouldHave.push(gameRoles[gameIds["LittleBigPlanet Karting"]]);
+            rolesShouldHave.push(gameRoles[gameIds["LittleBigPlanet 3"]]);
         }
+        member.roles.add(rolesShouldHave);
+    } else {
+        member.roles.add(gameRoles[gameIds[gameName]]);
     }
 }
 
@@ -190,15 +189,7 @@ removeRolesCmd = async (message) => {
     client.deleteSrcUser.run(discordId);
     member = await guild.members.fetch(discordId);
     if (member) {
-        Object.values(roles).forEach((role) => {
-            member.roles.remove(role);
-        });
-        wrRoles.forEach((role) => {
-            member.roles.remove(role);
-        });
-        ilWrRoles.forEach((role) => {
-            member.roles.remove(role);
-        });
+        member.roles.remove(Object.values(gameRoles).concat(wrRoles).concat(ilWrRoles));
     }
     message.react(emotes.acknowledge);
 }
@@ -233,9 +224,9 @@ doSrcRoleUpdates = (discordId, srcName, message = null) => {
         numWrs = 0;
         numIlWrs = 0;
         JSON.parse(dataQueue).data.forEach((d) => {
-            role = roles[d.run.game];
+            role = gameRoles[d.run.game];
             if (role) {
-                rolesShouldHave.add(role);
+                rolesShouldHave.push(role);
                 if (d.place === 1 && !exemptGamesFromWrRole.includes(d.run.game)) {
                     if (d.run.level !== null || fullGameCatsThatAreILs.includes(d.run.category)) {
                         numIlWrs++;
@@ -250,25 +241,26 @@ doSrcRoleUpdates = (discordId, srcName, message = null) => {
             if (numWrs > wrRoles.length) {
                 numWrs = wrRoles.length;
             }
-            rolesShouldHave.add(wrRoles[numWrs - 1]);
+            rolesShouldHave.push(wrRoles[numWrs - 1]);
         }
         if (numIlWrs >= 50) {
-            rolesShouldHave.add(ilWrRoles[9]);
+            rolesShouldHave.push(ilWrRoles[9]);
         } else if (numIlWrs >= 40) {
-            rolesShouldHave.add(ilWrRoles[8]);
+            rolesShouldHave.push(ilWrRoles[8]);
         } else if (numIlWrs >= 30) {
-            rolesShouldHave.add(ilWrRoles[7]);
+            rolesShouldHave.push(ilWrRoles[7]);
         } else if (numIlWrs >= 20) {
-            rolesShouldHave.add(ilWrRoles[6]);
+            rolesShouldHave.push(ilWrRoles[6]);
         } else if (numIlWrs >= 10) {
-            rolesShouldHave.add(ilWrRoles[5]);
+            rolesShouldHave.push(ilWrRoles[5]);
         } else if (numIlWrs >= 5) {
-            rolesShouldHave.add(ilWrRoles[4]);
+            rolesShouldHave.push(ilWrRoles[4]);
         } else if (numIlWrs > 0) {
-            rolesShouldHave.add(ilWrRoles[numIlWrs - 1]);
+            rolesShouldHave.push(ilWrRoles[numIlWrs - 1]);
         }
 
-        updateRoles(member, rolesShouldHave);
+        member.roles.remove(Object.values(gameRoles).concat(wrRoles).concat(ilWrRoles));
+        member.roles.add(rolesShouldHave);
     });
 }
 
@@ -276,38 +268,28 @@ doSrcRoleUpdates = (discordId, srcName, message = null) => {
 getRaceRoles = (discordId) => {
     rolesShouldHave = new Set();
     client.getUserGamesRan.all(discordId).forEach((race) => {
-        rolesShouldHave.add(roles[gameIds[race.game]]);
+        role = gameRoles[gameIds[race.game]];
+        if (role !== undefined) {
+            rolesShouldHave.add(role);
+        }
 
-        // Add individual game roles for multi-game races
         if (race.game === "Multiple LittleBigPlanet Games") {
             if (race.category === "An3%") {
-                rolesShouldHave.add(roles[gameIds["LittleBigPlanet"]]);
-                rolesShouldHave.add(roles[gameIds["LittleBigPlanet 2"]]);
-                rolesShouldHave.add(roles[gameIds["LittleBigPlanet 3"]]);
+                rolesShouldHave.add(gameRoles[gameIds["LittleBigPlanet"]]);
+                rolesShouldHave.add(gameRoles[gameIds["LittleBigPlanet 2"]]);
+                rolesShouldHave.add(gameRoles[gameIds["LittleBigPlanet 3"]]);
             } else if (race.category === "7ny%") {
-                rolesShouldHave.add(roles[gameIds["LittleBigPlanet"]]);
-                rolesShouldHave.add(roles[gameIds["LittleBigPlanet PSP"]]);
-                rolesShouldHave.add(roles[gameIds["Sackboy's Prehistoric Moves"]]);
-                rolesShouldHave.add(roles[gameIds["LittleBigPlanet 2"]]);
-                rolesShouldHave.add(roles[gameIds["LittleBigPlanet PS Vita"]]);
-                rolesShouldHave.add(roles[gameIds["LittleBigPlanet Karting"]]);
-                rolesShouldHave.add(roles[gameIds["LittleBigPlanet 3"]]);
+                rolesShouldHave.add(gameRoles[gameIds["LittleBigPlanet"]]);
+                rolesShouldHave.add(gameRoles[gameIds["LittleBigPlanet PSP"]]);
+                rolesShouldHave.add(gameRoles[gameIds["Sackboy's Prehistoric Moves"]]);
+                rolesShouldHave.add(gameRoles[gameIds["LittleBigPlanet 2"]]);
+                rolesShouldHave.add(gameRoles[gameIds["LittleBigPlanet PS Vita"]]);
+                rolesShouldHave.add(gameRoles[gameIds["LittleBigPlanet Karting"]]);
+                rolesShouldHave.add(gameRoles[gameIds["LittleBigPlanet 3"]]);
             }
         }
     });
-    return rolesShouldHave;
-}
-
-// Updates member's runner roles to match the ones in rolesShouldHave
-updateRoles = (member, rolesShouldHave) => {
-    // Update roles
-    Object.values(roles).concat(wrRoles).concat(ilWrRoles).forEach((role) => {
-        if (rolesShouldHave.has(role)) {
-            member.roles.add(role);
-        } else {
-            member.roles.remove(role);
-        }
-    });
+    return Array.from(rolesShouldHave);
 }
 
 // Gets data from speedrun.com
