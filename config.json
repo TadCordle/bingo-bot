@@ -468,11 +468,10 @@
             "aliases": ["saba", "sba", "sacboybigadventure", "sackboysbigadventure"],
             "categories": {
                 "Any%": [],
+                "Any% (Co-op)": ["coop", "2p", "3p", "4p"],
                 "100%": [],
-                "2p Co-op": ["coop", "2p"],
-                "3p Co-op": ["3p"],
-                "4p Co-op": ["4p"],
                 "Trial 16": ["allknittedknighttrials", "allknittedknights", "ripsnorter"],
+                "Trial 16 (Co-op)": ["allknittedknighttrialscoop", "allknittedknightscoop", "ripsnortercoop", "coopallknittedknighttrials", "coopallknittedknights", "coopripsnorter"],
                 "Individual Levels": ["il", "ils", "individuallevel"],
                 "Individual Levels (Co-op)": ["ilcoop", "ilscoop", "individuallevelcoop", "coopil", "coopils", "teamil", "teamils"]
             },
@@ -492,7 +491,6 @@
                 "Trial 13: Sweet Beams": ["trial13", "sweetbeams", "sweetbeans"],
                 "Trial 14: Stitch in Time": ["trial14", "stitchintime"],
                 "Trial 15: Fish 'N' Slips": ["trial15", "fishnslips"],
-                "Trial 16: The Ripsnorter": ["trial16", "ripsnorter"],
 
                 "A Big Adventure": ["bigadventure"],
                 "Cold Feat": [],
