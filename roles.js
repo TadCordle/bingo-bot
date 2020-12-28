@@ -208,11 +208,16 @@ reloadRolesCmd = () => {
 // Update user roles from speedrun.com profile
 doSrcRoleUpdates = (discordId, srcName, message = null) => {
     callSrc("/api/v1/users/" + srcName + "/personal-bests", message, async (dataQueue) => {
-        member = await guild.members.fetch(discordId);
-        if (!member) {
-            helpers.log("SRC role update: '" + discordId + "' is not a member of the LBP speedrunning server. Removing...", true);
-            client.deleteSrcUser.run(discordId);
-            return;
+        // Retreive discord member
+        var member;
+        try {
+            member = await guild.members.fetch(discordId);
+        } finally {
+            if (!member) {
+                helpers.log("SRC role update: '" + discordId + "' is not a member of the LBP speedrunning server. Removing...", true);
+                client.deleteSrcUser.run(discordId);
+                return;
+            }
         }
 
         // Save discord/src name link
