@@ -35,10 +35,11 @@ const fullGameCatsThatAreILs = [
     "7dg8qml2", // LBP3 Corruption%
 ];
 
-exports.init = (c) => {
+exports.init = async (c) => {
     let sql = new SQLite("./data/roles.sqlite");
     client = c;
     guild = client.guilds.cache.get('129652811754504192');
+    await guild.roles.fetch();
     gameRoles = {
         "369pp31l": guild.roles.cache.get("716015233256390696"),
         "j1llxz71": guild.roles.cache.get("729768987365474355"),
@@ -195,81 +196,82 @@ removeRolesCmd = async (message) => {
 }
 
 // !reloadroles
-reloadRolesCmd = () => {
+reloadRolesCmd = async () => {
     helpers.log("==== Updating all registered users ====");
-    client.getSrcUsers.all().forEach((user) => {
-        doSrcRoleUpdates(user.discord_id.toString(), user.src_name.toString());
-    });
-
+    for(let user of client.getSrcUsers.all()) {
+        await doSrcRoleUpdates(user.discord_id.toString(), user.src_name.toString());
+    }
     clearTimeout(autoRefreshTimeout);
     autoRefreshTimeout = setTimeout(reloadRolesCmd, 86400000 * Math.ceil(Date.now() / 86400000) - Date.now() + 1);
 }
 
 // Update user roles from speedrun.com profile
 doSrcRoleUpdates = (discordId, srcName, message = null) => {
-    callSrc("/api/v1/users/" + srcName + "/personal-bests", message, async (dataQueue) => {
-        // Retreive discord member
-        var member;
-        try {
-            member = await guild.members.fetch(discordId);
-        } finally {
-            if (!member) {
-                helpers.log("SRC role update: '" + discordId + "' is not a member of the LBP speedrunning server. Removing...", true);
-                client.deleteSrcUser.run(discordId);
-                return;
+    return new Promise((resolve, reject) => callSrc("/api/v1/users/" + srcName + "/personal-bests", message, (dataQueue) => {
+        guild.members.fetch(discordId).then((member) => {
+            // Figure out which roles we need to remove
+            allRoles = Object.values(gameRoles).concat(wrRoles).concat(ilWrRoles);
+            removeRoles = [];
+            for (let role of allRoles) {
+                removeRoles.push(role.id);
             }
-        }
 
-        // Save discord/src name link
-        srcUser = { discord_id: `${discordId}`, src_name: `${srcName}` };
-        client.addSrcUser.run(srcUser);
+            member.roles.remove(removeRoles).then((member) => {
+                // Save discord/src name link
+                srcUser = { discord_id: `${discordId}`, src_name: `${srcName}` };
+                client.addSrcUser.run(srcUser);
 
-        // Figure out what roles user should have from races + src
-        rolesShouldHave = getRaceRoles(discordId);
-        numWrs = 0;
-        numIlWrs = 0;
-        JSON.parse(dataQueue).data.forEach((d) => {
-            if (!Object.values(gameIds).includes(d.run.game)) {
-                // Not an LBP game
-                return;
-            }
-            if (gameRoles[d.run.game]) {
-                rolesShouldHave.push(gameRoles[d.run.game]);
-            }
-            if (d.place === 1) {
-                if (d.run.level !== null || fullGameCatsThatAreILs.includes(d.run.category)) {
-                    numIlWrs++;
-                } else {
-                    numWrs++;
+                // Figure out what roles user should have from races + src
+                rolesShouldHave = getRaceRoles(discordId);
+                numWrs = 0;
+                numIlWrs = 0;
+                JSON.parse(dataQueue).data.forEach((d) => {
+                    if (!Object.values(gameIds).includes(d.run.game)) {
+                        // Not an LBP game
+                        return;
+                    }
+                    if (gameRoles[d.run.game]) {
+                        rolesShouldHave.add(gameRoles[d.run.game]);
+                    }
+                    if (d.place === 1) {
+                        if (d.run.level !== null || fullGameCatsThatAreILs.includes(d.run.category)) {
+                            numIlWrs++;
+                        } else {
+                            numWrs++;
+                        }
+                    }
+                });
+                helpers.log(member.displayName + ":\t" + numIlWrs + " IL Wrs / " + numWrs + " Wrs");
+                if (numWrs > 0) {
+                    if (numWrs > wrRoles.length) {
+                        numWrs = wrRoles.length;
+                    }
+                    rolesShouldHave.add(wrRoles[numWrs - 1]);
                 }
-            }
-        });
-        helpers.log(member.displayName + ":\t" + numIlWrs + " IL Wrs / " + numWrs + " Wrs");
-        if (numWrs > 0) {
-            if (numWrs > wrRoles.length) {
-                numWrs = wrRoles.length;
-            }
-            rolesShouldHave.push(wrRoles[numWrs - 1]);
-        }
-        if (numIlWrs >= 50) {
-            rolesShouldHave.push(ilWrRoles[9]);
-        } else if (numIlWrs >= 40) {
-            rolesShouldHave.push(ilWrRoles[8]);
-        } else if (numIlWrs >= 30) {
-            rolesShouldHave.push(ilWrRoles[7]);
-        } else if (numIlWrs >= 20) {
-            rolesShouldHave.push(ilWrRoles[6]);
-        } else if (numIlWrs >= 10) {
-            rolesShouldHave.push(ilWrRoles[5]);
-        } else if (numIlWrs >= 5) {
-            rolesShouldHave.push(ilWrRoles[4]);
-        } else if (numIlWrs > 0) {
-            rolesShouldHave.push(ilWrRoles[numIlWrs - 1]);
-        }
+                if (numIlWrs >= 50) {
+                    rolesShouldHave.add(ilWrRoles[9]);
+                } else if (numIlWrs >= 40) {
+                    rolesShouldHave.add(ilWrRoles[8]);
+                } else if (numIlWrs >= 30) {
+                    rolesShouldHave.add(ilWrRoles[7]);
+                } else if (numIlWrs >= 20) {
+                    rolesShouldHave.add(ilWrRoles[6]);
+                } else if (numIlWrs >= 10) {
+                    rolesShouldHave.add(ilWrRoles[5]);
+                } else if (numIlWrs >= 5) {
+                    rolesShouldHave.add(ilWrRoles[4]);
+                } else if (numIlWrs > 0) {
+                    rolesShouldHave.add(ilWrRoles[numIlWrs - 1]);
+                }
+                member.roles.add(Array.from(rolesShouldHave)).then((value) => resolve());
+            });
 
-        member.roles.remove(Object.values(gameRoles).concat(wrRoles).concat(ilWrRoles));
-        member.roles.add(rolesShouldHave);
-    });
+        }).catch((e) => {
+            helpers.log("SRC role update: '" + discordId + "' is not a member of the LBP speedrunning server. Removing...", true);
+            client.deleteSrcUser.run(discordId);
+            resolve();
+        });
+    }, resolve));
 }
 
 // Returns a set of roles from race history
@@ -297,14 +299,14 @@ getRaceRoles = (discordId) => {
             }
         }
     });
-    return Array.from(rolesShouldHave);
+    return rolesShouldHave;
 }
 
 // Gets data from speedrun.com
 // - delay after API call: 1 sec
 // - delay after downloading any other sr.c page: 10 sec
 // API: https://github.com/speedruncomorg/api/tree/master/version1
-callSrc = (path, message, onEnd) => {
+callSrc = (path, message, onEnd, onError = () => {}) => {
     afterPause = () => {
         helpers.log("API call: " + path);
         https.get({
@@ -336,6 +338,7 @@ callSrc = (path, message, onEnd) => {
         }).on('error', (e) => {
             helpers.log(e, true);
             helpers.sendErrorMessage(e, path, message);
+            onError();
         });
     }
 
