@@ -76,6 +76,17 @@ class RaceState {
         return this.entrants.has(id) && this.entrants.get(id).ready;
     }
 
+    // Returns true if all entrants are ready, false if not.
+    isEveryoneReady() {
+        everyoneReady = true;
+        this.entrants.forEach((entrant) => {
+            if (!entrant.ready) {
+                everyoneReady = false;
+            }
+        });
+        return everyoneReady;
+    }
+
     // Returns the current IL score of a user
     getILScore(id) {
         if (this.ilScores.has(id)) {
@@ -817,6 +828,11 @@ forfeitCmd = (message) => {
                 if (isILRace() && !raceState.hasTeams()) {
                     categoryName = "Individual Levels";
                 }
+
+                // If everyone left is ready, start the race
+                if (raceState.isEveryoneReady()) {
+                    doCountDown(message);
+                }
             }
         }
 
@@ -898,13 +914,7 @@ readyCmd = (message) => {
         raceState.entrants.get(message.author.id).ready = true;
 
         // Start countdown if everyone is ready
-            everyoneReady = true;
-            raceState.entrants.forEach((entrant) => {
-                if (!entrant.ready) {
-                    everyoneReady = false;
-                }
-            });
-            if (everyoneReady) {
+        if (raceState.isEveryoneReady()) {
             // Don't start if only one team has joined
             if (helpers.isOneTeamRegistered(raceState)) {
                 message.channel.send("Can't ready up/start; everyone is on the same team!");
