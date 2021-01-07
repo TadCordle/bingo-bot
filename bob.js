@@ -870,7 +870,9 @@ unforfeitCmd = (message) => {
                 }
                 raceState.ffEntrants = helpers.arrayRemove(raceState.ffEntrants, id);
             });
-            raceState.state = State.ACTIVE;
+            if (raceState.state === State.Done) {
+                raceState.state = State.ACTIVE;
+            }
             clearTimeout(raceDoneTimeout);
             clearTimeout(raceDoneWarningTimeout);
             message.react(emotes.acknowledge);
@@ -1340,6 +1342,13 @@ doCountDown = (message) => {
     }, 10000);
 }
 
+stopCountDown = () => {
+    clearTimeout(countDownTimeout1);
+    clearTimeout(countDownTimeout2);
+    clearTimeout(countDownTimeout3);
+    clearTimeout(goTimeout);
+}
+
 // Sets up a callback to record the race results
 doEndRace = (message) => {
     if (isILRace()) {
@@ -1451,13 +1460,6 @@ newIL = () => {
 
 isILRace = () => {
     return categoryName.startsWith("Individual Levels");
-}
-
-stopCountDown = () => {
-    clearTimeout(countDownTimeout1);
-    clearTimeout(countDownTimeout2);
-    clearTimeout(countDownTimeout3);
-    clearTimeout(goTimeout);
 }
 
 client.login(discordAuth.token);
