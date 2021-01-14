@@ -1087,7 +1087,6 @@ statusCmd = (message) => {
 
         // List done entrants
         place = 0;
-        points = raceState.entrants.size;
         helpers.forEachWithTeamHandling(entrantsDone,
             (individualEntrant) => raceString += "\n\t" + helpers.placeEmote(place++) + " " + helpers.username(individualEntrant.message) + " " + eloDiffStr(individualEntrant) + " (" + helpers.formatTime(individualEntrant.doneTime) + ")",
             (firstOnTeam)       => raceString += "\n\t" + helpers.placeEmote(place++) + " **" + firstOnTeam.team + "** (" + helpers.formatTime(firstOnTeam.doneTime) + ")",
@@ -1215,7 +1214,7 @@ showUserStats = (message, userId, username) => {
                     + "`   " + emotes.elo + "\u00A0`" + helpers.addSpaces(Math.floor(line.elo).toString(), maxNumberLength.elo)
                     + "`   " + emotes.racing + "\u00A0`" + helpers.formatTime(line.pb) + "`";
             if (line.category.startsWith("Individual Levels")) {
-                ilString = "\n  " + line.category + lineString;
+                ilString += "\n  " + line.category + lineString;
             } else {
                 meString += "\n  " + line.category + lineString;
             }
