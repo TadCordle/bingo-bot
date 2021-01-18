@@ -75,6 +75,11 @@ exports.init = async (c) => {
         guild.roles.cache.get("784118537933291541"), // 30+
         guild.roles.cache.get("784118624197672960"), // 40+
         guild.roles.cache.get("784118766145503232"), // 50+
+        guild.roles.cache.get(""), // 60+
+        guild.roles.cache.get(""), // 70+
+        guild.roles.cache.get(""), // 80+
+        guild.roles.cache.get(""), // 90+
+        guild.roles.cache.get(""), // 100+
     ];
     if (Object.values(gameRoles).includes(undefined)) {
         helpers.log("Couldn't find all roles; Discord roles may have changed.", true);
@@ -248,7 +253,17 @@ doSrcRoleUpdates = (discordId, srcName, message = null) => {
                     }
                     rolesShouldHave.add(wrRoles[numWrs - 1]);
                 }
-                if (numIlWrs >= 50) {
+                if (numIlWrs >= 100) {
+                    rolesShouldHave.add(ilWrRoles[14]);
+                } else if (numIlWrs >= 90) {
+                    rolesShouldHave.add(ilWrRoles[13]);
+                } else if (numIlWrs >= 80) {
+                    rolesShouldHave.add(ilWrRoles[12]);
+                } else if (numIlWrs >= 70) {
+                    rolesShouldHave.add(ilWrRoles[11]);
+                } else if (numIlWrs >= 60) {
+                    rolesShouldHave.add(ilWrRoles[10]);
+                } else if (numIlWrs >= 50) {
                     rolesShouldHave.add(ilWrRoles[9]);
                 } else if (numIlWrs >= 40) {
                     rolesShouldHave.add(ilWrRoles[8]);
