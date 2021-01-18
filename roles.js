@@ -75,11 +75,11 @@ exports.init = async (c) => {
         guild.roles.cache.get("784118537933291541"), // 30+
         guild.roles.cache.get("784118624197672960"), // 40+
         guild.roles.cache.get("784118766145503232"), // 50+
-        guild.roles.cache.get(""), // 60+
-        guild.roles.cache.get(""), // 70+
-        guild.roles.cache.get(""), // 80+
-        guild.roles.cache.get(""), // 90+
-        guild.roles.cache.get(""), // 100+
+        guild.roles.cache.get("800566048586727454"), // 60+
+        guild.roles.cache.get("800566126827536385"), // 70+
+        guild.roles.cache.get("800566196738981888"), // 80+
+        guild.roles.cache.get("800566238891343873"), // 90+
+        guild.roles.cache.get("800566271573229659"), // 100+
     ];
     if (Object.values(gameRoles).includes(undefined)) {
         helpers.log("Couldn't find all roles; Discord roles may have changed.", true);
