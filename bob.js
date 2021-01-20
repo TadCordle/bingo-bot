@@ -959,12 +959,23 @@ unreadyCmd = (message) => {
 
 // !d/!done
 doneCmd = (message) => {
-    if (raceState.state !== State.ACTIVE || !raceState.entrants.has(message.author.id) || raceState.doneIds.includes(message.author.id) || raceState.ffIds.includes(message.author.id)) {
+    // Check if admin is done'ing for someone else
+    doneId = message.author.id;
+    username = helpers.mention(message.author);
+    if (message.member.roles.cache.some(role => role.name === "Admin" || role.name === "Moderator")) {
+        params = message.content.trim().toLowerCase().replace("! d", "!d").split(" ");
+        if (params.length > 1) {
+            doneId = params[1].replace("<@!", "").replace(">", "").trim();
+            username = params[1].trim() + " (via " + helpers.username(message) + ")";
+        }
+    }
+
+    if (raceState.state !== State.ACTIVE || !raceState.entrants.has(doneId) || raceState.doneIds.includes(doneId) || raceState.ffIds.includes(doneId)) {
         return;
     }
 
     time = message.createdTimestamp / 1000 - raceState.startTime;
-    helpers.doForWholeTeam(raceState, message.author.id, (e) => {
+    helpers.doForWholeTeam(raceState, doneId, (e) => {
         e.doneTime = time;
         raceState.doneIds.push(e.message.author.id);
     });
@@ -983,9 +994,9 @@ doneCmd = (message) => {
 
     sortedRacerList = raceState.doneIds.concat(inProgress).concat(raceState.ffIds);
     stats = helpers.retrievePlayerStats(sortedRacerList, client.getUserStatsForCategory, gameName, categoryName, teamMap);
-    eloId = message.author.id;
-    if (teamMap.get(message.author.id) !== "") {
-        eloId = "!team " + teamMap.get(message.author.id);
+    eloId = doneId;
+    if (teamMap.get(doneId) !== "") {
+        eloId = "!team " + teamMap.get(doneId);
     }
     eloDiff = helpers.calculateEloDiffs(stats, teamMap, sortedRacerList, raceState.ffIds).get(eloId);
 
@@ -995,8 +1006,8 @@ doneCmd = (message) => {
     raceState.doneIds.forEach((id) => entrantsDone.push(raceState.entrants.get(id)));
     helpers.forEachWithTeamHandling(entrantsDone, (individualEntrante) => place++, (firstOnTeam) => place++, (entrantWithTeame) => {});
 
-    team = raceState.entrants.get(message.author.id).team;
-    message.channel.send((team === "" ? helpers.mention(message.author) : "**" + team + "**")
+    team = raceState.entrants.get(doneId).team;
+    message.channel.send((team === "" ? username : "**" + team + "**")
             + " has finished in " + helpers.formatPlace(place) + " place "
             + ((eloDiff < 0 ? "(" : "(+") + (Math.round(eloDiff * 100) / 100) + " " + emotes.elo + ") ")
             + "with a time of " + helpers.formatTime(time)) + "! (Use `!undone` if this was a mistake.)";
