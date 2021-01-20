@@ -157,7 +157,7 @@ rolesCmd = (message) => {
             message.channel.send("Usage: `!roles [<speedrun.com name>]` (e.g. `!roles RbdJellyfish`)");
             return;
         }
-        id = params[1].replace("<@", "").replace(">", "").trim();
+        id = params[1].replace("<@!", "").replace(">", "").trim();
         doSrcRoleUpdates(id, params[0], message);
         message.react(emotes.acknowledge);
         return;
@@ -189,7 +189,7 @@ removeRolesCmd = async (message) => {
     param = message.content.replace(/^!removeroles/i, "").trim();
     discordId = message.author.id;
     if (param !== "" && isAdmin(discordId)) {
-        discordId = param.replace("<@", "").replace(">", "").trim();
+        discordId = param.replace("<@!", "").replace(">", "").trim();
     }
 
     client.deleteSrcUser.run(discordId);
@@ -282,8 +282,9 @@ doSrcRoleUpdates = (discordId, srcName, message = null) => {
             });
 
         }).catch((e) => {
-            helpers.log("SRC role update: '" + discordId + "' is not a member of the LBP speedrunning server. Removing...", true);
-            client.deleteSrcUser.run(discordId);
+            helpers.log(e);
+            //helpers.log("SRC role update: '" + discordId + "' is not a member of the LBP speedrunning server. Removing...", true);
+            //client.deleteSrcUser.run(discordId);
             resolve();
         });
     }, resolve));

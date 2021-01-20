@@ -330,6 +330,7 @@ modHelpCmd = (message) => {
 \`!modhelp\` - Shows this message.
 \`!clearrace\` - Resets the bot; forces ending the race without recording any results.
 \`!clearteams\` - Disbands all current teams.
+\`!f <discord id>\` - Kicks another user from the race.
 \`!roles <speedrun.com name> <discord id>\` - Updates someone else's roles.
 \`!removeroles <discord id>\` - Remove someone else's roles.
 \`!reloadroles\` - Refreshes all registered roles.
@@ -790,17 +791,28 @@ unteamCmd = (message) => {
 
 // !ff/!forfeit/!leave/!exit/!unrace
 forfeitCmd = (message) => {
-    if (!raceState.entrants.has(message.author.id)){
+    // Check if admin is FF'ing for someone else
+    ffId = message.author.id;
+    username = helpers.username(message);
+    if (message.member.roles.cache.some(role => role.name === "Admin" || role.name === "Moderator")) {
+        params = message.content.trim().split(" ");
+        if (params.length > 1) {
+            ffId = params[1].replace("<@!", "").replace(">", "").trim();
+            username = params[1].trim() + " (via " + helpers.username(message) + ")";
+        }
+    }
+
+    if (!raceState.entrants.has(ffId)){
         // Can't leave if you're not in the race, dummy
         return;
     }
 
     if (raceState.state === State.JOINING) {
         // Leave race completely if the race hasn't started yet
-        if (raceState.removeEntrant(message.author.id)) {
+        if (raceState.removeEntrant(ffId)) {
             if (raceState.entrants.size === 0) {
                 // Close down race if this is the last person leaving
-                message.channel.send(helpers.username(message) + " has left the race. Closing race.");
+                message.channel.send(username + " has left the race. Closing race.");
                 raceState = new RaceState();
                 if (isILRace()) {
                     categoryName = helpers.normalizeCategory(gameName, null);
@@ -819,7 +831,7 @@ forfeitCmd = (message) => {
                     }
                 }
 
-                message.channel.send(helpers.username(message) + " has left the race.");
+                message.channel.send(username + " has left the race.");
                 if (raceState.entrants.size === 1) {
                     // If only one person is left now, make sure they are marked as unready
                     raceState.entrants.forEach((entrant) => { entrant.ready = false; });
@@ -837,18 +849,18 @@ forfeitCmd = (message) => {
         }
 
     } else if (raceState.state === State.ACTIVE || raceState.state === State.COUNTDOWN) {
-        if (raceState.ffIds.includes(message.author.id) || raceState.doneIds.includes(message.author.id)) {
+        if (raceState.ffIds.includes(ffId) || raceState.doneIds.includes(ffId)) {
             // If this person has already finished the current race, mark them to leave once the race is over
             if (isILRace()) {
-                raceState.leavingWhenDone.add(message.author.id);
-                message.channel.send(helpers.username(message) + " has left the race.");
+                raceState.leavingWhenDone.add(ffId);
+                message.channel.send(username + " has left the race.");
             }
 
         } else {
             // Otherwise mark them as forfeited
-            helpers.doForWholeTeam(raceState, message.author.id, (e) => raceState.ffIds.push(e.message.author.id));
-            team = raceState.entrants.get(message.author.id).team;
-            message.channel.send((team === "" ? helpers.username(message) : "**" + team + "**") + " has forfeited (use `!unforfeit` to rejoin if this was an accident).");
+            helpers.doForWholeTeam(raceState, ffId, (e) => raceState.ffIds.push(e.ffId));
+            team = raceState.entrants.get(ffId).team;
+            message.channel.send((team === "" ? username : "**" + team + "**") + " has forfeited (use `!unforfeit` to rejoin if this was an accident).");
 
             // Check if everyone forfeited
             if (raceState.ffIds.length + raceState.doneIds.length === raceState.entrants.size) {
