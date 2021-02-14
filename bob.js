@@ -858,7 +858,7 @@ forfeitCmd = (message) => {
 
         } else {
             // Otherwise mark them as forfeited
-            helpers.doForWholeTeam(raceState, ffId, (e) => raceState.ffIds.push(e.ffId));
+            helpers.doForWholeTeam(raceState, ffId, (e) => raceState.ffIds.push(e.message.author.id));
             team = raceState.entrants.get(ffId).team;
             message.channel.send((team === "" ? username : "**" + team + "**") + " has forfeited (use `!unforfeit` to rejoin if this was an accident).");
 
