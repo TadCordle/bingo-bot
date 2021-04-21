@@ -1,6 +1,6 @@
 # Bingo Bot
 
-LittleBigPlanet speedrunning race bot for Discord.
+LittleBigPlanet speedrunning race bot for Discord. Rewritten/currently being maintained [here](https://github.com/KaDiWa4/bingo-bot).
 
 ## Setup
 
